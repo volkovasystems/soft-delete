@@ -1,0 +1,68 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Bash and dependencies
+        id: setup
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y bats shellcheck
+          echo "CACHE_KEY=$(date +%Y%m)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/pip
+            ~/.cache/apt
+          key: ${{ runner.os }}-deps-${{ steps.setup.outputs.CACHE_KEY }}
+          restore-keys: |
+            ${{ runner.os }}-deps-
+
+      - name: Run tests
+        run: |
+          make test || exit 1
+
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Bash and dependencies
+        run: sudo apt-get install -y bats shellcheck
+
+      - name: Extract version
+        id: version
+        run: |
+          VERSION=$(make version | tr -d '\n') || exit 1
+          if [ -z "$VERSION" ]; then
+            echo "Error: Failed to extract version"
+            exit 1
+          fi
+          echo "VERSION=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Build package
+        run: make package
+
+      - name: Create Release and Upload Assets
+        uses: softprops/action-gh-release@v1
+        with:
+          name: Release ${{ github.ref_name }}
+          files: ./dist/soft-delete-${{ steps.version.outputs.VERSION }}.tar.gz
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
