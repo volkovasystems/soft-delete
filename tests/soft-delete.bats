@@ -10,9 +10,10 @@ load test_helper
 setup() {
     # Create temporary test directory
     TEST_DIR="$(mktemp -d)"
-    cd "$TEST_DIR"
+    cd "$TEST_DIR" || exit
 
     # Copy the soft-delete script to test directory
+    # shellcheck disable=SC2154
     cp "$BATS_TEST_DIRNAME/../bin/soft-delete" ./soft-delete
     chmod +x ./soft-delete
 

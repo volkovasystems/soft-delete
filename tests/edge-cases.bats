@@ -4,14 +4,14 @@
 # Copyright (c) 2025 Richeve S. Bebedor <richeve.bebedor@gmail.com>
 
 # Load test helpers
-# shellcheck disable=SC1091
+# shellcheck disable=SC1091,SC2154
 source "${BATS_TEST_DIRNAME}/test_helper.bash"
 
 # Set up test environment
 setup() {
     # Create a unique test directory for this test run
     TEST_DIR="$(mktemp -d)"
-    cd "$TEST_DIR"
+    cd "$TEST_DIR" || exit
     
     # Ensure we start with clean backup state
     cleanup_backups
@@ -25,7 +25,8 @@ setup() {
 
 # Clean up after each test
 teardown() {
-    cd "$BATS_TEST_DIRNAME"
+    # shellcheck disable=SC2154
+    cd "$BATS_TEST_DIRNAME" || exit
     rm -rf "$TEST_DIR"
     cleanup_backups
 }
@@ -37,7 +38,7 @@ teardown() {
     
     run "$SOFT_DELETE" "$file_with_spaces"
     [ "$status" -eq 0 ]
-    [[ "$output" =~ "Soft deleted: '$file_with_spaces'" ]]
+    [[ $output =~ Soft\ deleted:\ \'$file_with_spaces\' ]]
     [ ! -e "$file_with_spaces" ]
     
     # Verify backup exists with correct content
@@ -76,7 +77,7 @@ teardown() {
     local dash_file="-file-starting-with-dash.txt"
     create_test_file "$dash_file" "dash content"
     
-    run "$SOFT_DELETE" "$dash_file"
+    run "$SOFT_DELETE" -- "$dash_file"
     [ "$status" -eq 0 ]
     [ ! -e "$dash_file" ]
     
