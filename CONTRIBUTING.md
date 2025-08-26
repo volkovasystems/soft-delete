@@ -52,12 +52,12 @@ Please be respectful and constructive in all interactions. We welcome contributi
 
 ```
 soft-delete/
-├── bin/                     # Built executable
-├── examples/                # Usage examples and documentation
+├── bin/                    # Built executable
+├── examples/               # Usage examples and documentation
 │   ├── README.md           # Examples documentation
 │   ├── basic_usage.sh      # Basic usage examples
 │   └── advanced_usage.sh   # Advanced integration examples
-├── tests/                   # Test files
+├── tests/                  # Test files
 │   ├── soft-delete.bats    # Main test suite
 │   └── test_helper.bash    # Test utilities
 ├── .editorconfig           # Code formatting standards

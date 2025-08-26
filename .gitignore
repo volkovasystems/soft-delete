@@ -51,3 +51,15 @@
 # Ignore executables without extension (except specific ones)
 # Allow our main executable
 !bin/soft-delete
+
+# Docker and testing
+!Dockerfile.test
+!docker-compose.test.yml
+!scripts/
+!scripts/**/*
+!docs/
+!docs/**/*
+
+# Ignore test reports but keep structure
+reports/*
+!reports/.gitkeep
