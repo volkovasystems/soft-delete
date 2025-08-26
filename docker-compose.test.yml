@@ -1,0 +1,68 @@
+version: '3.8'
+
+services:
+  test:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    container_name: soft-delete-test
+    volumes:
+      # Mount source code (read-only)
+      - ./bin:/app/bin:ro
+      - ./soft-delete.sh:/app/soft-delete.sh:ro
+      - ./tests:/app/tests:ro
+      # Mount reports directory (read-write)
+      - ./reports:/app/reports:rw
+      # Mount temporary workspace for test isolation
+      - test-workspace:/tmp/test-workspace:rw
+    environment:
+      - BATS_LIB_PATH=/opt/bats-support:/opt/bats-assert:/opt/bats-file
+      - TAP_VERSION=14
+    working_dir: /app
+    user: testuser
+    # Override default command for different test scenarios
+    command: >
+      bash -c "
+        echo 'Starting BATS tests with TAP output...' &&
+        mkdir -p /app/reports /app/reports/tap &&
+        echo 'TAP version 14' > /app/reports/tap/results.tap &&
+        bats --tap --recursive /app/tests/ | tee -a /app/reports/tap/results.tap &&
+        echo 'Tests completed. TAP reports saved to /app/reports/tap/'
+      "
+
+  # Service for running tests with verbose output
+  test-verbose:
+    extends: test
+    command: >
+      bash -c "
+        echo 'Starting BATS tests with verbose TAP output...' &&
+        mkdir -p /app/reports &&
+        bats --tap --verbose-run --output /app/reports --recursive /app/tests/ &&
+        echo 'Verbose tests completed. Reports saved to /app/reports/'
+      "
+
+  # Service for running specific test files
+  test-single:
+    extends: test
+    command: >
+      bash -c "
+        echo 'Starting single test file...' &&
+        mkdir -p /app/reports &&
+        bats --tap --output /app/reports /app/tests/soft-delete.bats &&
+        echo 'Single test completed. Reports saved to /app/reports/'
+      "
+
+  # Service for running shellcheck linting
+  lint:
+    extends: test
+    command: >
+      bash -c "
+        echo 'Running shellcheck linting...' &&
+        mkdir -p /app/reports &&
+        shellcheck /app/soft-delete.sh > /app/reports/shellcheck.txt 2>&1 || true &&
+        echo 'Linting completed. Results saved to /app/reports/shellcheck.txt'
+      "
+
+volumes:
+  test-workspace:
+    driver: local
