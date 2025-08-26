@@ -12,26 +12,54 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Bash and dependencies
-        id: setup
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y bats shellcheck
-          echo "CACHE_KEY=$(date +%Y%m)" >> "$GITHUB_OUTPUT"
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-      - name: Cache dependencies
+      - name: Cache Docker layers
         uses: actions/cache@v3
         with:
-          path: |
-            ~/.cache/pip
-            ~/.cache/apt
-          key: ${{ runner.os }}-deps-${{ steps.setup.outputs.CACHE_KEY }}
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
           restore-keys: |
-            ${{ runner.os }}-deps-
+            ${{ runner.os }}-buildx-
 
-      - name: Run tests
+      - name: Create reports directory
+        run: mkdir -p reports
+
+      - name: Run Docker tests with TAP output
         run: |
-          make test || exit 1
+          make docker-test || exit 1
+
+      - name: Run Docker linting
+        run: |
+          make docker-lint || true
+
+      - name: Upload test reports
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: test-reports-${{ github.run_number }}
+          path: |
+            reports/
+            !reports/.gitkeep
+          retention-days: 30
+
+      - name: Publish TAP Results
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        if: always()
+        with:
+          files: |
+            reports/**/*.tap
+            reports/**/*.xml
+          check_name: "Test Results (TAP)"
+          comment_mode: create new
+          fail_on: "test failures"
+
+      - name: Cleanup test environment
+        if: always()
+        run: |
+          make docker-clean || true
+          make clean-temp || true
 
   build:
     needs: test
