@@ -65,12 +65,35 @@ lint:
 		echo "  macOS: brew install shellcheck"; \
 	fi
 
-# Clean target
+# Clean build artifacts
 .PHONY: clean
 clean:
 	@echo "Cleaning build artifacts..."
 	@rm -f bin/$(SCRIPT_NAME)
-	@echo "Clean complete."
+	@rm -rf dist/
+	@echo "Build artifacts cleaned."
+
+# Clean temporary files
+.PHONY: clean-temp
+clean-temp:
+	@echo "Cleaning temporary files..."
+	@find . -name "*.tmp" -type f -delete 2>/dev/null || true
+	@find . -name "*.log" -type f -delete 2>/dev/null || true
+	@find . -name "*~" -type f -delete 2>/dev/null || true
+	@find . -name ".DS_Store" -type f -delete 2>/dev/null || true
+	@find . -name "Thumbs.db" -type f -delete 2>/dev/null || true
+	@find . -name "*.swp" -type f -delete 2>/dev/null || true
+	@find . -name "*.swo" -type f -delete 2>/dev/null || true
+	@find . -name "*.orig" -type f -delete 2>/dev/null || true
+	@find . -name "*.rej" -type f -delete 2>/dev/null || true
+	@echo "Temporary files cleaned."
+
+# Clean package files
+.PHONY: clean-dist
+clean-dist:
+	@echo "Cleaning distribution packages..."
+	@rm -rf dist/
+	@echo "Distribution packages cleaned."
 
 # Check target - verify installation
 .PHONY: check
@@ -123,29 +146,118 @@ package: clean build
 version:
 	@echo "$(VERSION)"
 
+# Docker-based testing targets
+.PHONY: docker-test
+docker-test: build
+	@echo "Running tests in Docker with TAP output..."
+	@mkdir -p reports
+	@docker-compose -f docker-compose.test.yml up --build test
+	@echo "Tests completed. TAP reports available in ./reports/"
+
+.PHONY: docker-test-verbose
+docker-test-verbose: build
+	@echo "Running verbose tests in Docker..."
+	@mkdir -p reports
+	@docker-compose -f docker-compose.test.yml up --build test-verbose
+	@echo "Verbose tests completed. Reports available in ./reports/"
+
+.PHONY: docker-test-single
+docker-test-single: build
+	@echo "Running single test file in Docker..."
+	@mkdir -p reports
+	@docker-compose -f docker-compose.test.yml up --build test-single
+	@echo "Single test completed. Reports available in ./reports/"
+
+.PHONY: docker-lint
+docker-lint: build
+	@echo "Running shellcheck in Docker..."
+	@mkdir -p reports
+	@docker-compose -f docker-compose.test.yml up --build lint
+	@echo "Linting completed. Results available in ./reports/shellcheck.txt"
+
+.PHONY: docker-clean
+docker-clean:
+	@echo "Cleaning Docker test environment..."
+	@docker-compose -f docker-compose.test.yml down --volumes --remove-orphans
+	@docker image rm $$(docker images -q soft-delete*) 2>/dev/null || true
+	@echo "Docker cleanup complete."
+
+.PHONY: test-reports
+test-reports:
+	@echo "Available test reports:"
+	@ls -la reports/ 2>/dev/null || echo "No reports found. Run 'make docker-test' first."
+
+.PHONY: clean-reports
+clean-reports:
+	@echo "Cleaning test reports..."
+	@rm -rf reports/*
+	@echo "Reports cleaned."
+
+# Comprehensive cleanup using cleanup script
+.PHONY: cleanup
+cleanup:
+	@./scripts/cleanup.sh all
+
+.PHONY: cleanup-build
+cleanup-build:
+	@./scripts/cleanup.sh build
+
+.PHONY: cleanup-deployment
+cleanup-deployment:
+	@./scripts/cleanup.sh deployment
+
+.PHONY: cleanup-dry-run
+cleanup-dry-run:
+	@./scripts/cleanup.sh -n all
+
+# Enhanced clean target
+.PHONY: clean-all
+clean-all: clean clean-temp clean-dist clean-reports docker-clean
+	@echo "Full cleanup complete."
+
 # Help target
 .PHONY: help
 help:
 	@echo "Available targets:"
-	@echo "  all          - Build the project (default)"
-	@echo "  build        - Copy source script to bin/ and make executable"
-	@echo "  install      - Install $(SCRIPT_NAME) to $(PREFIX)/bin (requires sudo)"
-	@echo "  uninstall    - Remove $(SCRIPT_NAME) from $(PREFIX)/bin (requires sudo)"
-	@echo "  test         - Run test suite (requires bats)"
-	@echo "  lint         - Check bash syntax and run shellcheck"
-	@echo "  clean        - Remove build artifacts"
-	@echo "  check        - Verify installation"
-	@echo "  install-deps - Install development dependencies"
-	@echo "  package      - Create distribution archive (version: $(VERSION))"
-	@echo "  help         - Show this help message"
+	@echo "  all              - Build the project (default)"
+	@echo "  build            - Copy source script to bin/ and make executable"
+	@echo "  install          - Install $(SCRIPT_NAME) to $(PREFIX)/bin (requires sudo)"
+	@echo "  uninstall        - Remove $(SCRIPT_NAME) from $(PREFIX)/bin (requires sudo)"
+	@echo "  test             - Run test suite (requires bats)"
+	@echo "  docker-test      - Run tests in Docker with TAP output"
+	@echo "  docker-test-verbose - Run verbose tests in Docker"
+	@echo "  docker-test-single - Run single test file in Docker"
+	@echo "  docker-lint      - Run shellcheck in Docker"
+	@echo "  lint             - Check bash syntax and run shellcheck"
+	@echo "  clean            - Remove build artifacts"
+	@echo "  clean-temp       - Remove temporary files (.tmp, .log, ~, etc.)"
+	@echo "  clean-dist       - Remove distribution packages"
+	@echo "  clean-reports    - Remove test reports"
+	@echo "  clean-all        - Full cleanup (build + reports + docker + temp)"
+	@echo "  cleanup          - Comprehensive cleanup using cleanup script"
+	@echo "  cleanup-build    - Clean only build artifacts (comprehensive)"
+	@echo "  cleanup-deployment - Clean deployment artifacts"
+	@echo "  cleanup-dry-run  - Preview what cleanup would do"
+	@echo "  docker-clean     - Clean Docker test environment"
+	@echo "  test-reports     - Show available test reports"
+	@echo "  check            - Verify installation"
+	@echo "  install-deps     - Install development dependencies"
+	@echo "  package          - Create distribution archive (version: $(VERSION))"
+	@echo "  help             - Show this help message"
+	@echo ""
+	@echo "Docker Test Targets:"
+	@echo "  docker-test      - Standard TAP-compliant testing in Docker"
+	@echo "  docker-test-verbose - Verbose test output with detailed logs"
+	@echo "  docker-lint      - Code quality checks in isolated environment"
 	@echo ""
 	@echo "Variables:"
-	@echo "  PREFIX       - Installation prefix (default: /usr/local)"
-	@echo "  BINDIR       - Binary installation directory (default: \$PREFIX/bin)"
+	@echo "  PREFIX           - Installation prefix (default: /usr/local)"
+	@echo "  BINDIR           - Binary installation directory (default: \$PREFIX/bin)"
 	@echo ""
 	@echo "Examples:"
-	@echo "  make                    # Build the project"
-	@echo "  sudo make install       # Install system-wide"
-	@echo "  make install PREFIX=~   # Install to home directory"
-	@echo "  make test               # Run tests"
-	@echo "  make lint               # Check code quality"
+	@echo "  make                      # Build the project"
+	@echo "  make docker-test          # Run tests in Docker (recommended)"
+	@echo "  make docker-test-verbose  # Run tests with verbose output"
+	@echo "  make test-reports         # View test results"
+	@echo "  sudo make install         # Install system-wide"
+	@echo "  make install PREFIX=~     # Install to home directory"
