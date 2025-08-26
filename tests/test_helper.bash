@@ -4,8 +4,8 @@
 # Load BATS libraries if available
 if [[ -n "${BATS_LIB_PATH:-}" ]]; then
     for lib_path in $(echo "$BATS_LIB_PATH" | tr ':' ' '); do
-        if [[ -d "$lib_path/load.bash" ]]; then
-            # shellcheck disable=SC1090
+        if [[ -f "$lib_path/load.bash" ]]; then
+            # shellcheck disable=SC1091
             source "$lib_path/load.bash"
         fi
     done
@@ -78,7 +78,7 @@ cleanup_backups() {
 
 # Helper function to count backup directories
 count_backups() {
-    ls -d /tmp/backup-* 2>/dev/null | wc -l || echo 0
+    find /tmp -maxdepth 1 -name "backup-*" -type d 2>/dev/null | wc -l || echo 0
 }
 
 # Helper function to create files with specific permissions

@@ -6,9 +6,12 @@
 set -euo pipefail
 
 # Script metadata
-readonly SCRIPT_NAME="$(basename "$0")"
-readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-readonly PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+SCRIPT_NAME="$(basename "$0")"
+readonly SCRIPT_NAME
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+readonly SCRIPT_DIR
+PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+readonly PROJECT_ROOT
 
 # Colors for output
 readonly RED='\033[0;31m'
@@ -259,7 +262,7 @@ clean_docker() {
         
         [[ "$verbose" == "true" ]] && log_info "Removing Docker images..."
         if docker images -q "soft-delete*" 2>/dev/null | head -1 | grep -q .; then
-            docker rmi $(docker images -q "soft-delete*") 2>/dev/null || true
+            docker rmi "$(docker images -q "soft-delete*")" 2>/dev/null || true
         fi
         
         log_success "Docker environment cleaned"

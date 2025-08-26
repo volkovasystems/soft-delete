@@ -6,9 +6,12 @@
 set -euo pipefail
 
 # Script metadata
-readonly SCRIPT_NAME="$(basename "$0")"
-readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-readonly PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+SCRIPT_NAME="$(basename "$0")"
+readonly SCRIPT_NAME
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+readonly SCRIPT_DIR
+PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+readonly PROJECT_ROOT
 
 # Configuration
 readonly DOCKER_COMPOSE_FILE="docker-compose.test.yml"
@@ -104,7 +107,7 @@ clean_docker_environment() {
     
     # Remove test images
     if docker images | grep -q "soft-delete"; then
-        docker rmi $(docker images -q "*soft-delete*") 2>/dev/null || true
+        docker rmi "$(docker images -q "*soft-delete*")" 2>/dev/null || true
     fi
     
     log_success "Docker environment cleaned"
