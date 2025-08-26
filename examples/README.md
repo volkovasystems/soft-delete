@@ -4,7 +4,7 @@ This directory contains practical examples and usage scenarios for the `soft-del
 
 ## Files
 
-### `basic_usage.sh`
+### Basic Usage Script (basic_usage.sh)
 
 Demonstrates fundamental usage patterns including:
 
@@ -23,7 +23,7 @@ Demonstrates fundamental usage patterns including:
 cat basic_usage.sh
 ```
 
-### `advanced_usage.sh`
+### Advanced Usage Script (advanced_usage.sh)
 
 Shows advanced integration scenarios including:
 

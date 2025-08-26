@@ -32,6 +32,8 @@ make test-reports
 make clean-all
 ```
 
+---
+
 ### Using the Test Script
 
 ```bash
@@ -47,6 +49,8 @@ make clean-all
 # Get help
 ./scripts/run-tests.sh --help
 ```
+
+---
 
 ## Test Environment
 
@@ -159,12 +163,16 @@ The `tests/test_helper.bash` file provides:
 - `tap_todo()` - Mark test as TODO
 - `tap_diagnostic()` - Add diagnostic output
 
+---
+
 ### Utility Functions
 
 - `create_test_file()` - Create test files with content
 - `extract_backup_path()` - Extract backup paths from output
 - `verify_backup()` - Verify backup integrity
 - `cleanup_backups()` - Clean test artifacts
+
+---
 
 ## CI/CD Integration
 
@@ -200,25 +208,29 @@ The workflow automatically:
 
 ### Common Issues
 
-**Docker not found**
+### Docker not found
 
 ```bash
 # Install Docker
 sudo apt-get install docker.io docker-compose
 ```
-**Permission denied**
+
+### Permission denied
+
 ```bash
 # Add user to docker group
 sudo usermod -aG docker $USER
 # Re-login or restart shell
 ```
 
-**Tests failing in Docker but passing locally**
+### Tests failing in Docker but passing locally
+
 - Check file permissions
 - Verify volume mounts
 - Check environment variables
 
-**TAP output not valid**
+### TAP output not valid
+
 ```bash
 # Validate TAP output manually
 cat reports/tap/results.tap | tap-parser

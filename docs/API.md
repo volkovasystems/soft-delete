@@ -22,11 +22,13 @@ This document provides comprehensive API documentation for the soft-delete utili
 
 ##### `main()`
 
-**Description**: Entry point function that orchestrates the entire soft delete operation
+**Description**: Entry point function that orchestrates the entire soft
+ delete operation
 
-**Parameters**: Command line arguments (`"$@"`)
+**Parameters**:
 
-**Returns**:
+- Command line arguments (`"$@**Returns**:
+
 - `0` on success
 - `1` on general error
 - `2` on usage error
@@ -37,17 +39,23 @@ This document provides comprehensive API documentation for the soft-delete utili
 main "$@"
 ```
 
+---
+
 ##### `parse_arguments()`
 
 **Description**: Parses and validates command line arguments using getopts
 
-**Parameters**: Command line arguments
+**Parameters**:
+
+- Command line arguments
 
 **Global Variables Modified**:
+
 - `TARGET_PATH`: Set to the file/directory path to delete
 - `VERBOSE`: Set to true if verbose mode enabled
 
 **Supported Options**:
+
 - `-h, --help`: Display help and exit
 - `-v, --version`: Display version and exit
 - `-p, --path PATH`: Specify target path
@@ -58,29 +66,37 @@ main "$@"
 **Description**: Validates that the target path exists and is readable
 
 **Parameters**:
+
 - `$1`: Path to validate
 
 **Returns**:
+
 - `0` if path is valid
 - `1` if path is invalid
 
 **Error Conditions**:
+
 - Path is empty
 - Path doesn't exist
 - Path is not readable
+
+---
 
 ##### `soft_delete()`
 
 **Description**: Core function that performs the safe deletion operation
 
 **Parameters**:
+
 - `$1`: Target path to soft delete
 
 **Returns**:
+
 - `0` on successful move
 - `1` on failure
 
 **Side Effects**:
+
 - Creates backup directory in `/tmp`
 - Moves target to backup location
 - Outputs backup path to stdout
@@ -91,6 +107,8 @@ main "$@"
 2. Create unique timestamped backup directory using `mktemp`
 3. Move target to backup directory using `mv`
 4. Report success with backup location
+
+---
 
 ##### `show_help()`
 
@@ -117,6 +135,8 @@ main "$@"
 | `VERBOSE` | boolean | Debug output flag | false |
 | `TARGET_PATH` | string | Path to process | "" |
 
+---
+
 #### Exit Codes
 
 | Code | Meaning |
@@ -132,9 +152,12 @@ main "$@"
 ```
 
 Where:
+
 - `XXXXX`: Random 5-character string from mktemp
 - `YYYYMMDD`: Date (e.g., 20250122)
 - `HHMMSS`: Time (e.g., 143052)
+
+---
 
 ## Build System
 
@@ -242,32 +265,44 @@ Where:
 **Description**: Creates a test file with specified content
 
 **Parameters**:
+
 - `filename`: File to create
 - `content`: Content to write (default: "test content")
+
+---
 
 ##### `create_test_directory(dirname, filename, content)`
 
 **Description**: Creates test directory with file
 
 **Parameters**:
+
 - `dirname`: Directory to create
 - `filename`: Name of file to create
 - `content`: Content to write
+
+---
 
 ##### `extract_backup_path(output)`
 
 **Description**: Extracts the backup path from command output
 
 **Parameters**:
+
 - `output`: Command output string
+
+---
 
 ##### `verify_backup(backup_path, expected_content)`
 
 **Description**: Verifies that the backup file has expected content
 
 **Parameters**:
+
 - `backup_path`: Path to backup file
 - `expected_content`: Expected content
+
+---
 
 ##### `cleanup_backups()`
 
@@ -275,11 +310,15 @@ Where:
 
 **Parameters**: None
 
+---
+
 ##### `count_backups()`
 
 **Description**: Returns the number of backup directories/files found
 
 **Parameters**: None
+
+---
 
 ##### `tap_pass(message)`, `tap_fail(message)`, `tap_skip(message)`, `tap_todo(message)`
 
@@ -303,9 +342,9 @@ Where:
 
 #### Project Structure
 
-1. **Test**: Docker-based test infrastructure using BATS
-2. **Build**: Makefile with automation targets
-3. **Docs**: Function-level documentation and Example scripts
+1. **Test Infrastructure**: Docker-based test environment using BATS
+2. **Build Automation**: Makefile with automated CI/CD targets
+3. **Documentation**: Function-level documentation, examples, and usage guides
 
 ---
 
