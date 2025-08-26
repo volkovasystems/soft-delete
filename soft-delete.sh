@@ -131,12 +131,14 @@ validate_path() {
         return 1
     fi
 
-    if [[ ! -e "$path" ]]; then
+    # Check if path exists (including broken symlinks)
+    if [[ ! -e "$path" && ! -L "$path" ]]; then
         log_error "Path '$path' does not exist"
         return 1
     fi
 
-    if [[ ! -r "$path" ]]; then
+    # For broken symlinks, we can't check readability
+    if [[ -e "$path" && ! -r "$path" ]]; then
         log_error "Path '$path' is not readable"
         return 1
     fi
@@ -183,84 +185,113 @@ soft_delete() {
 
 # Parse command line arguments using getopts for short options
 parse_arguments() {
-    local OPTIND OPTARG opt
+    local OPTIND=1 OPTARG opt
+    local args=()
+    local end_of_options=false
 
-    # Handle long options manually first
-    case "${1:-}" in
-        --help)
-            show_help
-            exit 0
-            ;;
-        --version)
-            show_version
-            exit 0
-            ;;
-        --path)
-            if [[ -n "${2:-}" ]]; then
-                TARGET_PATH="$2"
-                shift 2
-            else
-                log_error "--path option requires an argument"
-                usage
-                exit 2
-            fi
-            ;;
-        --verbose)
-            VERBOSE=true
-            shift
-            ;;
-        --)
-            # End of options marker
-            shift
-            ;;
-        --*)
-            log_error "Unknown option: $1"
-            usage
-            exit 1
-            ;;
-    esac
-
-    # Handle short options with getopts
-    while getopts "hvp:" opt; do
-        case $opt in
-            h)
+    # First pass: handle long options and collect remaining arguments
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --help)
                 show_help
                 exit 0
                 ;;
-            v)
+            --version)
                 show_version
                 exit 0
                 ;;
-            p)
-                TARGET_PATH="$OPTARG"
+            --path)
+                if [[ -n "${2:-}" ]]; then
+                    TARGET_PATH="$2"
+                    shift 2
+                else
+                    log_error "--path option requires an argument"
+                    usage
+                    exit 2
+                fi
                 ;;
-            \?)
-                log_error "Invalid option: -$OPTARG"
+            --verbose)
+                VERBOSE=true
+                shift
+                ;;
+            --)
+                # End of options marker
+                shift
+                end_of_options=true
+                break
+                ;;
+            --*)
+                log_error "Unknown option: $1"
                 usage
                 exit 1
                 ;;
-            :)
-                log_error "Option -$OPTARG requires an argument"
-                usage
-                exit 2
+            -*)
+                # Collect short options for getopts processing
+                args+=("$1")
+                shift
+                ;;
+            *)
+                # Not an option, collect for later processing
+                args+=("$1")
+                shift
                 ;;
         esac
     done
 
-    # Shift processed options
-    shift $((OPTIND - 1))
-
-    # If no path was specified via -p/--path, use the first remaining argument
-    if [[ -z "$TARGET_PATH" && -n "${1:-}" ]]; then
-        TARGET_PATH="$1"
+    # Add remaining arguments after -- to args array
+    while [[ $# -gt 0 ]]; do
+        args+=("$1")
         shift
-    fi
+    done
 
-    # Check for extra arguments
-    if [[ $# -gt 0 ]]; then
-        log_error "Too many arguments: $*"
-        usage
-        exit 1
+    # Second pass: handle short options with getopts if we have any
+    if [[ ${#args[@]} -gt 0 ]]; then
+        set -- "${args[@]}"
+        
+        # Only process short options if we haven't hit end of options marker
+        if [[ "$end_of_options" == false ]]; then
+            while getopts "hvp:" opt; do
+                case $opt in
+                    h)
+                        show_help
+                        exit 0
+                        ;;
+                    v)
+                        show_version
+                        exit 0
+                        ;;
+                    p)
+                        TARGET_PATH="$OPTARG"
+                        ;;
+                    \?)
+                        log_error "Invalid option: -$OPTARG"
+                        usage
+                        exit 1
+                        ;;
+                    :)
+                        log_error "Option -$OPTARG requires an argument"
+                        usage
+                        exit 2
+                        ;;
+                esac
+            done
+            
+            # Shift processed options
+            shift $((OPTIND - 1))
+        fi
+        
+        # If no path was specified via -p/--path, use the first remaining argument
+        if [[ -z "$TARGET_PATH" && -n "${1:-}" ]]; then
+            TARGET_PATH="$1"
+            shift
+        fi
+        
+        # Check for extra arguments
+        if [[ $# -gt 0 ]]; then
+            log_error "Too many arguments: $*"
+            usage
+            exit 1
+        fi
     fi
 
     # Ensure we have a target path
