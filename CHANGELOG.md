@@ -32,16 +32,57 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feat(build): Add cleanup integration with build process
 - feat(dev): Add test helper functions with TAP-compliant logging
 - feat(dev): Add enhanced error handling and validation in tests
+- feat(security): Add comprehensive security scanning system with vulnerability detection
+- feat(security): Add hardcoded secrets detection and path traversal protection
+- feat(security): Add input validation analysis and Docker security scanning
+- feat(perf): Add performance benchmarking suite with memory usage analysis
+- feat(perf): Add performance regression testing and detailed reporting
+- feat(perf): Add concurrent operation and stress testing capabilities
+- feat(test): Add comprehensive edge case testing for special characters and Unicode
+- feat(test): Add binary file, symlink, and filesystem edge case coverage
+- feat(test): Add concurrent operation testing and data integrity verification
+- feat(quality): Add comprehensive shellcheck configuration and git attributes
+- feat(quality): Add editor configuration for consistent code formatting
+- feat(core): Add support for files starting with dash using -- argument handling
 - test: Add comprehensive test suite with error handling and validation
+- docs: Add comprehensive API documentation with function-level references
 - docs: Add comprehensive Docker testing documentation
 - docs: Add cleanup system usage guide and examples
 - docs: Add troubleshooting guide for Docker testing
 - docs: Add TAP compliance and testing best practices
+- docs: Add performance benchmarking and security scanning documentation
 - docs: Add basic usage examples and installation guide
 - docs: Add contributing guidelines and code of conduct
 - docs: Add Homebrew installation instructions
 - build: Add Makefile for project automation and packaging
 - chore: Add .gitignore for project organization
+- chore: Add comprehensive linting configuration and project standards
+
+### Fixed
+
+- fix: Resolve shellcheck warnings for improved code quality
+- fix: Address SC2155 warnings by separating variable declarations
+- fix: Fix Docker build compatibility with Ubuntu 22.04 (awk → gawk)
+- fix: Improve command substitution quoting for security
+- fix: Enhance file handling for special characters and edge cases
+- fix: Resolve broken symlink handling in edge case tests
+- fix: Improve argument parsing to handle -- end-of-options marker
+
+### Security
+
+- security: Implement comprehensive vulnerability scanning
+- security: Add protection against path traversal attacks
+- security: Ensure secure handling of files starting with dashes
+- security: Add input validation for all user-provided data
+- security: Implement non-root Docker execution environment
+- security: Add secrets detection and prevention systems
+
+### Performance
+
+- perf: Optimize file operations for single atomic moves
+- perf: Add memory-conscious processing for large files
+- perf: Implement efficient backup directory creation
+- perf: Add performance monitoring and regression detection
 
 ### Technical Details
 

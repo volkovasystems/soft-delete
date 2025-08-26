@@ -11,8 +11,8 @@ set -euo pipefail
 
 # Script metadata
 readonly VERSION="0.0.0"
-readonly SCRIPT_NAME="$(basename "$0")"
-readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SCRIPT_NAME="$(basename "$0")"
+readonly SCRIPT_NAME
 
 # Global variables
 declare -g VERBOSE=false
@@ -168,8 +168,8 @@ soft_delete() {
     # Get the basename for the moved item
     backup_name="$(basename "$target_path")"
 
-    # Perform the move operation
-    if mv "$target_path" "$backup_directory/$backup_name"; then
+    # Perform the move operation (use -- to handle files starting with dash)
+    if mv -- "$target_path" "$backup_directory/$backup_name"; then
         log_info "Soft deleted: '$target_path' -> '$backup_directory/$backup_name'"
         log_verbose "Operation completed successfully"
         return 0
@@ -207,6 +207,10 @@ parse_arguments() {
             ;;
         --verbose)
             VERBOSE=true
+            shift
+            ;;
+        --)
+            # End of options marker
             shift
             ;;
         --*)
