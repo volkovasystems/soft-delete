@@ -1,0 +1,53 @@
+FROM ubuntu:22.04
+
+# Avoid interactive prompts during package installation
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    bash \
+    bats \
+    shellcheck \
+    curl \
+    git \
+    make \
+    coreutils \
+    grep \
+    sed \
+    awk \
+    findutils \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install bats-assert and bats-support for better testing
+RUN git clone https://github.com/bats-core/bats-support.git /opt/bats-support && \
+    git clone https://github.com/bats-core/bats-assert.git /opt/bats-assert && \
+    git clone https://github.com/bats-core/bats-file.git /opt/bats-file
+
+# Create test user to avoid running as root
+RUN useradd -m -s /bin/bash testuser && \
+    mkdir -p /app /app/reports /tmp/test-workspace && \
+    chown -R testuser:testuser /app /tmp/test-workspace
+
+# Set working directory
+WORKDIR /app
+
+# Copy test dependencies first (for better layer caching)
+COPY tests/ /app/tests/
+COPY bin/ /app/bin/
+COPY soft-delete.sh /app/
+COPY Makefile /app/
+
+# Make scripts executable
+RUN chmod +x /app/bin/* /app/soft-delete.sh /app/tests/*.bats
+
+# Switch to test user
+USER testuser
+
+# Set environment variables for BATS helpers
+ENV BATS_LIB_PATH="/opt/bats-support:/opt/bats-assert:/opt/bats-file"
+
+# Create reports directory with proper permissions
+RUN mkdir -p /app/reports
+
+# Default command runs tests with TAP output
+CMD ["bats", "--tap", "--output", "/app/reports", "/app/tests"]
