@@ -5,6 +5,7 @@ This document describes the Docker-based testing setup for the soft-delete proje
 ## Overview
 
 Our testing infrastructure uses:
+
 - **Docker** for isolated test environments
 - **BATS** (Bash Automated Testing System) for test execution
 - **TAP** (Test Anything Protocol) for standardized test output
@@ -52,6 +53,7 @@ make clean-all
 ### Docker Configuration
 
 **Dockerfile.test** creates a testing environment with:
+
 - Ubuntu 22.04 base image
 - BATS testing framework
 - Additional BATS libraries (bats-support, bats-assert, bats-file)
@@ -59,6 +61,7 @@ make clean-all
 - Non-root test user for security
 
 **docker-compose.test.yml** defines services for:
+
 - `test`: Standard TAP-compliant test execution
 - `test-verbose`: Detailed test output
 - `test-single`: Single test file execution
@@ -118,6 +121,7 @@ reports/
 ### Accessing Reports
 
 Reports are automatically generated in the `./reports` directory and can be:
+
 - Viewed locally after test execution
 - Uploaded as CI/CD artifacts
 - Processed by test result parsers
@@ -148,13 +152,15 @@ make clean-all                # Full cleanup (build + reports + docker)
 The `tests/test_helper.bash` file provides:
 
 ### TAP-Compliant Functions
+
 - `tap_pass()` - Mark test as passed
-- `tap_fail()` - Mark test as failed  
+- `tap_fail()` - Mark test as failed
 - `tap_skip()` - Mark test as skipped
 - `tap_todo()` - Mark test as TODO
 - `tap_diagnostic()` - Add diagnostic output
 
 ### Utility Functions
+
 - `create_test_file()` - Create test files with content
 - `extract_backup_path()` - Extract backup paths from output
 - `verify_backup()` - Verify backup integrity
@@ -165,6 +171,7 @@ The `tests/test_helper.bash` file provides:
 ### GitHub Actions
 
 The workflow automatically:
+
 1. Sets up Docker environment
 2. Runs tests with TAP output
 3. Uploads test reports as artifacts
@@ -194,11 +201,11 @@ The workflow automatically:
 ### Common Issues
 
 **Docker not found**
+
 ```bash
 # Install Docker
 sudo apt-get install docker.io docker-compose
 ```
-
 **Permission denied**
 ```bash
 # Add user to docker group

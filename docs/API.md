@@ -16,74 +16,96 @@ This document provides comprehensive API documentation for the soft-delete utili
 
 **Location**: `soft-delete.sh`  
 **Purpose**: Main executable that safely moves files and directories to timestamped backup locations  
-**Language**: Bash 4.0+  
+**Language**: Bash 4.0+
 
 #### Functions
 
 ##### `main()`
-**Description**: Entry point function that orchestrates the entire soft delete operation  
-**Parameters**: Command line arguments (`"$@"`)  
-**Returns**: 
+
+**Description**: Entry point function that orchestrates the entire soft delete operation
+
+**Parameters**: Command line arguments (`"$@"`)
+
+**Returns**:
 - `0` on success
-- `1` on general error  
+- `1` on general error
 - `2` on usage error
 
 **Example**:
+
 ```bash
 main "$@"
 ```
 
 ##### `parse_arguments()`
-**Description**: Parses and validates command line arguments using getopts  
-**Parameters**: Command line arguments  
+
+**Description**: Parses and validates command line arguments using getopts
+
+**Parameters**: Command line arguments
+
 **Global Variables Modified**:
 - `TARGET_PATH`: Set to the file/directory path to delete
 - `VERBOSE`: Set to true if verbose mode enabled
 
 **Supported Options**:
 - `-h, --help`: Display help and exit
-- `-v, --version`: Display version and exit  
+- `-v, --version`: Display version and exit
 - `-p, --path PATH`: Specify target path
 - `--verbose`: Enable debug output
 
 ##### `validate_path()`
-**Description**: Validates that the target path exists and is readable  
-**Parameters**: 
+
+**Description**: Validates that the target path exists and is readable
+
+**Parameters**:
 - `$1`: Path to validate
-**Returns**: 
+
+**Returns**:
 - `0` if path is valid
 - `1` if path is invalid
+
 **Error Conditions**:
 - Path is empty
 - Path doesn't exist
 - Path is not readable
 
 ##### `soft_delete()`
-**Description**: Core function that performs the safe deletion operation  
+
+**Description**: Core function that performs the safe deletion operation
+
 **Parameters**:
 - `$1`: Target path to soft delete
+
 **Returns**:
 - `0` on successful move
 - `1` on failure
+
 **Side Effects**:
 - Creates backup directory in `/tmp`
 - Moves target to backup location
 - Outputs backup path to stdout
 
 **Algorithm**:
+
 1. Validate target path
 2. Create unique timestamped backup directory using `mktemp`
 3. Move target to backup directory using `mv`
 4. Report success with backup location
 
 ##### `show_help()`
-**Description**: Displays comprehensive help information  
-**Parameters**: None  
+
+**Description**: Displays comprehensive help information
+
+**Parameters**: None
+
 **Output**: Formatted help text to stdout
 
 ##### `show_version()`
-**Description**: Displays version and copyright information  
-**Parameters**: None  
+
+**Description**: Displays version and copyright information
+
+**Parameters**: None
+
 **Output**: Version string to stdout
 
 #### Global Variables
@@ -105,69 +127,95 @@ main "$@"
 
 #### Backup Directory Format
 
-```
+```bash
 /tmp/backup-XXXXX-YYYYMMDD-HHMMSS/
 ```
 
 Where:
 - `XXXXX`: Random 5-character string from mktemp
-- `YYYYMMDD`: Date (e.g., 20250122)  
+- `YYYYMMDD`: Date (e.g., 20250122)
 - `HHMMSS`: Time (e.g., 143052)
 
 ## Build System
 
 ### Makefile
 
-**Location**: `Makefile`  
+**Location**: `Makefile`
+
 **Purpose**: Automates building, testing, packaging, and maintenance tasks
 
 #### Primary Targets
 
 ##### `build`
-**Description**: Compiles the soft-delete executable  
-**Dependencies**: `bin/soft-delete`  
+
+**Description**: Compiles the soft-delete executable
+
+**Dependencies**: `bin/soft-delete`
+
 **Side Effects**: Creates `bin/` directory and executable
 
-##### `test`  
-**Description**: Runs the test suite using BATS  
-**Dependencies**: `build`  
+##### `test`
+
+**Description**: Runs the test suite using BATS
+
+**Dependencies**: `build`
+
 **Requirements**: BATS testing framework
 
 ##### `docker-test`
-**Description**: Runs tests in Docker environment with TAP output  
-**Dependencies**: `build`, Docker, docker-compose  
+
+**Description**: Runs tests in Docker environment with TAP output
+
+**Dependencies**: `build`, Docker, docker-compose
+
 **Output**: TAP-compliant test results in `reports/`
 
 ##### `install`
-**Description**: Installs soft-delete system-wide  
-**Requirements**: sudo privileges  
+
+**Description**: Installs soft-delete system-wide
+
+**Requirements**: sudo privileges
+
 **Installation Path**: `/usr/local/bin/soft-delete`
 
 ##### `package`
-**Description**: Creates distributable tarball  
-**Dependencies**: `build`  
+
+**Description**: Creates distributable tarball
+
+**Dependencies**: `build`
+
 **Output**: `dist/soft-delete-{VERSION}.tar.gz`
 
 #### Cleanup Targets
 
 ##### `clean`
-**Description**: Removes build artifacts  
+
+**Description**: Removes build artifacts
+
 **Removes**: `bin/soft-delete`, `dist/`
 
-##### `clean-temp` 
-**Description**: Removes temporary files  
+##### `clean-temp`
+
+**Description**: Removes temporary files
+
 **Patterns**: `*.tmp`, `*.log`, `*~`, `.DS_Store`, `Thumbs.db`, `*.swp`, `*.swo`, `*.orig`
 
 ##### `clean-docker`
-**Description**: Cleans Docker test environment  
+
+**Description**: Cleans Docker test environment
+
 **Actions**: Stops containers, removes images, cleans volumes
 
 ##### `clean-reports`
-**Description**: Removes test reports  
+
+**Description**: Removes test reports
+
 **Preserves**: `.gitkeep` files
 
 ##### `clean-all`
-**Description**: Runs all cleanup targets  
+
+**Description**: Runs all cleanup targets
+
 **Equivalent**: `clean clean-temp clean-docker clean-reports`
 
 #### Variables
@@ -183,68 +231,83 @@ Where:
 
 ### Test Helpers (test_helper.bash)
 
-**Location**: `tests/test_helper.bash`  
+**Location**: `tests/test_helper.bash`
+
 **Purpose**: Common functions for BATS test suite
 
 #### Helper Functions
 
 ##### `create_test_file(filename, content)`
-**Description**: Creates a test file with specified content  
+
+**Description**: Creates a test file with specified content
+
 **Parameters**:
 - `filename`: File to create
 - `content`: Content to write (default: "test content")
 
 ##### `create_test_directory(dirname, filename, content)`
-**Description**: Creates test directory with file  
+
+**Description**: Creates test directory with file
+
 **Parameters**:
 - `dirname`: Directory to create
-- `filename`: File within directory (default: "test_file.txt")
-- `content`: File content (default: "test content")
+- `filename`: Name of file to create
+- `content`: Content to write
 
 ##### `extract_backup_path(output)`
-**Description**: Extracts backup path from soft-delete output  
-**Parameters**: 
+
+**Description**: Extracts the backup path from command output
+
+**Parameters**:
 - `output`: Command output string
-**Returns**: Backup path string
 
 ##### `verify_backup(backup_path, expected_content)`
-**Description**: Verifies backup exists with correct content  
+
+**Description**: Verifies that the backup file has expected content
+
 **Parameters**:
-- `backup_path`: Path to backup file/directory
-- `expected_content`: Expected file content
-**Returns**: 0 if valid, 1 if invalid
+- `backup_path`: Path to backup file
+- `expected_content`: Expected content
 
 ##### `cleanup_backups()`
-**Description**: Removes all backup directories from /tmp  
-**Side Effects**: Removes `/tmp/backup-*` directories
+
+**Description**: Removes all backups created during testing
+
+**Parameters**: None
 
 ##### `count_backups()`
-**Description**: Counts backup directories in /tmp  
-**Returns**: Number of backup directories
 
-#### TAP Logging Functions
+**Description**: Returns the number of backup directories/files found
+
+**Parameters**: None
 
 ##### `tap_pass(message)`, `tap_fail(message)`, `tap_skip(message)`, `tap_todo(message)`
-**Description**: TAP-compliant logging functions  
-**Output**: Formatted TAP diagnostic messages
 
-### Edge Case Tests (edge-cases.bats)
+**Description**: TAP-compliant status functions
 
-**Location**: `tests/edge-cases.bats`  
-**Purpose**: Comprehensive edge case and stress testing
+**Parameters**: `message`: Diagnostic text
 
-#### Test Categories
+#### Utility Scripts
 
-1. **Special Characters**: Unicode, spaces, special symbols
-2. **File Types**: Empty files, large files, binary files, symlinks
-3. **Permissions**: Special directory permissions, read-only scenarios
-4. **Filesystem Edge Cases**: Deep nesting, trailing slashes, relative paths
-5. **Concurrency**: Multiple simultaneous operations
-6. **Stress Testing**: Many files, data integrity verification
+- `benchmark.sh`: Performance testing and memory usage analysis
+- `cleanup.sh`: Artifact cleanup for build, temp, docker, reports, deployment
+- `run-tests.sh`: Docker-based TAP test runner
+- `security-scan.sh`: Comprehensive security scanning
+- `tap-formatter.sh`: TAP output formatter for BATS
 
-## Utility Scripts
+#### Configuration Files
 
-### Security Scanner (security-scan.sh)
+- `.editorconfig`: Editor config for consistent formatting
+- `.gitattributes`: MIME detection, diff and merge settings
+- `.gitignore`: Ignore files/patterns for version control
+
+#### Project Structure
+
+1. **Test**: Docker-based test infrastructure using BATS
+2. **Build**: Makefile with automation targets
+3. **Docs**: Function-level documentation and Example scripts
+
+---
 
 **Location**: `scripts/security-scan.sh`  
 **Purpose**: Comprehensive security vulnerability scanning

@@ -5,13 +5,16 @@ This directory contains practical examples and usage scenarios for the `soft-del
 ## Files
 
 ### `basic_usage.sh`
+
 Demonstrates fundamental usage patterns including:
+
 - Basic file and directory deletion
 - Command-line options
 - Recovery procedures
 - Safety tips
 
 **Usage:**
+
 ```bash
 # View examples (doesn't execute commands)
 ./basic_usage.sh
@@ -20,8 +23,10 @@ Demonstrates fundamental usage patterns including:
 cat basic_usage.sh
 ```
 
-### `advanced_usage.sh` 
+### `advanced_usage.sh`
+
 Shows advanced integration scenarios including:
+
 - Cleanup scripts for system maintenance
 - Development workflow integration
 - Batch processing examples
@@ -30,8 +35,9 @@ Shows advanced integration scenarios including:
 - Recovery and maintenance scripts
 
 **Usage:**
+
 ```bash
-# View examples (doesn't execute commands)  
+# View examples (doesn't execute commands)
 ./advanced_usage.sh
 
 # Or read specific sections
@@ -41,6 +47,7 @@ cat advanced_usage.sh
 ## Important Notes
 
 ⚠️ **Safety First**: These example scripts are for demonstration purposes. Always:
+
 - Review scripts before running them
 - Test in a safe environment first
 - Understand what files will be affected
@@ -51,6 +58,7 @@ cat advanced_usage.sh
 The example scripts are designed to show you commands rather than execute them automatically. This prevents accidental deletion of your files.
 
 To use an example:
+
 1. Run the script to see the examples: `./basic_usage.sh`
 2. Copy the commands you want to try
 3. Paste and modify them for your specific needs
@@ -61,7 +69,7 @@ To use an example:
 Feel free to modify these examples for your specific use cases:
 
 - Change file paths to match your system
-- Adjust time periods for cleanup scripts  
+- Adjust time periods for cleanup scripts
 - Add additional file types or patterns
 - Integrate with your existing workflows
 
@@ -78,6 +86,7 @@ If you have useful `soft-delete` usage patterns or scripts, consider contributin
 ## Support
 
 If you have questions about these examples or need help adapting them:
-- Check the main [README.md](../README.md) 
+
+- Check the main [README.md](../README.md)
 - Review the [CONTRIBUTING.md](../CONTRIBUTING.md) guidelines
 - Open an issue on GitHub for specific problems
