@@ -2,97 +2,102 @@
 
 All notable changes to this project will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) and follows the [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) format.
 
 ## [0.0.0] - 2025-08-26
 
 ### Added
+- Initial core features for soft-delete
+- Command-line interface and standard options
+- Safe file deletion with timestamped backups
+- File permission preservation system
+- Backup directory with unique identifiers
+- Homebrew formula and installation support
+- Makefile targets for automation and version management
+- GitHub Actions workflow with testing and release automation
+- Docker-based testing environment with TAP compliance
+- Docker Compose orchestration for test services
+- TAP version 14 compliant test output
+- Isolated test environment with volume mounting
+- BATS libraries integration (bats-support, bats-assert, bats-file)
+- Test report generation and artifact management
+- Comprehensive cleanup script for build and deployment
+- Selective cleanup by artifact type (build, temp, docker, reports, deployment)
+- Dry-run mode with cleanup preview and statistics
+- Force mode and confirmation prompts for safety
+- Verbose and quiet modes for different use cases
+- Multiple cleanup targets for Makefile
+- Cleanup integration with build process
+- Test helper functions with TAP-compliant logging
+- Enhanced error handling and validation in tests
+- Comprehensive security scanning and vulnerability detection
+- Hardcoded secrets detection and path traversal protection
+- Input validation analysis and Docker security scanning
+- Performance benchmarking suite with memory usage analysis
+- Performance regression testing and detailed reporting
+- Concurrent operation and stress testing capabilities
+- Comprehensive edge case testing for special characters and Unicode
+- Binary file, symlink, and filesystem edge case coverage
+- Concurrent operation testing and data integrity verification
+- Comprehensive shellcheck configuration and git attributes
+- Editor configuration for consistent code formatting
+- Support for files starting with dash using -- argument handling
+- Enhanced argument parsing with proper -- end-of-options support
+- Broken symbolic link detection and handling capabilities
+- Comprehensive test suite with error handling and validation
+- Comprehensive API documentation with function-level references
+- Comprehensive Docker testing documentation
+- Cleanup system usage guide and examples
+- Troubleshooting guide for Docker testing
+- TAP compliance and testing best practices
+- Performance benchmarking and security scanning documentation
+- Basic usage examples and installation guide
+- Contributing guidelines and code of conduct
+- Homebrew installation instructions
+- Makefile for project automation and packaging
+- .gitignore for project organization
+- Comprehensive linting configuration and project standards
 
-- feat: Add initial soft-delete implementation core features
-- feat: Add command-line interface and standard options
-- feat: Add safe file deletion with timestamped backups
-- feat: Add file permission preservation system
-- feat: Add backup directory with unique identifiers
-- feat: Add Homebrew formula and installation support
-- feat: Add Makefile targets for automation and version management
-- feat(ci): Add GitHub Actions workflow with testing and release automation
-- feat(test): Add Docker-based testing environment with TAP compliance
-- feat(test): Add Docker Compose orchestration for test services
-- feat(test): Add TAP version 14 compliant test output
-- feat(test): Add isolated test environment with volume mounting
-- feat(test): Add BATS libraries integration (bats-support, bats-assert, bats-file)
-- feat(test): Add test report generation and artifact management
-- feat(build): Add comprehensive cleanup script for build and deployment
-- feat(build): Add selective cleanup by artifact type (build, temp, docker, reports, deployment)
-- feat(build): Add dry-run mode with cleanup preview and statistics
-- feat(build): Add force mode and confirmation prompts for safety
-- feat(build): Add verbose and quiet modes for different use cases
-- feat(build): Add multiple cleanup targets to Makefile
-- feat(build): Add cleanup integration with build process
-- feat(dev): Add test helper functions with TAP-compliant logging
-- feat(dev): Add enhanced error handling and validation in tests
-- feat(security): Add comprehensive security scanning system with vulnerability detection
-- feat(security): Add hardcoded secrets detection and path traversal protection
-- feat(security): Add input validation analysis and Docker security scanning
-- feat(perf): Add performance benchmarking suite with memory usage analysis
-- feat(perf): Add performance regression testing and detailed reporting
-- feat(perf): Add concurrent operation and stress testing capabilities
-- feat(test): Add comprehensive edge case testing for special characters and Unicode
-- feat(test): Add binary file, symlink, and filesystem edge case coverage
-- feat(test): Add concurrent operation testing and data integrity verification
-- feat(quality): Add comprehensive shellcheck configuration and git attributes
-- feat(quality): Add editor configuration for consistent code formatting
-- feat(core): Add support for files starting with dash using -- argument handling
-- feat(core): Add enhanced argument parsing with proper -- end-of-options support
-- feat(core): Add broken symbolic link detection and handling capabilities
-- test: Add comprehensive test suite with error handling and validation
-- docs: Add comprehensive API documentation with function-level references
-- docs: Add comprehensive Docker testing documentation
-- docs: Add cleanup system usage guide and examples
-- docs: Add troubleshooting guide for Docker testing
-- docs: Add TAP compliance and testing best practices
-- docs: Add performance benchmarking and security scanning documentation
-- docs: Add basic usage examples and installation guide
-- docs: Add contributing guidelines and code of conduct
-- docs: Add Homebrew installation instructions
-- build: Add Makefile for project automation and packaging
-- chore: Add .gitignore for project organization
-- chore: Add comprehensive linting configuration and project standards
+### Changed
+- N/A
+
+### Deprecated
+- N/A
+
+### Removed
+- N/A
 
 ### Fixed
-
-- fix: Resolve ALL shellcheck warnings achieving 100% compliance across 12 shell files
-- fix: Address SC2155 warnings by separating variable declarations
-- fix: Fix SC2164 warnings by adding proper error handling for cd commands
-- fix: Fix SC2154 warnings for BATS built-in variables with proper disable directives
-- fix: Fix SC2076 warnings by correcting regex pattern matching in tests
-- fix: Fix Docker build compatibility with Ubuntu 22.04 (awk → gawk)
-- fix: Improve command substitution quoting for security
-- fix: Enhance file handling for special characters and edge cases
-- fix: Resolve broken symlink handling with improved path validation (-e AND -L checks)
-- fix: Fix argument parsing for files starting with dash (proper -- handling)
-- fix: Improve test reliability and edge case coverage
+- Resolved all shellcheck warnings, achieving 100% compliance across 12 shell files
+- Addressed SC2155 warnings by separating variable declarations
+- Fixed SC2164 warnings with enhanced error handling for cd commands
+- Fixed SC2154 warnings for BATS built-in variables with proper disable directives
+- Fixed SC2076 warnings by correcting regex pattern matching in tests
+- Improved Docker build compatibility with Ubuntu 22.04 (awk → gawk)
+- Improved command substitution quoting for security
+- Enhanced file handling for special characters and edge cases
+- Improved path validation for broken symlink handling (-e AND -L checks)
+- Improved argument parsing for files starting with dash (proper -- handling)
+- Improved test reliability and edge case coverage
 
 ### Security
-
-- security: Implement comprehensive vulnerability scanning
-- security: Add protection against path traversal attacks
-- security: Ensure secure handling of files starting with dashes
-- security: Add input validation for all user-provided data
-- security: Implement non-root Docker execution environment
-- security: Add secrets detection and prevention systems
+- Implemented comprehensive vulnerability scanning
+- Added protection against path traversal attacks
+- Ensured secure handling of files starting with dashes
+- Input validation for all user-provided data
+- Non-root Docker execution environment
+- Secrets detection and prevention systems
 
 ### Performance
+- Optimized file operations for single atomic moves
+- Added memory-conscious processing for large files
+- Implemented efficient backup directory creation
+- Performance monitoring and regression detection
+- Achieved 100% test pass rate (45/45 tests passing)
 
-- perf: Optimize file operations for single atomic moves
-- perf: Add memory-conscious processing for large files
-- perf: Implement efficient backup directory creation
-- perf: Add performance monitoring and regression detection
-- perf: Achieve 100% test pass rate (45/45 tests passing)
+---
 
-### Technical Details
-
+#### Technical Details
 - Written in Bash with strict mode (`set -euo pipefail`)
 - Uses `/tmp` for backup storage
 - Implements proper signal handling and cleanup
@@ -106,36 +111,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Smart preview system with file count and size statistics
 - Cross-platform cleanup compatibility (macOS, Linux, Windows)
 - CI/CD integration with automated cleanup and test reporting
-- **100% shellcheck compliance** across all 12 shell script files
-- **100% test success rate** with 45 comprehensive test cases
-- **Complete edge case coverage** including Unicode, binary files, symlinks, and special characters
-- **Production-ready quality** meeting all modern open source standards
+- 100% shellcheck compliance across all 12 shell script files
+- 100% test success rate with 45 comprehensive test cases
+- Complete edge case coverage including Unicode, binary files, symlinks, and special characters
+- Production-ready quality meeting all modern open source standards
 
 ---
 
-## Version History Notes
+## Release Management
 
-### Version Numbering
-
-This project follows semantic versioning (SemVer):
-
+### Versioning
+This project uses [Semantic Versioning 2.0.0](https://semver.org/spec/v2.0.0.html):
 - **MAJOR**: Incompatible API changes
-- **MINOR**: Added functionality in a backwards compatible manner
-- **PATCH**: Backwards compatible bug fixes
+- **MINOR**: Functionality added in a backwards-compatible manner
+- **PATCH**: Backwards-compatible bug fixes
 
 ### Release Process
+1. Update the version number in `soft-delete.sh`.
+2. Update this CHANGELOG.md with release notes.
+3. Create git tag, e.g. `git tag v0.0.0`.
+4. Push tag: `git push origin v0.0.0`.
+5. Create GitHub release with the release notes.
 
-1. Update version number in `soft-delete.sh`
-2. Update this CHANGELOG.md with release notes
-3. Create git tag: `git tag v0.0.0`
-4. Push tag: `git push origin v0.0.0`
-5. Create GitHub release with release notes
-
-### Categories
-
-- **Added**: New features
-- **Changed**: Changes in existing functionality
-- **Deprecated**: Soon-to-be removed features
-- **Removed**: Removed features
-- **Fixed**: Bug fixes
-- **Security**: Vulnerability fixes
+### Section Definitions
+- **Added**: For new features.
+- **Changed**: For changes in existing functionality.
+- **Deprecated**: For features soon-to-be removed.
+- **Removed**: For now-removed features.
+- **Fixed**: For any bug fixes.
+- **Security**: For vulnerabilities or mitigations.
