@@ -1,6 +1,7 @@
 # Examples
 
-This directory contains practical examples and usage scenarios for the `soft-delete` utility.
+This directory contains practical examples and usage scenarios for the
+`soft-delete` utility.
 
 ## Files
 
@@ -55,7 +56,8 @@ cat advanced_usage.sh
 
 ## Running Examples
 
-The example scripts are designed to show you commands rather than execute them automatically. This prevents accidental deletion of your files.
+The example scripts are designed to show you commands rather than execute
+them automatically. This prevents accidental deletion of your files.
 
 To use an example:
 

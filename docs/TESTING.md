@@ -1,6 +1,8 @@
 # Docker-Based Testing with TAP Compliance
 
-This document describes the Docker-based testing setup for the soft-delete project, which provides isolated, reproducible testing with TAP (Test Anything Protocol) compliant output.
+This document describes the Docker-based testing setup for the
+soft-delete project, which provides isolated, reproducible testing with TAP
+(Test Anything Protocol) compliant output.
 
 ## Overview
 
@@ -246,6 +248,7 @@ make docker-test-verbose
 ./scripts/run-tests.sh -k test
 
 # Inspect running container
+# (Next line wrapped for 80 chars)
 docker exec -it soft-delete-test /bin/bash
 ```
 
