@@ -3,16 +3,19 @@
 # Tests for soft-delete script
 # Copyright (c) 2025 Richeve S. Bebedor <richeve.bebedor@gmail.com>
 
+# Load test helpers
+load test_helper
+
 # Setup function run before each test
 setup() {
     # Create temporary test directory
     TEST_DIR="$(mktemp -d)"
     cd "$TEST_DIR"
-    
+
     # Copy the soft-delete script to test directory
     cp "$BATS_TEST_DIRNAME/../bin/soft-delete" ./soft-delete
     chmod +x ./soft-delete
-    
+
     # Create test files
     echo "test content" > test_file.txt
     mkdir test_directory
@@ -76,16 +79,13 @@ teardown() {
     [[ "$output" == *"Soft deleted:"* ]]
     [[ "$output" == *"test_file.txt"* ]]
     [[ "$output" == *"/tmp/backup-"* ]]
-    
+
     # Verify original file is gone
     [ ! -f "test_file.txt" ]
-    
-    # Verify backup exists
-    backup_path=$(echo "$output" | grep -o "/tmp/backup-[^']*")
-    [ -f "$backup_path" ]
-    
-    # Verify backup content
-    [ "$(cat "$backup_path")" = "test content" ]
+
+    # Use helper function to extract and verify backup
+    backup_path=$(extract_backup_path "$output")
+    verify_backup "$backup_path" "test content"
 }
 
 @test "soft delete a directory" {
@@ -94,10 +94,10 @@ teardown() {
     [[ "$output" == *"Soft deleted:"* ]]
     [[ "$output" == *"test_directory"* ]]
     [[ "$output" == *"/tmp/backup-"* ]]
-    
+
     # Verify original directory is gone
     [ ! -d "test_directory" ]
-    
+
     # Verify backup exists
     backup_path=$(echo "$output" | grep -o "/tmp/backup-[^']*")
     [ -d "$backup_path" ]
@@ -150,18 +150,18 @@ teardown() {
     # Create two files and delete them quickly
     echo "content1" > file1.txt
     echo "content2" > file2.txt
-    
+
     run ./soft-delete file1.txt
     [ "$status" -eq 0 ]
     backup1=$(echo "$output" | grep -o "/tmp/backup-[^']*")
-    
+
     run ./soft-delete file2.txt
     [ "$status" -eq 0 ]
     backup2=$(echo "$output" | grep -o "/tmp/backup-[^']*")
-    
+
     # Backup paths should be different
     [ "$backup1" != "$backup2" ]
-    
+
     # Both backups should exist
     [ -f "$backup1" ]
     [ -f "$backup2" ]
@@ -169,12 +169,12 @@ teardown() {
 
 @test "handles special characters in filename" {
     echo "special content" > "file with spaces & symbols!.txt"
-    
+
     run ./soft-delete "file with spaces & symbols!.txt"
     [ "$status" -eq 0 ]
     [[ "$output" == *"Soft deleted:"* ]]
     [ ! -f "file with spaces & symbols!.txt" ]
-    
+
     # Verify backup exists and has correct content
     backup_path=$(echo "$output" | grep -o "/tmp/backup-[^']*")
     [ -f "$backup_path" ]
@@ -185,10 +185,10 @@ teardown() {
     # Create executable file
     echo "#!/bin/bash" > test_script.sh
     chmod +x test_script.sh
-    
+
     run ./soft-delete test_script.sh
     [ "$status" -eq 0 ]
-    
+
     # Check that backup preserves executable permission
     backup_path=$(echo "$output" | grep -o "/tmp/backup-[^']*")
     [ -x "$backup_path" ]
@@ -197,7 +197,7 @@ teardown() {
 @test "handles relative paths" {
     mkdir -p subdir
     echo "subdir content" > subdir/file.txt
-    
+
     run ./soft-delete subdir/file.txt
     [ "$status" -eq 0 ]
     [[ "$output" == *"Soft deleted:"* ]]
@@ -206,7 +206,7 @@ teardown() {
 
 @test "handles absolute paths" {
     abs_path="$TEST_DIR/test_file.txt"
-    
+
     run ./soft-delete "$abs_path"
     [ "$status" -eq 0 ]
     [[ "$output" == *"Soft deleted:"* ]]

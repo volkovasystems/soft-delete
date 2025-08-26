@@ -1,6 +1,37 @@
 # Test helper functions for soft-delete tests
 # Copyright (c) 2025 Richeve S. Bebedor <richeve.bebedor@gmail.com>
 
+# Load BATS libraries if available
+if [[ -n "${BATS_LIB_PATH:-}" ]]; then
+    for lib_path in $(echo "$BATS_LIB_PATH" | tr ':' ' '); do
+        if [[ -d "$lib_path/load.bash" ]]; then
+            # shellcheck disable=SC1090
+            source "$lib_path/load.bash"
+        fi
+    done
+fi
+
+# TAP-compliant logging functions
+tap_pass() {
+    echo "# PASS: $*"
+}
+
+tap_fail() {
+    echo "# FAIL: $*"
+}
+
+tap_skip() {
+    echo "# SKIP: $*"
+}
+
+tap_todo() {
+    echo "# TODO: $*"
+}
+
+tap_diagnostic() {
+    echo "# $*"
+}
+
 # Helper function to create test files with specific content
 create_test_file() {
     local filename="$1"
