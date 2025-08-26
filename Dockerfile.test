@@ -14,7 +14,7 @@ RUN apt-get update && apt-get install -y \
     coreutils \
     grep \
     sed \
-    awk \
+    gawk \
     findutils \
     && rm -rf /var/lib/apt/lists/*
 
