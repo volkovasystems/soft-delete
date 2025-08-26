@@ -1,0 +1,9 @@
+# This file ensures the reports directory is tracked by git
+# Test reports and artifacts will be generated here
+# 
+# Structure:
+# reports/
+# ├── tap/           # TAP format test results
+# ├── junit/         # JUnit XML format results
+# ├── coverage/      # Code coverage reports
+# └── artifacts/     # Test artifacts and logs
