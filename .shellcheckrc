@@ -1,18 +1,29 @@
-# ShellCheck configuration for soft-delete project
-# This file configures shellcheck behavior for consistent code quality
+# Disable unused variables (sometimes variables are used externally)
+disable=SC2034
 
-# Disable specific checks that are not relevant or too strict for this project
-disable=SC2034  # Unused variables (sometimes variables are used externally)
-disable=SC1091  # Not following sourced files (external libraries)
-disable=SC2248  # Style preference for quoting numeric variables
-disable=SC2250  # Style preference for brace syntax ${var}
-disable=SC2016  # Expected single quote behavior in arrays
-disable=SC2038  # xargs usage is intentional and safe in our context
+# Disable not following sourced files (external libraries)
+disable=SC1091
 
-# Enable optional checks
-enable=require-variable-braces  # Require ${var} instead of $var
-enable=quote-safe-variables     # Quote variables that could contain spaces
-enable=check-unassigned-uppercase  # Check unassigned uppercase variables
+# Disable style preference for quoting numeric variables
+disable=SC2248
+
+# Disable style preference for brace syntax ${var}
+disable=SC2250
+
+# Disable expected single quote behavior in arrays
+disable=SC2016
+
+# Disable xargs usage is intentional and safe in our context
+disable=SC2038
+
+# Require ${var} instead of $var
+enable=require-variable-braces
+
+# Quote variables that could contain spaces
+enable=quote-safe-variables
+
+# Check unassigned uppercase variables
+enable=check-unassigned-uppercase
 
 # Set shell dialect - we use bash
 shell=bash
