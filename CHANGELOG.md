@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) and follows the [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) format.
 
-## [0.0.0] - 2025-08-26
+## [0.0.0] - 2025-08-30
 
 ### Added
 - Initial core features for soft-delete
@@ -71,6 +71,8 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - `docs/` directory with API documentation and testing guides
 - Comprehensive Docker testing infrastructure with TAP compliance
 - Markdown linting, security scanning, and performance benchmarking
+- WARP.md guidance file for AI-assisted development
+- Production-ready deployment preparation and validation
 
 ### Changed
 - Streamlined and organized all configuration files for better maintainability:
@@ -103,6 +105,11 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - Fixed broken links and inconsistent formatting in API.md
 - Fixed `.gitignore` patterns to properly handle `.tap` files and other extensions
 - Enhanced Docker operations in CI/CD with better error reporting and diagnostics
+- Removed deprecated `version` attribute from docker-compose.test.yml
+- Fixed incorrect terminology in API.md (compile → copy for build process)
+- Enhanced CONTRIBUTING.md with Docker-first testing approach and updated project structure
+- Improved TESTING.md with accurate test helper function documentation
+- Updated all documentation for consistency and deployment readiness
 
 ### Security
 - Implemented comprehensive vulnerability scanning
