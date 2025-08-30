@@ -10,11 +10,15 @@ Please be respectful and constructive in all interactions. We welcome contributi
 
 ### Prerequisites
 
+**Required:**
 - Bash 4.0 or later
 - Git
 - Make
-- Optional: `bats` for running tests
-- Optional: `shellcheck` for code quality
+- Docker and Docker Compose (for recommended testing)
+
+**Optional:**
+- `bats` for local testing (fallback method)
+- `shellcheck` for code quality checks
 
 ### Development Setup
 
@@ -52,21 +56,43 @@ Please be respectful and constructive in all interactions. We welcome contributi
 
 ```
 soft-delete/
-├── bin/                    # Built executable
-├── examples/               # Usage examples and documentation
+├── .github/
+│   └── workflows/          # GitHub Actions CI/CD
+├── bin/                    # Built executable (git-tracked)
+├── docs/                   # Documentation
+│   ├── API.md              # API documentation
+│   └── TESTING.md          # Testing guide
+├── examples/               # Usage examples
 │   ├── README.md           # Examples documentation
 │   ├── basic_usage.sh      # Basic usage examples
 │   └── advanced_usage.sh   # Advanced integration examples
-├── tests/                  # Test files
+├── Formula/                # Homebrew formula
+│   └── soft-delete.rb     # Homebrew package definition
+├── reports/                # Test reports (created during testing)
+├── scripts/                # Utility scripts
+│   ├── benchmark.sh        # Performance testing
+│   ├── cleanup.sh          # System cleanup utilities
+│   ├── run-tests.sh        # Docker test runner
+│   ├── security-scan.sh    # Security scanner
+│   └── tap-formatter.sh    # TAP output formatter
+├── tests/                  # Test suite
+│   ├── edge-cases.bats     # Edge case tests
 │   ├── soft-delete.bats    # Main test suite
-│   └── test_helper.bash    # Test utilities
+│   └── test_helper.bash    # Test utilities and helpers
 ├── .editorconfig           # Code formatting standards
+├── .gitattributes          # Git file handling
+├── .gitignore              # Git ignore patterns
+├── .markdownlint.yaml      # Markdown linting rules
+├── .shellcheckrc           # Shell linting configuration
 ├── CHANGELOG.md            # Version history
 ├── CONTRIBUTING.md         # This file
-├── install.sh              # Simple installation script
+├── Dockerfile.test         # Docker test environment
+├── docker-compose.test.yml # Test orchestration
+├── install.sh              # Installation script
 ├── LICENSE                 # MIT License
-├── Makefile                # Build configuration
+├── Makefile                # Build automation
 ├── README.md               # Main documentation
+├── WARP.md                 # WARP AI guidance
 └── soft-delete.sh          # Source script
 ```
 
@@ -121,42 +147,119 @@ function_name() {
 
 ## Testing
 
+This project uses Docker-based testing as the primary method to ensure consistent, isolated test environments with TAP (Test Anything Protocol) compliance.
+
 ### Running Tests
 
+**Docker Testing (Recommended):**
 ```bash
-# Run all tests
+# Standard TAP-compliant tests
+make docker-test
+
+# Verbose test output with debugging
+make docker-test-verbose
+
+# Run only shellcheck linting
+make docker-lint
+
+# View test reports
+make test-reports
+
+# Clean Docker environment
+make docker-clean
+```
+
+**Local Testing (Fallback):**
+```bash
+# Install dependencies first
+make install-deps
+
+# Run all tests locally
 make test
 
 # Run specific test file
 bats tests/soft-delete.bats
 
 # Run with verbose output
-bats -t tests/soft-delete.bats
+bats -v tests/soft-delete.bats
 ```
+
+**Complete Development Cycle:**
+```bash
+# Build and test everything
+make build && make docker-test
+```
+
+### Test Architecture
+
+**Test Files:**
+- `tests/soft-delete.bats` - Main functionality tests
+- `tests/edge-cases.bats` - Edge cases and special scenarios
+- `tests/test_helper.bash` - Shared test utilities
+
+**Docker Environment:**
+- Ubuntu 22.04 base with bash, bats, shellcheck
+- TAP version 14 compliant output
+- Non-root test user for security
+- Isolated workspace volumes
 
 ### Writing Tests
 
+**Guidelines:**
 - Add tests for all new functionality
-- Use descriptive test names
+- Use descriptive test names that explain what is being tested
 - Test both success and failure cases
+- Include edge cases (special characters, permissions, etc.)
 - Clean up test artifacts in `teardown()`
+- Use helper functions from `test_helper.bash`
 
-#### Test Example
-
+**Test Structure:**
 ```bash
+#!/usr/bin/env bats
+
+# Load test helpers
+load test_helper
+
+setup() {
+    # Create isolated test environment
+    TEST_DIR="$(mktemp -d)"
+    cd "$TEST_DIR" || exit
+    
+    # Copy executable
+    cp "$BATS_TEST_DIRNAME/../bin/soft-delete" ./soft-delete
+    chmod +x ./soft-delete
+}
+
+teardown() {
+    # Clean up
+    cd /
+    rm -rf "$TEST_DIR"
+}
+
 @test "descriptive test name" {
-    # Setup
+    # Setup test data
     create_test_file "test.txt" "content"
 
-    # Execute
+    # Execute command
     run ./soft-delete test.txt
 
-    # Assert
+    # Assert results
     [ "$status" -eq 0 ]
-    [[ "$output" == *"expected output"* ]]
+    [[ "$output" == *"Soft deleted:"* ]]
     [ ! -f "test.txt" ]
+    
+    # Verify backup using helper
+    backup_path=$(extract_backup_path "$output")
+    verify_backup "$backup_path" "content"
 }
 ```
+
+**Helper Functions Available:**
+- `create_test_file()` - Create test files with content
+- `create_symlink()` - Create symbolic links
+- `extract_backup_path()` - Extract backup paths from output
+- `verify_backup()` - Verify backup integrity
+- `cleanup_backups()` - Clean test artifacts
 
 ## Submitting Changes
 
@@ -164,7 +267,16 @@ bats -t tests/soft-delete.bats
 
 1. **Test Your Changes**
 
+   **Recommended (Docker-based):**
    ```bash
+   make build
+   make docker-test
+   make docker-lint
+   ```
+   
+   **Alternative (Local):**
+   ```bash
+   make build
    make test
    make lint
    ```
@@ -205,12 +317,21 @@ bats -t tests/soft-delete.bats
 
 ### PR Checklist
 
-- [ ] Tests pass (`make test`)
-- [ ] Code passes linting (`make lint`)
-- [ ] Documentation updated
-- [ ] CHANGELOG.md updated
-- [ ] Commit messages are clear
-- [ ] No unnecessary changes (formatting, etc.)
+**Required:**
+- [ ] Build succeeds (`make build`)
+- [ ] Tests pass (preferably `make docker-test`)
+- [ ] Code passes linting (`make docker-lint` or `make lint`)
+- [ ] Documentation updated (README.md, help text, etc.)
+- [ ] CHANGELOG.md updated with your changes
+- [ ] Commit messages are clear and descriptive
+- [ ] No unnecessary changes (formatting, whitespace, etc.)
+
+**Recommended:**
+- [ ] Security scan passes (`./scripts/security-scan.sh`)
+- [ ] Edge cases tested (if applicable)
+- [ ] Examples added or updated (if new feature)
+- [ ] TAP test reports reviewed (`make test-reports`)
+- [ ] Backward compatibility maintained
 
 ## Types of Contributions
 
