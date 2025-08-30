@@ -22,12 +22,13 @@ This document provides comprehensive API documentation for the soft-delete utili
 
 ##### `main()`
 
-**Description**: Entry point function that orchestrates the entire soft
- delete operation
+**Description**: Entry point function that orchestrates the entire soft delete operation
 
 **Parameters**:
 
-- Command line arguments (`"$@**Returns**:
+- Command line arguments (`"$@"`)
+
+**Returns**:
 
 - `0` on success
 - `1` on general error
@@ -326,27 +327,11 @@ Where:
 
 **Parameters**: `message`: Diagnostic text
 
-#### Utility Scripts
-
-- `benchmark.sh`: Performance testing and memory usage analysis
-- `cleanup.sh`: Artifact cleanup for build, temp, docker, reports, deployment
-- `run-tests.sh`: Docker-based TAP test runner
-- `security-scan.sh`: Comprehensive security scanning
-- `tap-formatter.sh`: TAP output formatter for BATS
-
-#### Configuration Files
-
-- `.editorconfig`: Editor config for consistent formatting
-- `.gitattributes`: MIME detection, diff and merge settings
-- `.gitignore`: Ignore files/patterns for version control
-
-#### Project Structure
-
-1. **Test Infrastructure**: Docker-based test environment using BATS
-2. **Build Automation**: Makefile with automated CI/CD targets
-3. **Documentation**: Function-level documentation, examples, and usage guides
-
 ---
+
+## Utility Scripts
+
+### Security Scanner (security-scan.sh)
 
 **Location**: `scripts/security-scan.sh`  
 **Purpose**: Comprehensive security vulnerability scanning
