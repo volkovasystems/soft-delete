@@ -1,65 +1,43 @@
-# Allowlist approach
-*
-.*
+*/**/*
 
-# Allow essential dotfiles
+!LICENSE
+!Makefile
+
 !.gitignore
 !.editorconfig
+!.gitkeep
 
-# Allow license
-!LICENSE
+!Dockerfile.*
 
-# Allow documentation
-!*.md
-
-# Allow shell scripts
-!*.sh
 !*.bash
 !*.bats
-
-# Allow Ruby and YAML files
+!*.json
+!*.md
 !*.rb
+!*.sh
+!*.tap
+!*.txt
 !*.yml
 !*.yaml
 
-# Allow Makefile (no extension)
-!Makefile
+!bin/**/*.*
 
-# Allow directories
-!*/
-# But ignore all dotfiles in subdirectories
-.*/**/*.*
+!*/**/LICENSE
+!*/**/Makefile
 
-# Allow same file types in subdirectories
-!*/.gitignore
-!*/.editorconfig
-!*/LICENSE
-!*/*.md
-!*/*.sh
-!*/*.bash
-!*/*.bats
-!*/Makefile
-!*/*.rb
-!*/*.yml
+!*/**/.gitignore
+!*/**/.editorconfig
+!*/**/.gitkeep
 
-# Allow specific new directories
-!Formula/
-!Formula/**/*
-!.github/
-!.github/**/*
+!*/**/Dockerfile.*
 
-# Ignore executables without extension (except specific ones)
-# Allow our main executable
-!bin/soft-delete
-
-# Docker and testing
-!Dockerfile.test
-!docker-compose.test.yml
-!scripts/
-!scripts/**/*
-!docs/
-!docs/**/*
-
-# Ignore test reports but keep structure
-reports/*
-!reports/.gitkeep
+!*/**/*.bash
+!*/**/*.bats
+!*/**/*.json
+!*/**/*.md
+!*/**/*.rb
+!*/**/*.sh
+!*/**/*.tap
+!*/**/*.txt
+!*/**/*.yml
+!*/**/*.yaml
