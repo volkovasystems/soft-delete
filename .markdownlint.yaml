@@ -1,0 +1,15 @@
+# Ignore line length
+MD013: false
+
+# Allow duplicate headings
+MD024: false
+
+# Allow no blank line before heading
+MD022: false
+
+# Allow no blank line around lists
+MD032: false
+
+# Do not require language tag for code blocks
+MD040: false
+
