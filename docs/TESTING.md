@@ -56,6 +56,27 @@ make clean-all
 
 ## Test Environment
 
+### Test Files Structure
+
+The project includes comprehensive test coverage:
+
+```
+tests/
+├── soft-delete.bats     # Main functionality tests (core features)
+├── edge-cases.bats      # Edge cases and special scenarios
+└── test_helper.bash     # Shared test utilities and helper functions
+```
+
+**Test Coverage Areas:**
+- Basic file and directory operations
+- Command-line argument parsing (both long and short forms)
+- Error handling and validation
+- Special characters and Unicode in filenames
+- File permissions and executable preservation
+- Symbolic links (both working and broken)
+- Large files and binary data
+- Edge cases (files starting with dash, very long names, etc.)
+
 ### Docker Configuration
 
 **Dockerfile.test** creates a testing environment with:
@@ -157,22 +178,32 @@ make clean-all                # Full cleanup (build + reports + docker)
 
 The `tests/test_helper.bash` file provides:
 
-### TAP-Compliant Functions
+### TAP-Compliant Diagnostic Functions
 
-- `tap_pass()` - Mark test as passed
-- `tap_fail()` - Mark test as failed
-- `tap_skip()` - Mark test as skipped
-- `tap_todo()` - Mark test as TODO
-- `tap_diagnostic()` - Add diagnostic output
+- `tap_pass()` - Add PASS diagnostic comment
+- `tap_fail()` - Add FAIL diagnostic comment
+- `tap_skip()` - Add SKIP diagnostic comment
+- `tap_todo()` - Add TODO diagnostic comment
+- `tap_diagnostic()` - Add general diagnostic comment
 
----
+### File and Directory Creation
 
-### Utility Functions
+- `create_test_file(filename, content)` - Create test files with specific content
+- `create_test_directory(dirname, filename, content)` - Create directories with test files
+- `create_executable_file(filename, content)` - Create executable files with proper permissions
+- `create_symlink(target, linkname)` - Create symbolic links
+- `setup_complex_structure()` - Create nested directory structure for testing
 
-- `create_test_file()` - Create test files with content
-- `extract_backup_path()` - Extract backup paths from output
-- `verify_backup()` - Verify backup integrity
-- `cleanup_backups()` - Clean test artifacts
+### Backup Verification
+
+- `extract_backup_path(output)` - Extract backup paths from soft-delete output
+- `verify_backup(backup_path, expected_content)` - Verify backup exists and has correct content
+- `cleanup_backups()` - Clean up backup directories for test isolation
+- `count_backups()` - Count backup directories in /tmp
+
+### Debug and Utility Functions
+
+- `print_test_env()` - Print test environment information for debugging
 
 ---
 
@@ -192,18 +223,35 @@ The workflow automatically:
 
 ```yaml
 - name: Run Docker tests with TAP output
-  run: make docker-test
+  run: |
+    echo "Starting Docker tests..."
+    make docker-test
+
+- name: Run Docker linting
+  run: |
+    echo "Starting Docker linting..."
+    make docker-lint || echo "Linting completed with warnings (non-fatal)"
 
 - name: Upload test reports
-  uses: actions/upload-artifact@v3
+  uses: actions/upload-artifact@v4
+  if: always()
   with:
     name: test-reports-${{ github.run_number }}
-    path: reports/
+    path: |
+      reports/
+      !reports/.gitkeep
+    retention-days: 30
 
 - name: Publish TAP Results
   uses: EnricoMi/publish-unit-test-result-action@v2
+  if: always()
   with:
-    files: reports/**/*.tap
+    files: |
+      reports/**/*.tap
+      reports/**/*.xml
+    check_name: "Test Results (TAP)"
+    comment_mode: create new
+    fail_on: "test failures"
 ```
 
 ## Troubleshooting
