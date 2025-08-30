@@ -172,11 +172,11 @@ Where:
 
 ##### `build`
 
-**Description**: Compiles the soft-delete executable
+**Description**: Copies the source script to create the soft-delete executable
 
-**Dependencies**: `bin/soft-delete`
+**Dependencies**: `soft-delete.sh`
 
-**Side Effects**: Creates `bin/` directory and executable
+**Side Effects**: Creates `bin/` directory and copies source to `bin/soft-delete`
 
 ##### `test`
 
