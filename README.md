@@ -8,14 +8,26 @@ A safe file deletion utility that moves files and directories to timestamped bac
 
 ## Features
 
-- 📦 **Homebrew Support**: Easy installation via Homebrew package manager
-
+### Core Functionality
 - 🗑️ **Safe Deletion**: Moves files to timestamped backup directories in `/tmp`
 - 🔄 **Easy Recovery**: Files are preserved with original names and permissions
 - ⚡ **Fast**: Lightweight bash script with minimal dependencies
 - 🛡️ **Robust**: Comprehensive error handling and validation
 - 📝 **Verbose Mode**: Debug output for troubleshooting
 - 🎯 **Simple**: Clean command-line interface
+
+### Installation & Distribution
+- 📦 **Homebrew Support**: Easy installation via Homebrew package manager
+- 🚀 **Multiple Install Methods**: Quick install, manual, from source
+- 📋 **Cross-Platform**: Linux, macOS, BSD, Windows (WSL), Android (Termux)
+
+### Development & Quality Assurance
+- 🐳 **Docker Testing**: Isolated, reproducible test environment
+- 🧪 **TAP Compliance**: Industry-standard test output format
+- 🔍 **Security Scanning**: Comprehensive vulnerability detection
+- 📊 **Performance Benchmarking**: Memory usage and speed analysis
+- 🔧 **Automated CI/CD**: GitHub Actions pipeline with quality gates
+- 📚 **Comprehensive Documentation**: API docs, testing guides, examples
 
 ## Installation
 
@@ -188,22 +200,64 @@ soft-delete /root/protected-file
 
 ## Testing
 
-Run the test suite:
+The project includes comprehensive testing infrastructure with multiple testing approaches:
+
+### Quick Testing
 
 ```bash
+# Run all tests (recommended)
 make test
+
+# Run Docker-based tests with TAP output
+make docker-test
+
+# Run tests with verbose output
+make docker-test-verbose
 ```
 
-Or run tests manually:
+### Docker Testing (Recommended)
+
+The project uses Docker for isolated, reproducible testing:
+
+```bash
+# Standard TAP-compliant testing
+make docker-test
+
+# Verbose test output with detailed logs
+make docker-test-verbose
+
+# Run only main test suite
+make docker-test-single
+
+# View test reports
+make test-reports
+
+# Clean up Docker test environment
+make docker-clean
+```
+
+### Manual Testing
 
 ```bash
 # Install bats if not already installed
-sudo apt-get install bats  # Ubuntu/Debian
-brew install bats-core     # macOS
+sudo apt-get install bats shellcheck  # Ubuntu/Debian
+brew install bats-core shellcheck     # macOS
 
-# Run tests
+# Run tests manually
 bats tests/
+
+# Run specific test files
+bats tests/soft-delete.bats
+bats tests/edge-cases.bats
 ```
+
+### Test Infrastructure
+
+- **Docker Environment**: Isolated Ubuntu 22.04 testing environment
+- **TAP Output**: Test results in Test Anything Protocol format
+- **Coverage**: Core functionality, edge cases, error handling
+- **Reports**: Persistent test artifacts in `reports/` directory
+- **CI/CD Integration**: Automated testing on releases
 
 ## Development
 
@@ -211,21 +265,43 @@ bats tests/
 
 ```
 soft-delete/
+├── .github/
+│   └── workflows/
+│       └── release.yml      # GitHub Actions CI/CD pipeline
 ├── bin/
 │   └── soft-delete          # Built executable
+├── docs/
+│   ├── API.md               # Comprehensive API documentation
+│   └── TESTING.md           # Testing guide and infrastructure
 ├── examples/
 │   ├── README.md            # Examples documentation
 │   ├── basic_usage.sh       # Basic usage examples
 │   └── advanced_usage.sh    # Advanced integration examples
+├── Formula/
+│   └── soft-delete.rb       # Homebrew formula
+├── reports/
+│   └── .gitkeep             # Test reports and artifacts
+├── scripts/
+│   ├── benchmark.sh         # Performance testing
+│   ├── cleanup.sh           # Comprehensive cleanup utility
+│   ├── run-tests.sh         # Docker-based test runner
+│   ├── security-scan.sh     # Security vulnerability scanner
+│   └── tap-formatter.sh     # TAP output formatter
 ├── tests/
+│   ├── edge-cases.bats      # Edge case test suite
 │   ├── soft-delete.bats     # Main test suite
-│   └── test_helper.bash     # Test utilities
+│   └── test_helper.bash     # Test utilities and helpers
 ├── .editorconfig            # Code formatting standards
+├── .gitattributes           # Git file handling configuration
+├── .gitignore               # Git ignore patterns
+├── .markdownlint.yaml       # Markdown linting configuration
+├── .shellcheckrc            # Shell script linting configuration
 ├── CHANGELOG.md             # Version history
 ├── CONTRIBUTING.md          # Contribution guidelines
+├── docker-compose.test.yml  # Docker testing environment
 ├── install.sh               # Simple installation script
 ├── LICENSE                  # MIT License
-├── Makefile                 # Build automation
+├── Makefile                 # Build automation and development tasks
 ├── README.md                # This file
 └── soft-delete.sh           # Source script
 ```
@@ -234,17 +310,139 @@ soft-delete/
 
 We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 
+### Development Tools
+
+The project includes comprehensive development utilities:
+
+```bash
+# Build and test
+make build                  # Build the executable
+make test                   # Run test suite
+make docker-test           # Run Docker-based tests
+make lint                   # Run shellcheck linting
+make docker-lint           # Run linting in Docker
+
+# Development utilities
+make install-deps          # Install development dependencies
+make check                  # Verify installation
+make version               # Show current version
+
+# Cleanup and maintenance
+make clean                 # Remove build artifacts
+make clean-all            # Comprehensive cleanup
+make docker-clean         # Clean Docker environment
+
+# Package and release
+make package              # Create distribution archive
+```
+
+### Utility Scripts
+
+The `scripts/` directory contains specialized utilities:
+
+#### Security Scanner (`scripts/security-scan.sh`)
+
+```bash
+# Run comprehensive security scan
+./scripts/security-scan.sh
+
+# Options
+./scripts/security-scan.sh --verbose   # Detailed output
+./scripts/security-scan.sh --quiet     # Minimal output
+```
+
+**Checks performed:**
+- File permissions vulnerabilities
+- Hardcoded secrets detection
+- Path traversal vulnerabilities
+- Input validation issues
+- ShellCheck security analysis
+
+#### Performance Benchmark (`scripts/benchmark.sh`)
+
+```bash
+# Run performance tests
+./scripts/benchmark.sh
+
+# Benchmark options
+./scripts/benchmark.sh --small         # Small files/directories
+./scripts/benchmark.sh --large         # Large files (10MB+)
+./scripts/benchmark.sh --all           # All benchmarks
+./scripts/benchmark.sh --report        # Generate detailed report
+```
+
+#### Cleanup System (`scripts/cleanup.sh`)
+
+```bash
+# Comprehensive cleanup with safety features
+./scripts/cleanup.sh all               # Clean everything
+./scripts/cleanup.sh build             # Clean build artifacts
+./scripts/cleanup.sh deployment        # Clean deployment files
+./scripts/cleanup.sh --dry-run all     # Preview changes
+```
+
+**Safety features:**
+- Dry run mode for preview
+- Interactive confirmation prompts
+- File statistics and reporting
+- Selective cleanup options
+
+#### Test Runner (`scripts/run-tests.sh`)
+
+```bash
+# Docker-based test execution
+./scripts/run-tests.sh                 # Standard tests
+./scripts/run-tests.sh --verbose       # Verbose output
+./scripts/run-tests.sh --single        # Single test file
+```
+
 ### Quick Start for Contributors
 
 1. Fork the repository
 2. Create a feature branch: `git checkout -b feature-name`
 3. Make your changes to `soft-delete.sh`
-4. Build: `make build` (copies to bin/soft-delete)
-5. Add tests for new functionality
-6. Run tests: `make test`
-7. Commit changes: `git commit -am 'Add feature'`
-8. Push to branch: `git push origin feature-name`
-9. Create a Pull Request
+4. Build and test: `make build && make docker-test`
+5. Run security scan: `./scripts/security-scan.sh`
+6. Add tests for new functionality in `tests/`
+7. Update documentation if needed
+8. Commit changes: `git commit -am 'Add feature'`
+9. Push to branch: `git push origin feature-name`
+10. Create a Pull Request
+
+### CI/CD and Releases
+
+The project uses GitHub Actions for automated testing and releases:
+
+#### Automated Release Process
+
+- **Trigger**: Git tags matching `v*` (e.g., `v1.0.0`)
+- **Pipeline Stages**:
+  1. **Testing**: Docker-based testing with TAP output
+  2. **Security**: Linting and security scanning
+  3. **Build**: Package creation and artifact generation
+  4. **Release**: GitHub release with distribution archives
+
+#### Release Workflow
+
+```bash
+# Create and push a release tag
+git tag v1.0.0
+git push origin v1.0.0
+
+# GitHub Actions will automatically:
+# 1. Run comprehensive tests
+# 2. Perform security scans
+# 3. Build distribution packages
+# 4. Create GitHub release with assets
+```
+
+#### Quality Assurance
+
+- **Automated Testing**: Full test suite runs on every release
+- **Security Scanning**: Vulnerability detection and validation
+- **Code Quality**: ShellCheck linting and best practices validation
+- **Docker Testing**: Isolated, reproducible test environment
+- **TAP Compliance**: Industry-standard test output format
 
 ## Requirements
 
@@ -252,6 +450,7 @@ We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for deta
 - Standard Unix utilities (`mv`, `mktemp`, `date`, etc.)
 - Write access to `/tmp` directory
 - Optional: `bats` for running tests
+- Optional: Docker for isolated testing
 
 ## Compatibility
 
