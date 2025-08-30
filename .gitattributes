@@ -1,32 +1,24 @@
-# Git attributes for soft-delete project
-# This file controls how Git handles different file types
-
-# Text files - ensure consistent line endings
-*.md text eol=lf
-*.txt text eol=lf
-*.yml text eol=lf
-*.yaml text eol=lf
-*.json text eol=lf
-*.sh text eol=lf
-*.bash text eol=lf
-*.bats text eol=lf
+LICENSE text eol=lf
 Makefile text eol=lf
-Dockerfile* text eol=lf
-docker-compose* text eol=lf
 
-# Configuration files
+Dockerfile.* text eol=lf
+
 .editorconfig text eol=lf
 .gitignore text eol=lf
 .gitattributes text eol=lf
 .shellcheckrc text eol=lf
 
-# Documentation
-README* text eol=lf
-CHANGELOG* text eol=lf
-CONTRIBUTING* text eol=lf
-LICENSE* text eol=lf
+*.bash text eol=lf
+*.bats text eol=lf
+*.md text eol=lf
+*.json text eol=lf
+*.rb text eol=lf
+*.sh text eol=lf
+*.tap text eol=lf
+*.txt text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
 
-# Binary files
 *.png binary
 *.jpg binary
 *.jpeg binary
@@ -36,12 +28,10 @@ LICENSE* text eol=lf
 *.zip binary
 *.tar.gz binary
 
-# Language-specific settings
 *.sh linguist-language=Shell
 *.bash linguist-language=Shell
 *.bats linguist-language=Shell
 
-# Exclude generated files from language statistics
 reports/* linguist-generated=true
 dist/* linguist-generated=true
 bin/* linguist-generated=true
