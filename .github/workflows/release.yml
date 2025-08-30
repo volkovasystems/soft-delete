@@ -5,18 +5,25 @@ on:
     tags:
       - 'v*'
 
+# Restrict permissions for security
+permissions:
+  contents: write  # Required for creating releases
+  actions: read    # Required for downloading artifacts
+  checks: write    # Required for publishing test results
+
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
       - name: Cache Docker layers
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: /tmp/.buildx-cache
           key: ${{ runner.os }}-buildx-${{ github.sha }}
@@ -28,14 +35,21 @@ jobs:
 
       - name: Run Docker tests with TAP output
         run: |
-          make docker-test || exit 1
+          echo "Starting Docker tests..."
+          if ! make docker-test; then
+            echo "Docker tests failed. Checking for any generated reports..."
+            ls -la reports/ || echo "No reports directory found"
+            exit 1
+          fi
+          echo "Docker tests completed successfully"
 
       - name: Run Docker linting
         run: |
-          make docker-lint || true
+          echo "Starting Docker linting..."
+          make docker-lint || echo "Linting completed with warnings (non-fatal)"
 
       - name: Upload test reports
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: test-reports-${{ github.run_number }}
@@ -64,12 +78,15 @@ jobs:
   build:
     needs: test
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up Bash and dependencies
-        run: sudo apt-get install -y bats shellcheck
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y bats shellcheck
 
       - name: Extract version
         id: version
@@ -80,12 +97,22 @@ jobs:
             exit 1
           fi
           echo "VERSION=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Extracted version: $VERSION"
 
       - name: Build package
         run: make package
 
+      - name: Verify package creation
+        run: |
+          if [ ! -f "./dist/soft-delete-${{ steps.version.outputs.VERSION }}.tar.gz" ]; then
+            echo "Error: Package file not found"
+            ls -la dist/
+            exit 1
+          fi
+          echo "Package verified: $(ls -lh ./dist/soft-delete-${{ steps.version.outputs.VERSION }}.tar.gz)"
+
       - name: Create Release and Upload Assets
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           name: Release ${{ github.ref_name }}
           files: ./dist/soft-delete-${{ steps.version.outputs.VERSION }}.tar.gz
