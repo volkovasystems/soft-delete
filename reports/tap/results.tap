@@ -1,0 +1,47 @@
+TAP version 14
+1..45
+ok 1 handle files with spaces in names
+ok 2 handle files with special characters
+ok 3 handle files with unicode characters
+ok 4 handle files starting with dash
+ok 5 handle hidden files (dotfiles)
+ok 6 handle very long filenames
+ok 7 handle empty files
+ok 8 handle very large files
+ok 9 handle binary files
+ok 10 handle symbolic links
+ok 11 handle broken symbolic links
+ok 12 handle directories with special permissions
+ok 13 handle files with no read permission # skip Cannot test files without read permission as user needs read access to move them
+ok 14 handle deep directory nesting
+ok 15 handle many files in directory
+ok 16 handle concurrent operations
+ok 17 handle filesystem edge cases - path with trailing slash
+ok 18 handle relative paths with parent directory references
+ok 19 handle files in /tmp directory
+ok 20 handle files with newlines in content
+ok 21 handle rapid successive operations
+ok 22 verify unique backup directory names under high frequency
+ok 23 handle error recovery - insufficient disk space simulation # skip Cannot easily simulate disk space issues in test environment
+ok 24 handle error recovery - permission denied during move # skip Complex permission scenarios require root access to test properly
+ok 25 verify no data corruption under stress
+ok 26 script exists and is executable
+ok 27 show help with --help
+ok 28 show help with -h
+ok 29 show version with --version
+ok 30 show version with -v
+ok 31 show usage when no arguments provided
+ok 32 error when file does not exist
+ok 33 soft delete a file
+ok 34 soft delete a directory
+ok 35 soft delete with --path option
+ok 36 soft delete with -p option
+ok 37 verbose mode shows debug output
+ok 38 error with invalid option
+ok 39 error with missing path argument
+ok 40 error with too many arguments
+ok 41 backup directory has unique timestamp
+ok 42 handles special characters in filename
+ok 43 preserves file permissions
+ok 44 handles relative paths
+ok 45 handles absolute paths
