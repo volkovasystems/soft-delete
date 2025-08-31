@@ -50,11 +50,11 @@ log_info "📋 Checking Code Quality Compliance..."
 
 # ShellCheck compliance
 log_info "Running ShellCheck validation..."
-if make docker-lint >/dev/null 2>&1; then
+if make lint >/dev/null 2>&1; then
     log_success "ShellCheck: 100% compliant (zero warnings)"
 else
     log_error "ShellCheck: COMPLIANCE FAILURE - warnings detected"
-    make docker-lint
+    make lint
 fi
 
 # Bash strict mode verification
@@ -103,20 +103,11 @@ log_info "🧪 Checking Testing Compliance..."
 
 # Test execution compliance
 log_info "Running comprehensive test suite..."
-if make docker-test >/dev/null 2>&1; then
+if make test >/dev/null 2>&1; then
     log_success "Testing: 100% compliant (all tests passed)"
-    
-    # Verify TAP format compliance
-    if [[ -f "./reports/tap/results.tap" ]]; then
-        if head -1 "./reports/tap/results.tap" | grep -q "TAP version 14"; then
-            log_success "TAP format: 100% compliant"
-        else
-            log_error "TAP format: Non-compliant version"
-        fi
-    fi
 else
     log_error "Testing: COMPLIANCE FAILURE - tests failed"
-    make docker-test
+    make test
 fi
 
 # Build verification

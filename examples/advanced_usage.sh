@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -euo pipefail
 
 # Advanced usage examples for soft-delete
 # Copyright (c) 2025 Richeve S. Bebedor <richeve.bebedor@gmail.com>

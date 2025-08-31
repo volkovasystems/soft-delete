@@ -25,7 +25,7 @@ readonly VERSION_FILE
 
 # Read version from VERSION file
 if [[ -f "$VERSION_FILE" ]]; then
-    VERSION=$(cat "$VERSION_FILE" | tr -d '\n\r' | tr -d ' ')
+    VERSION=$(tr -d '\n\r' < "$VERSION_FILE" | tr -d ' ')
 else
     VERSION="0.0.0"  # Fallback version
 fi
