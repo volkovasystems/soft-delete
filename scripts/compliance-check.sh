@@ -336,6 +336,146 @@ if [[ $protocol_ref_failures -eq 0 ]]; then
     log_success "Protocol references: 100% compliant"
 fi
 
+# Changelog compliance check
+log_info "Verifying changelog compliance..."
+changelog_version=$(head -10 CHANGELOG.md | grep -o "\[.*\]" | head -1 | tr -d '[]')
+current_version=$(tr -d '\n\r' < VERSION | tr -d ' ')
+if [[ "$changelog_version" == "$current_version" ]]; then
+    log_success "Changelog: Current version ($current_version) documented"
+else
+    log_error "Changelog: Version mismatch - changelog shows ($changelog_version), VERSION file shows ($current_version)"
+fi
+
+# 8. STRUCTURAL ALIGNMENT COMPLIANCE
+echo ""
+log_info "🏗️  Checking Structural Alignment Compliance..."
+
+# Structural alignment validation functions
+validate_directory_structure() {
+    # Extract documented directories from all documentation
+    local documented_dirs=()
+    while IFS= read -r line; do
+        if [[ "$line" =~ ├──[[:space:]]+([a-zA-Z0-9_.-]+/) ]]; then
+            documented_dirs+=("${BASH_REMATCH[1]}")
+        fi
+    done < <(grep -h "├──" docs/*.md .warp/*.md README.md 2>/dev/null || true)
+    
+    # Get actual directories
+    local missing_dirs=0
+    for doc_dir in "${documented_dirs[@]}"; do
+        if [[ -n "$doc_dir" && ! -d "$doc_dir" ]]; then
+            log_error "Documented directory missing: $doc_dir"
+            missing_dirs=$((missing_dirs + 1))
+        fi
+    done
+    
+    return $missing_dirs
+}
+
+validate_file_references() {
+    local missing_files=0
+    
+    # Check file references in documentation
+    while IFS= read -r file_ref; do
+        # Clean up the file reference
+        file_ref=$(echo "$file_ref" | sed 's/[`"'\'']//g' | sed 's/.*://g')
+        
+        # Skip URLs and generic patterns
+        if [[ "$file_ref" =~ ^https?:// || "$file_ref" =~ \* || "$file_ref" == *"example"* ]]; then
+            continue
+        fi
+        
+        # Check if referenced file exists
+        if [[ -n "$file_ref" && ! -e "$file_ref" && ! "$file_ref" =~ ^/ ]]; then
+            # Only count as missing if it looks like a real file path
+            if [[ "$file_ref" =~ \.(sh|md|bats|yml|yaml|rb|js|json)$ ]]; then
+                log_error "Referenced file missing: $file_ref"
+                missing_files=$((missing_files + 1))
+            fi
+        fi
+    done < <(grep -r -o "[a-zA-Z0-9_./-]*\.(sh\|md\|bats\|yml\|yaml\|rb\|js\|json)" docs/ .warp/ README.md CONTRIBUTING.md 2>/dev/null | head -20)
+    
+    return $missing_files
+}
+
+validate_internal_links() {
+    local broken_links=0
+    
+    # Check markdown links in documentation
+    while IFS= read -r file; do
+        if [[ -f "$file" ]]; then
+            while IFS= read -r link; do
+                # Extract the link target
+                local target=$(echo "$link" | sed -n 's/.*](\([^)#]*\)).*/\1/p')
+                
+                # Skip external links and anchors
+                if [[ "$target" =~ ^https?:// || "$target" =~ ^# || -z "$target" ]]; then
+                    continue
+                fi
+                
+                # Check if internal link target exists
+                if [[ ! -e "$target" ]]; then
+                    log_error "Broken internal link in $file: $target"
+                    broken_links=$((broken_links + 1))
+                fi
+            done < <(grep -o '\[.*\]([^)]*\.md[^)]*)' "$file" 2>/dev/null || true)
+        fi
+    done < <(find docs/ .warp/ -name "*.md" 2>/dev/null; echo "README.md"; echo "CONTRIBUTING.md")
+    
+    return $broken_links
+}
+
+validate_example_consistency() {
+    local inconsistent_examples=0
+    
+    # Check if examples reference correct executable name
+    while IFS= read -r file; do
+        if [[ -f "$file" ]]; then
+            # Check for correct executable references
+            if grep -q "soft-delete" "$file"; then
+                if grep -q "soft-delete.sh" "$file" && ! grep -q "# Source file" "$file"; then
+                    # Allow .sh references only when clearly talking about source
+                    if ! grep -q "source\|repository\|development" "$file"; then
+                        log_error "Example in $file uses .sh instead of binary name"
+                        inconsistent_examples=$((inconsistent_examples + 1))
+                    fi
+                fi
+            fi
+        fi
+    done < <(find docs/ examples/ -name "*.md" -o -name "*.sh" 2>/dev/null; echo "README.md")
+    
+    return $inconsistent_examples
+}
+
+# Run structural alignment checks
+log_info "Validating directory structure documentation..."
+if validate_directory_structure; then
+    log_success "Directory structure: 100% aligned"
+else
+    log_error "Directory structure: ALIGNMENT FAILURE"
+fi
+
+log_info "Validating file path references..."
+if validate_file_references; then
+    log_success "File references: 100% valid"
+else
+    log_error "File references: INVALID REFERENCES FOUND"
+fi
+
+log_info "Checking internal link integrity..."
+if validate_internal_links; then
+    log_success "Internal links: 100% valid"
+else
+    log_error "Internal links: BROKEN LINKS FOUND"
+fi
+
+log_info "Validating documentation examples..."
+if validate_example_consistency; then
+    log_success "Examples: 100% consistent"
+else
+    log_error "Examples: INCONSISTENT REFERENCES"
+fi
+
 # FINAL COMPLIANCE REPORT
 echo ""
 echo "🎯 FINAL COMPLIANCE REPORT"
@@ -353,6 +493,7 @@ if [[ $COMPLIANCE_FAILED -eq 0 ]]; then
     echo "  ✅ File System: 100%"
     echo "  ✅ Security: 100%"
     echo "  ✅ Consistency: 100%"
+    echo "  ✅ Structural Alignment: 100%"
     echo ""
     echo "🟢 READY FOR DEVELOPMENT/DEPLOYMENT"
     exit 0
