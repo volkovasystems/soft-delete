@@ -56,6 +56,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added protection against false security alerts from documentation and development references
 - Enhanced git history scanning with intelligent filtering for security-related commits
 
+### Documentation
+- Updated README.md version badge to match VERSION file (0.1.0)
+- Fixed version consistency between documentation and versioning system
+- Resolved pre-commit hook warnings about version mismatches
+
 ## [0.0.0] - 2025-08-31
 
 ### Added
