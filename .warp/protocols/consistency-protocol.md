@@ -71,15 +71,15 @@ VERSION=$(cat VERSION | tr -d '\n\r' | tr -d ' ')
 #### When Adding New Protocols
 **Files to Update:**
 - `.warp/README.md` - File structure and precedence
-- `.warp/AGENT_INSTRUCTIONS.md` - Reference new protocol
+- `.warp/rules/agent-instructions.md` - Reference new protocol
 - `.warp/rules/dynamic-rules.md` - Extract actionable rules
 - Cross-reference related protocols
 
 #### When Adding New Rules
 **Files to Update:**
 - Source protocol files - Cross-reference new rule
-- `.warp/AGENT_INSTRUCTIONS.md` - Update rule counts and categories
-- `.warp/RULES_SUMMARY.md` - Update comprehensive summary
+- `.warp/rules/agent-instructions.md` - Update rule counts and categories
+- `.warp/rules/rules-summary.md` - Update comprehensive summary
 - Related protocol files - Add cross-references
 
 ### 5. Script and Automation Consistency
@@ -202,8 +202,8 @@ vim .warp/rules/dynamic-rules.md   # Add extracted rules
 
 # 3. Update meta-documentation
 vim .warp/README.md               # Add to file structure
-vim .warp/AGENT_INSTRUCTIONS.md   # Reference new protocol
-vim .warp/RULES_SUMMARY.md        # Update rule counts
+vim .warp/rules/agent-instructions.md   # Reference new protocol
+vim .warp/rules/rules-summary.md        # Update rule counts
 
 # 4. Cross-reference related protocols
 vim .warp/protocols/related-protocol.md  # Add cross-reference
@@ -223,7 +223,7 @@ git commit -m "feat: add new protocol with full cross-file integration"
 | `README.md` | docs/API.md, project-context.md | Command examples | Installation steps |
 | `Makefile` | project-context.md, TESTING.md, README.md | Build commands | CI/CD alignment |
 | `VERSION` | Formula/soft-delete.rb | All version references | Changelog consistency |
-| Protocol files | dynamic-rules.md, AGENT_INSTRUCTIONS.md | Cross-references | Rule extraction |
+| Protocol files | dynamic-rules.md, agent-instructions.md | Cross-references | Rule extraction |
 | Test files | TESTING.md, project-context.md | Test descriptions | Coverage alignment |
 
 ## Consistency Verification Tools

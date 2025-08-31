@@ -7,10 +7,9 @@ This directory contains all Warp.dev-specific configuration files and protocols 
 ```
 .warp/
 ├── README.md                    # This file - explains the structure
-├── RULES_SUMMARY.md             # Comprehensive summary of all rules
-├── AGENT_INSTRUCTIONS.md        # Agent behavior and rule suggestion guidelines
 ├── project-context.md           # Main project context (replaces WARP.md)
 ├── protocols/
+│   ├── ai-version-control-protocol.md # AI version control and modification rules
 │   ├── changelog-protocol.md    # Changelog management protocol
 │   ├── compliance-protocol.md   # 100% compliance standards and verification protocol
 │   ├── consistency-protocol.md  # Cross-file consistency protocol  
@@ -20,8 +19,10 @@ This directory contains all Warp.dev-specific configuration files and protocols 
 │   ├── testing-protocol.md      # Testing workflow protocol
 │   └── version-protocol.md      # VERSION file management protocol
 ├── rules/
+│   ├── agent-instructions.md    # Agent behavior and rule suggestion guidelines
 │   ├── ai-agent-rules.md        # AI agent behavior rules
-│   └── dynamic-rules.md         # Protocol-derived and suggested rules
+│   ├── dynamic-rules.md         # Protocol-derived and suggested rules
+│   └── rules-summary.md         # Comprehensive summary of all rules
 └── templates/
     └── rule-template.md          # Template for documenting complex rules
 ```
