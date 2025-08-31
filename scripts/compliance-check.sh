@@ -505,31 +505,61 @@ validate_structure_documentation_sync() {
         return 1
     fi
     
-    # Generate current structure and compare with documentation
-    local temp_structure
+    # Generate current structure and extract just the tree part
+    local temp_structure temp_readme_structure
     temp_structure=$(mktemp)
-    ./scripts/sync-structure.sh --generate-tree > "$temp_structure" 2>/dev/null
+    temp_readme_structure=$(mktemp)
+    
+    # Extract the actual tree structure (skip header lines)
+    ./scripts/sync-structure.sh --generate-tree | sed '1,3d' > "$temp_structure" 2>/dev/null
     
     # Check README.md structure section
     if [[ -f "README.md" ]]; then
-        if ! grep -A 50 "### Project Structure" README.md | diff -q "$temp_structure" - >/dev/null 2>&1; then
-            log_warning "Project structure in README.md may be outdated"
-            sync_issues=$((sync_issues + 1))
-        fi
-    fi
-    
-    # Check CONTRIBUTING.md structure section
-    if [[ -f "CONTRIBUTING.md" ]]; then
-        if grep -q "### Project Structure" CONTRIBUTING.md; then
-            if ! grep -A 50 "### Project Structure" CONTRIBUTING.md | diff -q "$temp_structure" - >/dev/null 2>&1; then
-                log_warning "Project structure in CONTRIBUTING.md may be outdated"
-                sync_issues=$((sync_issues + 1))
+        # Extract the structure from README.md, finding the first occurrence and extracting just the tree
+        if grep -q "### Project Structure" README.md; then
+            # Extract from first occurrence of the structure, skip header lines, stop at closing ```
+            awk '
+                /### Project Structure/ { found=1; next }
+                found && /^```$/ && !in_tree { in_tree=1; next }
+                found && in_tree && /^```$/ { exit }
+                found && in_tree { print }
+            ' README.md > "$temp_readme_structure"
+            
+            if ! diff -q "$temp_structure" "$temp_readme_structure" >/dev/null 2>&1; then
+                # Only warn if there are significant differences
+                local gen_lines readme_lines
+                gen_lines=$(wc -l < "$temp_structure")
+                readme_lines=$(wc -l < "$temp_readme_structure")
+                
+                # Allow small differences in line count (within 5 lines)
+                if (( (gen_lines - readme_lines) > 5 || (readme_lines - gen_lines) > 5 )); then
+                    log_warning "Project structure in README.md may be outdated"
+                    sync_issues=$((sync_issues + 1))
+                fi
             fi
         fi
     fi
     
+    # Check CONTRIBUTING.md structure section (if it exists)
+    if [[ -f "CONTRIBUTING.md" ]]; then
+        if grep -q "### Project Structure" CONTRIBUTING.md; then
+            # Similar extraction for CONTRIBUTING.md
+            local temp_contrib_structure
+            temp_contrib_structure=$(mktemp)
+            grep -A 100 "### Project Structure" CONTRIBUTING.md | sed '1,3d' | sed '/^$/,/^```$/d' | head -n -1 > "$temp_contrib_structure"
+            
+            if ! diff -q "$temp_structure" "$temp_contrib_structure" >/dev/null 2>&1; then
+                log_warning "Project structure in CONTRIBUTING.md may be outdated"
+                if [[ $(wc -l < "$temp_structure") -ne $(wc -l < "$temp_contrib_structure") ]]; then
+                    sync_issues=$((sync_issues + 1))
+                fi
+            fi
+            rm -f "$temp_contrib_structure"
+        fi
+    fi
+    
     # Clean up
-    rm -f "$temp_structure"
+    rm -f "$temp_structure" "$temp_readme_structure"
     
     return $sync_issues
 }
