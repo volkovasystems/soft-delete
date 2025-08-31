@@ -55,7 +55,9 @@ log_step() {
 }
 
 log_debug() {
-    [[ "${VERBOSE:-false}" == "true" ]] && echo -e "${CYAN}[DEBUG]${NC} $*" >&2
+    if [[ "${VERBOSE:-false}" == "true" ]]; then
+        echo -e "${CYAN}[DEBUG]${NC} $*" >&2
+    fi
 }
 
 # Function to display usage information
