@@ -1,5 +1,6 @@
 LICENSE text eol=lf
 Makefile text eol=lf
+VERSION text eol=lf
 
 Dockerfile.* text eol=lf
 
@@ -34,4 +35,3 @@ Dockerfile.* text eol=lf
 
 reports/* linguist-generated=true
 dist/* linguist-generated=true
-bin/* linguist-generated=true
