@@ -338,7 +338,8 @@ fi
 
 # Changelog compliance check
 log_info "Verifying changelog compliance..."
-changelog_version=$(head -10 CHANGELOG.md | grep -o "\[.*\]" | head -1 | tr -d '[]')
+# Look specifically for version pattern [x.y.z] in first 15 lines
+changelog_version=$(head -15 CHANGELOG.md | grep -o "\[[0-9]\+\.[0-9]\+\.[0-9]\+\]" | head -1 | tr -d '[]')
 current_version=$(tr -d '\n\r' < VERSION | tr -d ' ')
 if [[ "$changelog_version" == "$current_version" ]]; then
     log_success "Changelog: Current version ($current_version) documented"

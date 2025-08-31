@@ -18,6 +18,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Enhanced structural alignment validation to check for version control protocol compliance
 - Version protection system ensuring only developers can modify version numbers
 
+### Fixed
+- **Compliance Check**: Fix changelog version parsing to correctly identify semantic versions [x.y.z]
+- Prevent false matches on "[Keep a Changelog]" links in CHANGELOG.md header
+- Improve version pattern detection with proper regex matching
+- Increase search range to 15 lines for better version detection accuracy
+
 ### Security
 - **Version Management Security**: AI systems now cannot modify versions without explicit developer authorization
 - Established version change validation requirements and exception conditions
