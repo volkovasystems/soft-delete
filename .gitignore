@@ -43,3 +43,7 @@
 !*/**/*.txt
 !*/**/*.yml
 !*/**/*.yaml
+
+# Deployment state files
+.deploy/
+*.state

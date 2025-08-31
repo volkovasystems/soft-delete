@@ -162,6 +162,52 @@ version-minor:
 version-patch:
 	@./scripts/version.sh patch
 
+# Deployment targets
+.PHONY: deploy-staging
+deploy-staging:
+	@./scripts/deploy.sh deploy-staging
+
+.PHONY: deploy-staging-dry
+deploy-staging-dry:
+	@./scripts/deploy.sh deploy-staging --dry-run
+
+.PHONY: deploy-release
+deploy-release:
+	@./scripts/deploy.sh deploy-release
+
+.PHONY: deploy-release-dry
+deploy-release-dry:
+	@./scripts/deploy.sh deploy-release --dry-run
+
+.PHONY: deploy-test
+deploy-test:
+	@./scripts/deploy.sh deploy-test
+
+.PHONY: deploy-test-dry
+deploy-test-dry:
+	@./scripts/deploy.sh deploy-test --dry-run
+
+.PHONY: deploy-status
+deploy-status:
+	@./scripts/deploy.sh status
+
+.PHONY: deploy-cleanup
+deploy-cleanup:
+	@./scripts/deploy.sh cleanup
+
+# Revert targets
+.PHONY: revert-staging
+revert-staging:
+	@./scripts/deploy.sh revert-staging
+
+.PHONY: revert-release
+revert-release:
+	@./scripts/deploy.sh revert-release
+
+.PHONY: revert-test
+revert-test:
+	@./scripts/deploy.sh revert-test
+
 # Docker-based testing targets
 .PHONY: docker-test
 docker-test: build

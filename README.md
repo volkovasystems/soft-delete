@@ -29,6 +29,14 @@ A safe file deletion utility that moves files and directories to timestamped bac
 - 🔧 **Automated CI/CD**: GitHub Actions pipeline with quality gates
 - 📚 **Comprehensive Documentation**: API docs, testing guides, examples
 
+### Deployment & Release Management
+- 🚀 **Automated Deployments**: Branch-based deployment workflow (develop → staging → release)
+- 🏷️ **Semantic Versioning**: Automated version tagging and management
+- 🔄 **Rollback Capabilities**: Complete revert functionality for all deployment types
+- 🌐 **Multi-Branch Support**: Develop, staging, test, release, master, and main branches
+- 🔒 **Safety Checks**: Version validation and remote connectivity verification
+- 📋 **Dry-Run Mode**: Preview deployments before execution
+
 ## Installation
 
 ### Quick Install
@@ -272,6 +280,7 @@ soft-delete/
 │   └── soft-delete          # Built executable
 ├── docs/
 │   ├── API.md               # Comprehensive API documentation
+│   ├── DEPLOYMENT.md        # Deployment automation guide
 │   └── TESTING.md           # Testing guide and infrastructure
 ├── examples/
 │   ├── README.md            # Examples documentation
@@ -284,9 +293,11 @@ soft-delete/
 ├── scripts/
 │   ├── benchmark.sh         # Performance testing
 │   ├── cleanup.sh           # Comprehensive cleanup utility
+│   ├── deploy.sh            # Deployment automation system
 │   ├── run-tests.sh         # Docker-based test runner
 │   ├── security-scan.sh     # Security vulnerability scanner
-│   └── tap-formatter.sh     # TAP output formatter
+│   ├── tap-formatter.sh     # TAP output formatter
+│   └── version.sh           # Semantic version management
 ├── tests/
 │   ├── edge-cases.bats      # Edge case test suite
 │   ├── soft-delete.bats     # Main test suite
@@ -408,6 +419,83 @@ The `scripts/` directory contains specialized utilities:
 8. Commit changes: `git commit -am 'Add feature'`
 9. Push to branch: `git push origin feature-name`
 10. Create a Pull Request
+
+## Deployment & Release Management
+
+The project includes a comprehensive automated deployment system for managing releases across multiple branches.
+
+### Branch Strategy
+
+```
+develop ──────────────► staging ──────────────► release
+                            │                       │
+                            ▼                       ▼
+                         test                   master/main
+```
+
+### Quick Deployment
+
+```bash
+# Deploy to staging
+make version-patch       # Update version first
+make deploy-staging      # Deploy develop → staging
+
+# Deploy to release
+make deploy-release      # Deploy staging → release (creates tags)
+
+# Deploy specific version
+./scripts/deploy.sh deploy-version 1.2.3
+
+# Check deployment status
+make deploy-status
+```
+
+### Deployment Commands
+
+| Command | Description | Make Target |
+|---------|-------------|-------------|
+| `deploy-staging` | Deploy develop to staging | `make deploy-staging` |
+| `deploy-release` | Deploy staging to release | `make deploy-release` |
+| `deploy-test` | Deploy develop to test | `make deploy-test` |
+| `deploy-version VERSION` | Deploy specific version | N/A |
+| `revert-staging` | Revert staging deployment | `make revert-staging` |
+| `revert-release` | Revert release deployment | `make revert-release` |
+| `status` | Show deployment status | `make deploy-status` |
+
+### Version Management Integration
+
+```bash
+# Version management
+make version-show        # Show current version
+make version-patch      # Increment patch: 1.0.0 → 1.0.1
+make version-minor      # Increment minor: 1.0.0 → 1.1.0
+make version-major      # Increment major: 1.0.0 → 2.0.0
+```
+
+### Deployment Features
+
+- ✅ **Version Validation**: Ensures version is updated before deployment
+- ✅ **Remote Verification**: Checks push access before deployment
+- ✅ **Dry Run Mode**: Preview changes with `--dry-run`
+- ✅ **Automatic Tagging**: Creates semantic version tags on release
+- ✅ **Branch Synchronization**: Updates master/main with release
+- ✅ **Rollback Support**: Complete revert capabilities
+- ✅ **State Tracking**: Maintains deployment history
+
+### Safety & Recovery
+
+```bash
+# Preview deployment
+./scripts/deploy.sh deploy-staging --dry-run
+
+# Emergency rollback
+./scripts/deploy.sh revert-release
+
+# Check what's deployed
+./scripts/deploy.sh status
+```
+
+For detailed deployment documentation, see [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
 ### CI/CD and Releases
 
