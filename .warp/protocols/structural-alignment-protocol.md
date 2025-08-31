@@ -370,7 +370,7 @@ echo "🔍 Running structural alignment checks..."
 if git diff --cached --name-only | grep -qE '\.(sh|md|bats)$|Makefile|VERSION'; then
     echo "📁 Detected structural changes, validating alignment..."
     
-    if ! ./scripts/validate-structural-alignment.sh; then
+    if ! ./scripts/sync-structure.sh --validate-comprehensive; then
         echo "❌ Structural alignment check failed!"
         echo "Run: ./scripts/sync-structure.sh to fix issues"
         exit 1
@@ -449,8 +449,8 @@ jobs:
       
       - name: Run structural alignment validation
         run: |
-          chmod +x scripts/validate-structural-alignment.sh
-          ./scripts/validate-structural-alignment.sh
+          chmod +x scripts/sync-structure.sh
+          ./scripts/sync-structure.sh --validate-comprehensive
           
       - name: Check link integrity
         run: |

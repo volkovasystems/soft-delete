@@ -327,6 +327,136 @@ validate_cross_references() {
     fi
 }
 
+# Validate executable consistency (from validate-structural-alignment.sh)
+validate_executable_consistency() {
+    log_info "Validating executable references consistency..."
+    
+    local inconsistencies=0
+    
+    # Check for incorrect .sh references in user-facing documentation
+    local readme_file="README.md"
+    if [[ -f "$readme_file" ]]; then
+        # Look for soft-delete.sh references that should be just soft-delete
+        while IFS= read -r line; do
+            # Skip lines that clearly refer to source code or development
+            if [[ "$line" =~ (source|repository|development|clone|git|\.sh.*#) ]]; then
+                continue
+            fi
+            
+            # Check for .sh usage in examples or commands
+            if [[ "$line" =~ soft-delete\.sh[[:space:]] ]]; then
+                log_warning "Potential .sh usage in user example in $readme_file: $line"
+            fi
+        done < <(grep "soft-delete\.sh" "$readme_file" 2>/dev/null || true)
+    fi
+    
+    # Check docs and examples directories
+    for dir in docs examples; do
+        if [[ -d "$dir" ]]; then
+            for file in "$dir"/*.md; do
+                if [[ -f "$file" ]]; then
+                    # Look for soft-delete.sh references that should be just soft-delete
+                    while IFS= read -r line; do
+                        # Skip lines that clearly refer to source code or development
+                        if [[ "$line" =~ (source|repository|development|clone|git|\.sh.*#) ]]; then
+                            continue
+                        fi
+                        
+                        # Check for .sh usage in examples or commands
+                        if [[ "$line" =~ soft-delete\.sh[[:space:]] ]]; then
+                            log_warning "Potential .sh usage in user example in $file: $line"
+                        fi
+                    done < <(grep "soft-delete\.sh" "$file" 2>/dev/null || true)
+                fi
+            done
+        fi
+    done
+    
+    # Validate installation path consistency
+    local install_paths=()
+    while IFS= read -r path; do
+        install_paths+=("$path")
+    done < <(grep -o '/usr/local/bin/[a-zA-Z0-9_-]*' README.md docs/*.md 2>/dev/null || true)
+    
+    # Check that all installation paths are consistent
+    local expected_path="/usr/local/bin/soft-delete"
+    for path in "${install_paths[@]}"; do
+        if [[ "$path" != "$expected_path" ]]; then
+            log_error "Inconsistent installation path: $path (expected: $expected_path)"
+            inconsistencies=$((inconsistencies + 1))
+        fi
+    done
+    
+    if [[ $inconsistencies -eq 0 ]]; then
+        log_success "Executable references: All references are consistent"
+        return 0
+    else
+        log_error "Executable references: $inconsistencies inconsistencies found"
+        return 1
+    fi
+}
+
+# Validate script documentation coverage (from validate-structural-alignment.sh)
+validate_script_documentation() {
+    log_info "Validating script documentation coverage..."
+    
+    local undocumented_scripts=0
+    
+    # Check if all scripts are documented
+    if [[ -d "scripts" ]]; then
+        for script in scripts/*.sh; do
+            if [[ -f "$script" ]]; then
+                local script_name
+                script_name=$(basename "$script")
+                
+                # Check if script is mentioned in API docs
+                if [[ -f "docs/API.md" ]]; then
+                    if ! grep -q "$script_name" "docs/API.md"; then
+                        log_warning "Script not documented in API.md: $script_name"
+                        undocumented_scripts=$((undocumented_scripts + 1))
+                    fi
+                fi
+            fi
+        done
+    fi
+    
+    if [[ $undocumented_scripts -eq 0 ]]; then
+        log_success "Script documentation: All scripts are documented"
+        return 0
+    else
+        log_warning "Script documentation: $undocumented_scripts scripts may need documentation"
+        return 0  # Don't fail on this, just warn
+    fi
+}
+
+# Comprehensive validation function
+run_comprehensive_validation() {
+    log_info "Running comprehensive structural validation..."
+    
+    local validation_failed=0
+    
+    # Run all validation checks
+    if ! validate_cross_references; then
+        validation_failed=1
+    fi
+    
+    if ! validate_executable_consistency; then
+        validation_failed=1
+    fi
+    
+    if ! validate_script_documentation; then
+        validation_failed=1
+    fi
+    
+    if [[ $validation_failed -eq 0 ]]; then
+        log_success "🎉 All comprehensive validation checks passed!"
+        return 0
+    else
+        log_error "❌ Some validation checks failed"
+        return 1
+    fi
+}
+
 # Main synchronization function
 sync_all_documentation() {
     log_info "Starting comprehensive documentation synchronization..."
@@ -363,6 +493,15 @@ case "${1:-sync}" in
         ;;
     --validate-only)
         validate_cross_references
+        ;;
+    --validate-comprehensive)
+        run_comprehensive_validation
+        ;;
+    --validate-executables)
+        validate_executable_consistency
+        ;;
+    --validate-script-docs)
+        validate_script_documentation
         ;;
     --preserve-api)
         preserve_api_docs
