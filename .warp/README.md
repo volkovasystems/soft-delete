@@ -9,6 +9,7 @@ This directory contains all Warp.dev-specific configuration files and protocols 
 ├── README.md                    # This file - explains the structure
 ├── project-context.md           # Main project context (replaces WARP.md)
 ├── protocols/
+│   ├── ai-response-completeness-protocol.md # AI response completeness and commit requirements
 │   ├── ai-version-control-protocol.md # AI version control and modification rules
 │   ├── changelog-protocol.md    # Changelog management protocol
 │   ├── compliance-protocol.md   # 100% compliance standards and verification protocol
