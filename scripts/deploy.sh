@@ -187,7 +187,7 @@ check_working_directory() {
 
 # Function to check remote connectivity and push access
 check_remote_access() {
-    local remote="${1:-origin}"
+    local remote="origin"
     
     log_step "Checking remote access to $remote..."
     
@@ -544,9 +544,9 @@ revert_staging() {
     fi
     
     log_warn "This will revert staging branch to its previous state"
-    log_warn "Original branch: $ORIGINAL_BRANCH"
-    log_warn "Original version: $ORIGINAL_VERSION"
-    log_warn "Deployment timestamp: $TIMESTAMP"
+    log_warn "Original branch: ${ORIGINAL_BRANCH:-unknown}"
+    log_warn "Original version: ${ORIGINAL_VERSION:-unknown}"
+    log_warn "Deployment timestamp: ${TIMESTAMP:-unknown}"
     
     read -p "Are you sure? (y/N): " -n 1 -r
     echo
@@ -592,9 +592,9 @@ revert_release() {
     
     log_warn "This will revert release, master, and main branches"
     log_warn "This will also remove the version tag if it exists"
-    log_warn "Original branch: $ORIGINAL_BRANCH"
-    log_warn "Original version: $ORIGINAL_VERSION"
-    log_warn "Deployment timestamp: $TIMESTAMP"
+    log_warn "Original branch: ${ORIGINAL_BRANCH:-unknown}"
+    log_warn "Original version: ${ORIGINAL_VERSION:-unknown}"
+    log_warn "Deployment timestamp: ${TIMESTAMP:-unknown}"
     
     read -p "Are you sure? This is a destructive operation (y/N): " -n 1 -r
     echo

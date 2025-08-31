@@ -30,16 +30,6 @@ log_warning() {
     echo "⚠️  $*" >&2
 }
 
-check_exit_code() {
-    local exit_code=$1
-    local check_name="$2"
-    
-    if [[ $exit_code -eq 0 ]]; then
-        log_success "$check_name: 100% compliant"
-    else
-        log_error "$check_name: COMPLIANCE FAILURE"
-    fi
-}
 
 echo "🔍 RUNNING 100% COMPLIANCE VERIFICATION"
 echo "======================================="
@@ -86,7 +76,7 @@ while IFS= read -r -d '' file; do
 done < <(find . -name "*.sh" -o -name "*.md" -o -name "*.yml" -o -name "*.yaml" -type f -print0)
 
 # Check for Windows line endings
-if find . -name "*.sh" -o -name "*.md" -exec grep -l $'\r$' {} \; | grep -q .; then
+if find . \( -name "*.sh" -o -name "*.md" \) -exec grep -l $'\r$' {} \; | grep -q .; then
     log_error "Windows line endings detected"
     encoding_failures=$((encoding_failures + 1))
 else
@@ -269,7 +259,7 @@ fi
 
 # Check for path traversal vulnerabilities (exclude legitimate relative paths to VERSION file)
 log_info "Checking for path traversal vulnerabilities..."
-path_traversal_count=$(grep -r "\.\./\|\.\.\\\\" . --exclude-dir=.git --include="*.sh" 2>/dev/null | grep -v "VERSION" | wc -l)
+path_traversal_count=$(grep -r "\.\./\|\.\.\\\\" . --exclude-dir=.git --include="*.sh" 2>/dev/null | grep -cv "VERSION")
 if [[ $path_traversal_count -eq 0 ]]; then
     log_success "Path security: 100% compliant"
 else
@@ -282,7 +272,7 @@ log_info "🔄 Checking Cross-File Consistency Compliance..."
 
 # VERSION file consistency
 if [[ -f "VERSION" ]]; then
-    version_content=$(cat VERSION | tr -d '\n\r' | tr -d ' ')
+    version_content=$(tr -d '\n\r' < VERSION | tr -d ' ')
     # Check if this is a Homebrew project (has Formula directory)
     if [[ -d "Formula" ]]; then
         if [[ -f "Formula/soft-delete.rb" ]]; then
