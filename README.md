@@ -271,51 +271,179 @@ bats tests/edge-cases.bats
 
 ### Project Structure
 
+🔄 REPOSITORY STRUCTURE SYNCHRONIZATION
+========================================
 ```
 soft-delete/
-├── .github/
-│   └── workflows/
-│       └── release.yml      # GitHub Actions CI/CD pipeline
-├── bin/
-│   └── soft-delete          # Built executable
-├── docs/
-│   ├── API.md               # Comprehensive API documentation
-│   ├── DEPLOYMENT.md        # Deployment automation guide
-│   ├── TESTING.md           # Testing guide and infrastructure
-│   └── WARP_CHANGELOG_PROTOCOL.md  # Warp.dev changelog protocol
-├── examples/
-│   ├── README.md            # Examples documentation
-│   ├── basic_usage.sh       # Basic usage examples
-│   └── advanced_usage.sh    # Advanced integration examples
-├── Formula/
-│   └── soft-delete.rb       # Homebrew formula
-├── reports/
-│   └── .gitkeep             # Test reports and artifacts
-├── scripts/
-│   ├── benchmark.sh         # Performance testing
-│   ├── cleanup.sh           # Comprehensive cleanup utility
-│   ├── deploy.sh            # Deployment automation system
-│   ├── run-tests.sh         # Docker-based test runner
-│   ├── security-scan.sh     # Security vulnerability scanner
-│   ├── tap-formatter.sh     # TAP output formatter
-│   └── version.sh           # Semantic version management
-├── tests/
-│   ├── edge-cases.bats      # Edge case test suite
-│   ├── soft-delete.bats     # Main test suite
-│   └── test_helper.bash     # Test utilities and helpers
 ├── .editorconfig            # Code formatting standards
 ├── .gitattributes           # Git file handling configuration
 ├── .gitignore               # Git ignore patterns
 ├── .markdownlint.yaml       # Markdown linting configuration
 ├── .shellcheckrc            # Shell script linting configuration
+├── .github/
+│   └── workflows/
+│       └── release.yml      # GitHub Actions CI/CD pipeline
+├── .warp/                   # Warp.dev AI configuration
+│   ├── README.md            # Warp configuration documentation
+│   ├── project-context.md   # Main project context
+│   ├── protocols/           # Development protocols
+│   │   └── 10 protocol files  # Standard workflows and procedures
+│   ├── rules/               # AI agent rules and guidelines
+│   │   └── 4 rule files        # Behavioral guidelines
+│   └── templates/           # Rule templates
+├── bin/
+│   └── soft-delete          # Built executable
+├── dist/                    # Distribution files
+├── docs/                    # Documentation
+│   ├── API.md               # Comprehensive API documentation
+│   ├── DEPLOYMENT.md        # Deployment automation guide
+│   ├── SECURITY.md          # Security policy and reporting
+│   └── TESTING.md           # Testing guide and infrastructure
+├── examples/                # Usage examples
+│   ├── README.md            # Examples documentation
+│   ├── basic_usage.sh       # Basic usage examples
+│   └── advanced_usage.sh    # Advanced integration examples
+├── Formula/
+│   └── soft-delete.rb       # Homebrew formula
+├── reports/                 # Test reports and artifacts
+│   └── .gitkeep             # Keep directory in git
+├── scripts/                 # Utility scripts
+│   ├── benchmark.sh         # Performance testing
+│   ├── checkpoint.sh
+│   ├── cleanup.sh           # Comprehensive cleanup utility
+│   ├── compliance-check.sh  # 100% compliance verification
+│   ├── deploy.sh            # Deployment automation system
+│   ├── pre-commit-hook.sh
+│   └── ... (7 more scripts)
+├── tests/                   # Test files
+│   ├── edge-cases.bats      # Edge case test suite
+│   ├── soft-delete.bats     # Main test suite
+│   └── test_helper.bash     # Test utilities and helpers
 ├── CHANGELOG.md             # Version history
 ├── CONTRIBUTING.md          # Contribution guidelines
 ├── docker-compose.test.yml  # Docker testing environment
+├── Dockerfile.runtime       # Runtime container
+├── Dockerfile.test          # Testing container
 ├── install.sh               # Simple installation script
 ├── LICENSE                  # MIT License
 ├── Makefile                 # Build automation and development tasks
 ├── README.md                # This file
-└── soft-delete.sh           # Source script
+├── soft-delete.sh           # Source script
+└── VERSION                  # Version information
+```
+soft-delete/
+├── .editorconfig            # Code formatting standards
+├── .gitattributes           # Git file handling configuration
+├── .gitignore               # Git ignore patterns
+├── .markdownlint.yaml       # Markdown linting configuration
+├── .shellcheckrc            # Shell script linting configuration
+├── .github/
+│   └── workflows/
+│       └── release.yml      # GitHub Actions CI/CD pipeline
+├── .warp/                   # Warp.dev AI configuration
+│   ├── README.md            # Warp configuration documentation
+│   ├── project-context.md   # Main project context
+│   ├── protocols/           # Development protocols
+│   │   └── 10 protocol files  # Standard workflows and procedures
+│   ├── rules/               # AI agent rules and guidelines
+│   │   └── 4 rule files        # Behavioral guidelines
+│   └── templates/           # Rule templates
+├── bin/
+│   └── soft-delete          # Built executable
+├── dist/                    # Distribution files
+├── docs/                    # Documentation
+│   ├── API.md               # Comprehensive API documentation
+│   ├── DEPLOYMENT.md        # Deployment automation guide
+│   ├── SECURITY.md          # Security policy and reporting
+│   └── TESTING.md           # Testing guide and infrastructure
+├── examples/                # Usage examples
+│   ├── README.md            # Examples documentation
+│   ├── basic_usage.sh       # Basic usage examples
+│   └── advanced_usage.sh    # Advanced integration examples
+├── Formula/
+│   └── soft-delete.rb       # Homebrew formula
+├── reports/                 # Test reports and artifacts
+│   └── .gitkeep             # Keep directory in git
+├── scripts/                 # Utility scripts
+│   ├── benchmark.sh         # Performance testing
+│   ├── checkpoint.sh
+│   ├── cleanup.sh           # Comprehensive cleanup utility
+│   ├── compliance-check.sh  # 100% compliance verification
+│   ├── deploy.sh            # Deployment automation system
+│   ├── pre-commit-hook.sh
+│   └── ... (7 more scripts)
+├── tests/                   # Test files
+│   ├── edge-cases.bats      # Edge case test suite
+│   ├── soft-delete.bats     # Main test suite
+│   └── test_helper.bash     # Test utilities and helpers
+├── CHANGELOG.md             # Version history
+├── CONTRIBUTING.md          # Contribution guidelines
+├── docker-compose.test.yml  # Docker testing environment
+├── Dockerfile.runtime       # Runtime container
+├── Dockerfile.test          # Testing container
+├── install.sh               # Simple installation script
+├── LICENSE                  # MIT License
+├── Makefile                 # Build automation and development tasks
+├── README.md                # This file
+├── soft-delete.sh           # Source script
+└── VERSION                  # Version information
+```
+soft-delete/
+├── .editorconfig            # Code formatting standards
+├── .gitattributes           # Git file handling configuration
+├── .gitignore               # Git ignore patterns
+├── .markdownlint.yaml       # Markdown linting configuration
+├── .shellcheckrc            # Shell script linting configuration
+├── .github/
+│   └── workflows/
+│       └── release.yml      # GitHub Actions CI/CD pipeline
+├── .warp/                   # Warp.dev AI configuration
+│   ├── README.md            # Warp configuration documentation
+│   ├── project-context.md   # Main project context
+│   ├── protocols/           # Development protocols
+│   │   └── 10 protocol files  # Standard workflows and procedures
+│   ├── rules/               # AI agent rules and guidelines
+│   │   └── 4 rule files        # Behavioral guidelines
+│   └── templates/           # Rule templates
+├── bin/
+│   └── soft-delete          # Built executable
+├── dist/                    # Distribution files
+├── docs/                    # Documentation
+│   ├── API.md               # Comprehensive API documentation
+│   ├── DEPLOYMENT.md        # Deployment automation guide
+│   ├── SECURITY.md          # Security policy and reporting
+│   └── TESTING.md           # Testing guide and infrastructure
+├── examples/                # Usage examples
+│   ├── README.md            # Examples documentation
+│   ├── basic_usage.sh       # Basic usage examples
+│   └── advanced_usage.sh    # Advanced integration examples
+├── Formula/
+│   └── soft-delete.rb       # Homebrew formula
+├── reports/                 # Test reports and artifacts
+│   └── .gitkeep             # Keep directory in git
+├── scripts/                 # Utility scripts
+│   ├── benchmark.sh         # Performance testing
+│   ├── checkpoint.sh
+│   ├── cleanup.sh           # Comprehensive cleanup utility
+│   ├── compliance-check.sh  # 100% compliance verification
+│   ├── deploy.sh            # Deployment automation system
+│   ├── pre-commit-hook.sh
+│   └── ... (7 more scripts)
+├── tests/                   # Test files
+│   ├── edge-cases.bats      # Edge case test suite
+│   ├── soft-delete.bats     # Main test suite
+│   └── test_helper.bash     # Test utilities and helpers
+├── CHANGELOG.md             # Version history
+├── CONTRIBUTING.md          # Contribution guidelines
+├── docker-compose.test.yml  # Docker testing environment
+├── Dockerfile.runtime       # Runtime container
+├── Dockerfile.test          # Testing container
+├── install.sh               # Simple installation script
+├── LICENSE                  # MIT License
+├── Makefile                 # Build automation and development tasks
+├── README.md                # This file
+├── soft-delete.sh           # Source script
+└── VERSION                  # Version information
 ```
 
 ## Contributing

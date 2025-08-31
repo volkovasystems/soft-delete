@@ -203,6 +203,86 @@ check_protocol_compliance() {
     return 0
 }
 
+# Check 6: Structure Documentation Synchronization
+check_structure_documentation_sync() {
+    log_info "Checking structure documentation synchronization..."
+    
+    local structure_changes=false
+    local doc_changes=false
+    
+    # Check if any structural changes are being committed
+    while IFS= read -r file; do
+        if [[ -n "$file" ]]; then
+            # Files/changes that affect structure
+            if [[ "$file" =~ ^(scripts/.*\.sh|docs/.*\.md|\.warp/.*\.md|examples/.*\.(sh|md)|tests/.*\.bats)$ ]]; then
+                structure_changes=true
+            elif [[ "$file" =~ ^(Dockerfile|docker-compose|Makefile|.*\.yml|\.gitignore|\.editorconfig)$ ]]; then
+                structure_changes=true
+            elif [[ "$file" =~ ^(bin/|Formula/|reports/).*$ ]]; then
+                structure_changes=true
+            fi
+            
+            # Check if documentation with structure sections is being modified
+            if [[ "$file" == "README.md" || "$file" == "CONTRIBUTING.md" ]]; then
+                doc_changes=true
+            fi
+        fi
+    done <<< "$staged_files"
+    
+    # If structural changes detected, check if structure documentation might need updating
+    if [[ "$structure_changes" == "true" ]]; then
+        log_info "Structural changes detected in staged files"
+        
+        # Check if sync-structure script is available
+        if [[ -x "scripts/sync-structure.sh" ]]; then
+            # Run quick structure validation (non-destructive)
+            if ! ./scripts/sync-structure.sh --validate-only >/dev/null 2>&1; then
+                log_warning "Structure documentation may need synchronization"
+                echo ""
+                echo -e "${YELLOW}⚠️  STRUCTURE SYNC RECOMMENDATION:${NC}"
+                echo "Consider running: ./scripts/sync-structure.sh"
+                echo "This will update project structure documentation automatically."
+                echo ""
+            else
+                log_success "Structure documentation appears synchronized"
+            fi
+        else
+            log_warning "Structure synchronization script not found"
+        fi
+    fi
+    
+    # Additional check: if documentation files are being modified, ensure they have current structure
+    if [[ "$doc_changes" == "true" ]]; then
+        log_info "Documentation files with potential structure sections being modified"
+        
+        # Check for outdated .warp file counts
+        if echo "$staged_files" | grep -q "README.md"; then
+            if [[ -d ".warp/protocols" && -d ".warp/rules" ]]; then
+                local actual_protocols actual_rules
+                actual_protocols=$(find .warp/protocols -name "*.md" -type f 2>/dev/null | wc -l)
+                actual_rules=$(find .warp/rules -name "*.md" -type f 2>/dev/null | wc -l)
+                
+                # Check staged README.md content for file counts
+                local staged_readme_content
+                staged_readme_content=$(git show :README.md 2>/dev/null || cat README.md)
+                
+                # Extract documented counts from staged content
+                local documented_protocols documented_rules
+                documented_protocols=$(echo "$staged_readme_content" | grep -o "[0-9]\+ protocol files" | head -1 | grep -o "[0-9]\+" || echo "0")
+                documented_rules=$(echo "$staged_readme_content" | grep -o "[0-9]\+ rule files" | head -1 | grep -o "[0-9]\+" || echo "0")
+                
+                if [[ "$actual_protocols" != "$documented_protocols" || "$actual_rules" != "$documented_rules" ]]; then
+                    log_warning "File counts in README.md may be outdated"
+                    echo "  Actual: $actual_protocols protocols, $actual_rules rules"
+                    echo "  Documented: $documented_protocols protocols, $documented_rules rules"
+                fi
+            fi
+        fi
+    fi
+    
+    return 0
+}
+
 # Run all compliance checks
 main() {
     local exit_code=0
@@ -228,6 +308,10 @@ main() {
         exit_code=1
     fi
     
+    if ! check_structure_documentation_sync; then
+        exit_code=1
+    fi
+    
     # Final result
     echo ""
     if [[ $exit_code -eq 0 ]]; then
@@ -243,7 +327,8 @@ main() {
         echo "1. Update CHANGELOG.md following our protocol"
         echo "2. Run: git add CHANGELOG.md"
         echo "3. Fix any file compliance issues"
-        echo "4. Re-attempt commit"
+        echo "4. Run: ./scripts/sync-structure.sh (if structure changed)"
+        echo "5. Re-attempt commit"
         echo ""
         return 1
     fi

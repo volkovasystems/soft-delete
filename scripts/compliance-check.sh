@@ -493,12 +493,105 @@ validate_example_consistency() {
     return $inconsistent_examples
 }
 
+# Additional structure synchronization validation
+validate_structure_documentation_sync() {
+    local sync_issues=0
+    
+    log_info "Checking if project structure documentation is synchronized..."
+    
+    # Check if sync-structure script exists and is executable
+    if [[ ! -x "scripts/sync-structure.sh" ]]; then
+        log_error "Structure synchronization script missing or not executable"
+        return 1
+    fi
+    
+    # Generate current structure and compare with documentation
+    local temp_structure
+    temp_structure=$(mktemp)
+    ./scripts/sync-structure.sh --generate-tree > "$temp_structure" 2>/dev/null
+    
+    # Check README.md structure section
+    if [[ -f "README.md" ]]; then
+        if ! grep -A 50 "### Project Structure" README.md | diff -q "$temp_structure" - >/dev/null 2>&1; then
+            log_warning "Project structure in README.md may be outdated"
+            sync_issues=$((sync_issues + 1))
+        fi
+    fi
+    
+    # Check CONTRIBUTING.md structure section
+    if [[ -f "CONTRIBUTING.md" ]]; then
+        if grep -q "### Project Structure" CONTRIBUTING.md; then
+            if ! grep -A 50 "### Project Structure" CONTRIBUTING.md | diff -q "$temp_structure" - >/dev/null 2>&1; then
+                log_warning "Project structure in CONTRIBUTING.md may be outdated"
+                sync_issues=$((sync_issues + 1))
+            fi
+        fi
+    fi
+    
+    # Clean up
+    rm -f "$temp_structure"
+    
+    return $sync_issues
+}
+
+validate_warp_structure_consistency() {
+    local warp_issues=0
+    
+    # Check if .warp directory documentation is consistent
+    if [[ -d ".warp" ]]; then
+        # Count actual files in .warp subdirectories
+        local actual_protocols
+        local actual_rules
+        actual_protocols=$(find .warp/protocols -name "*.md" -type f 2>/dev/null | wc -l)
+        actual_rules=$(find .warp/rules -name "*.md" -type f 2>/dev/null | wc -l)
+        
+        # Check documentation mentions correct counts
+        if grep -q "protocol files" README.md; then
+            local documented_protocols
+            documented_protocols=$(grep -o "[0-9]\+ protocol files" README.md | grep -o "[0-9]\+")
+            if [[ "$actual_protocols" != "$documented_protocols" ]]; then
+                log_error "Protocol file count mismatch: actual=$actual_protocols, documented=$documented_protocols"
+                warp_issues=$((warp_issues + 1))
+            fi
+        fi
+        
+        if grep -q "rule files" README.md; then
+            local documented_rules
+            documented_rules=$(grep -o "[0-9]\+ rule files" README.md | grep -o "[0-9]\+")
+            if [[ "$actual_rules" != "$documented_rules" ]]; then
+                log_error "Rule file count mismatch: actual=$actual_rules, documented=$documented_rules"
+                warp_issues=$((warp_issues + 1))
+            fi
+        fi
+    fi
+    
+    return $warp_issues
+}
+
 # Run structural alignment checks
+log_info "🏗️  STRUCTURAL ALIGNMENT & DOCUMENTATION SYNC"
 log_info "Validating directory structure documentation..."
 if validate_directory_structure; then
     log_success "Directory structure: 100% aligned"
 else
     log_error "Directory structure: ALIGNMENT FAILURE"
+    COMPLIANCE_FAILED=1
+fi
+
+log_info "Validating structure documentation synchronization..."
+if validate_structure_documentation_sync; then
+    log_success "Structure documentation: 100% synchronized"
+else
+    log_error "Structure documentation: SYNCHRONIZATION ISSUES"
+    COMPLIANCE_FAILED=1
+fi
+
+log_info "Validating Warp.dev structure consistency..."
+if validate_warp_structure_consistency; then
+    log_success "Warp.dev structure: 100% consistent"
+else
+    log_error "Warp.dev structure: INCONSISTENCY DETECTED"
+    COMPLIANCE_FAILED=1
 fi
 
 log_info "Validating file path references..."
@@ -506,6 +599,7 @@ if validate_file_references; then
     log_success "File references: 100% valid"
 else
     log_error "File references: INVALID REFERENCES FOUND"
+    COMPLIANCE_FAILED=1
 fi
 
 log_info "Checking internal link integrity..."
@@ -513,6 +607,7 @@ if validate_internal_links; then
     log_success "Internal links: 100% valid"
 else
     log_error "Internal links: BROKEN LINKS FOUND"
+    COMPLIANCE_FAILED=1
 fi
 
 log_info "Validating documentation examples..."
@@ -520,6 +615,7 @@ if validate_example_consistency; then
     log_success "Examples: 100% consistent"
 else
     log_error "Examples: INCONSISTENT REFERENCES"
+    COMPLIANCE_FAILED=1
 fi
 
 # FINAL COMPLIANCE REPORT

@@ -48,6 +48,16 @@ jobs:
           echo "Starting Docker linting..."
           make docker-lint || echo "Linting completed with warnings (non-fatal)"
 
+      - name: Validate structure documentation synchronization
+        run: |
+          echo "Validating project structure documentation..."
+          if [ -x "scripts/sync-structure.sh" ]; then
+            ./scripts/sync-structure.sh --validate-only
+            echo "Structure documentation validation completed"
+          else
+            echo "Warning: Structure synchronization script not found"
+          fi
+
       - name: Upload test reports
         uses: actions/upload-artifact@v4
         if: always()

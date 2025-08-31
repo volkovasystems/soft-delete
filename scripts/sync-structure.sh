@@ -29,47 +29,118 @@ log_warning() {
 echo "🔄 REPOSITORY STRUCTURE SYNCHRONIZATION"
 echo "========================================"
 
-# Generate current directory tree
+# Generate current directory tree with comprehensive structure
 generate_directory_tree() {
-    local exclude_dirs=".git|node_modules|__pycache__|\.pytest_cache"
-    
-    echo "# Project Structure"
-    echo ""
     echo '```'
     echo "soft-delete/"
     
-    # Generate directory structure
-    find . -type d ! -path "./.git/*" ! -path "./node_modules/*" ! -name "__pycache__" | \
-    sort | sed 's|[^/]*/|├── |g; s|├── \./|├── |' | head -20
+    # Core files at root level
+    [[ -f ".editorconfig" ]] && echo "├── .editorconfig            # Code formatting standards"
+    [[ -f ".gitattributes" ]] && echo "├── .gitattributes           # Git file handling configuration"
+    [[ -f ".gitignore" ]] && echo "├── .gitignore               # Git ignore patterns"
+    [[ -f ".markdownlint.yaml" ]] && echo "├── .markdownlint.yaml       # Markdown linting configuration"
+    [[ -f ".shellcheckrc" ]] && echo "├── .shellcheckrc            # Shell script linting configuration"
     
-    echo ""
-    echo "# Key Files"
+    # Main directories with structure
+    if [[ -d ".github" ]]; then
+        echo "├── .github/"
+        [[ -d ".github/workflows" ]] && echo "│   └── workflows/"
+        [[ -f ".github/workflows/release.yml" ]] && echo "│       └── release.yml      # GitHub Actions CI/CD pipeline"
+    fi
     
-    # List important files with descriptions
-    if [[ -f "soft-delete.sh" ]]; then
-        echo "├── soft-delete.sh        # Main executable script"
+    if [[ -d ".warp" ]]; then
+        echo "├── .warp/                   # Warp.dev AI configuration"
+        [[ -f ".warp/README.md" ]] && echo "│   ├── README.md            # Warp configuration documentation"
+        [[ -f ".warp/project-context.md" ]] && echo "│   ├── project-context.md   # Main project context"
+        if [[ -d ".warp/protocols" ]]; then
+            echo "│   ├── protocols/           # Development protocols"
+            local protocol_count
+            protocol_count=$(find .warp/protocols -name "*.md" -type f | wc -l)
+            echo "│   │   └── ${protocol_count} protocol files  # Standard workflows and procedures"
+        fi
+        if [[ -d ".warp/rules" ]]; then
+            echo "│   ├── rules/               # AI agent rules and guidelines"
+            local rule_count
+            rule_count=$(find .warp/rules -name "*.md" -type f | wc -l)
+            echo "│   │   └── ${rule_count} rule files        # Behavioral guidelines"
+        fi
+        [[ -d ".warp/templates" ]] && echo "│   └── templates/           # Rule templates"
     fi
-    if [[ -f "README.md" ]]; then
-        echo "├── README.md            # Primary documentation"
+    
+    if [[ -d "bin" ]]; then
+        echo "├── bin/"
+        [[ -f "bin/soft-delete" ]] && echo "│   └── soft-delete          # Built executable"
     fi
-    if [[ -f "CHANGELOG.md" ]]; then
-        echo "├── CHANGELOG.md         # Version history"
+    [[ -d "dist" ]] && echo "├── dist/                    # Distribution files"
+    
+    if [[ -d "docs" ]]; then
+        echo "├── docs/                    # Documentation"
+        [[ -f "docs/API.md" ]] && echo "│   ├── API.md               # Comprehensive API documentation"
+        [[ -f "docs/DEPLOYMENT.md" ]] && echo "│   ├── DEPLOYMENT.md        # Deployment automation guide"
+        [[ -f "docs/SECURITY.md" ]] && echo "│   ├── SECURITY.md          # Security policy and reporting"
+        [[ -f "docs/TESTING.md" ]] && echo "│   └── TESTING.md           # Testing guide and infrastructure"
     fi
-    if [[ -f "CONTRIBUTING.md" ]]; then
-        echo "├── CONTRIBUTING.md      # Contribution guidelines"
+    
+    if [[ -d "examples" ]]; then
+        echo "├── examples/                # Usage examples"
+        [[ -f "examples/README.md" ]] && echo "│   ├── README.md            # Examples documentation"
+        [[ -f "examples/basic_usage.sh" ]] && echo "│   ├── basic_usage.sh       # Basic usage examples"
+        [[ -f "examples/advanced_usage.sh" ]] && echo "│   └── advanced_usage.sh    # Advanced integration examples"
     fi
-    if [[ -f "Makefile" ]]; then
-        echo "├── Makefile            # Build system"
-    fi
-    if [[ -f "VERSION" ]]; then
-        echo "├── VERSION             # Version file"
-    fi
-    if [[ -f "install.sh" ]]; then
-        echo "├── install.sh          # Installation script"
-    fi
+    
     if [[ -d "Formula" ]]; then
-        echo "├── Formula/            # Homebrew formula"
+        echo "├── Formula/"
+        [[ -f "Formula/soft-delete.rb" ]] && echo "│   └── soft-delete.rb       # Homebrew formula"
     fi
+    if [[ -d "reports" ]]; then
+        echo "├── reports/                 # Test reports and artifacts"
+        echo "│   └── .gitkeep             # Keep directory in git"
+    fi
+    
+    if [[ -d "scripts" ]]; then
+        echo "├── scripts/                 # Utility scripts"
+        local script_count
+        script_count=$(find scripts -name "*.sh" -type f | wc -l)
+        local scripts_array
+        mapfile -t scripts_array < <(find scripts -name "*.sh" -type f | sort | head -6)
+        for script in "${scripts_array[@]}"; do
+            local basename_script
+            basename_script=$(basename "$script")
+            case "$basename_script" in
+                "benchmark.sh") echo "│   ├── benchmark.sh         # Performance testing" ;;
+                "cleanup.sh") echo "│   ├── cleanup.sh           # Comprehensive cleanup utility" ;;
+                "compliance-check.sh") echo "│   ├── compliance-check.sh  # 100% compliance verification" ;;
+                "deploy.sh") echo "│   ├── deploy.sh            # Deployment automation system" ;;
+                "run-tests.sh") echo "│   ├── run-tests.sh         # Docker-based test runner" ;;
+                "security-scan.sh") echo "│   ├── security-scan.sh     # Security vulnerability scanner" ;;
+                *) echo "│   ├── $basename_script" ;;
+            esac
+        done
+        if [[ $script_count -gt 6 ]]; then
+            local remaining=$((script_count - 6))
+            echo "│   └── ... (${remaining} more scripts)"
+        fi
+    fi
+    
+    if [[ -d "tests" ]]; then
+        echo "├── tests/                   # Test files"
+        [[ -f "tests/edge-cases.bats" ]] && echo "│   ├── edge-cases.bats      # Edge case test suite"
+        [[ -f "tests/soft-delete.bats" ]] && echo "│   ├── soft-delete.bats     # Main test suite"
+        [[ -f "tests/test_helper.bash" ]] && echo "│   └── test_helper.bash     # Test utilities and helpers"
+    fi
+    
+    # Root-level files
+    echo "├── CHANGELOG.md             # Version history"
+    echo "├── CONTRIBUTING.md          # Contribution guidelines"
+    [[ -f "docker-compose.test.yml" ]] && echo "├── docker-compose.test.yml  # Docker testing environment"
+    [[ -f "Dockerfile.runtime" ]] && echo "├── Dockerfile.runtime       # Runtime container"
+    [[ -f "Dockerfile.test" ]] && echo "├── Dockerfile.test          # Testing container"
+    [[ -f "install.sh" ]] && echo "├── install.sh               # Simple installation script"
+    [[ -f "LICENSE" ]] && echo "├── LICENSE                  # MIT License"
+    [[ -f "Makefile" ]] && echo "├── Makefile                 # Build automation and development tasks"
+    echo "├── README.md                # This file"
+    echo "├── soft-delete.sh           # Source script"
+    [[ -f "VERSION" ]] && echo "└── VERSION                  # Version information"
     
     echo '```'
 }
@@ -143,107 +214,17 @@ update_script_references() {
     rm -f "$temp_file"
 }
 
-# Generate API documentation based on actual scripts
-generate_api_docs() {
-    local api_doc="docs/API.md"
-    local temp_file
-    temp_file=$(mktemp)
+# Preserve existing API documentation (do not regenerate)
+preserve_api_docs() {
+    log_info "Preserving existing API documentation..."
     
-    log_info "Updating API documentation with current scripts..."
-    
-    {
-        echo "# Soft-Delete API Reference"
-        echo ""
-        echo "This document provides comprehensive API documentation for the soft-delete utility and its associated scripts."
-        echo ""
-        echo "## Table of Contents"
-        echo ""
-        echo "- [Core Utility](#core-utility)"
-        echo "- [Build System](#build-system)"
-        echo "- [Testing Infrastructure](#testing-infrastructure)"
-        echo "- [Utility Scripts](#utility-scripts)"
-        echo "- [Configuration Files](#configuration-files)"
-        echo ""
-        
-        echo "## Core Utility"
-        echo ""
-        if [[ -f "soft-delete.sh" ]]; then
-            echo "### soft-delete.sh"
-            echo ""
-            echo "**Location**: \`soft-delete.sh\`"
-            echo "**Purpose**: Main executable that safely moves files and directories to timestamped backup locations"
-            echo "**Language**: Bash 4.0+"
-            echo ""
-            
-            # Extract help text if available
-            if grep -q "Usage:" "soft-delete.sh"; then
-                echo "**Usage**:"
-                echo '```bash'
-                grep -A 10 "Usage:" "soft-delete.sh" | head -5 | sed 's/^echo "//' | sed 's/"$//'
-                echo '```'
-                echo ""
-            fi
-        fi
-        
-        echo "## Utility Scripts"
-        echo ""
-        
-        # Document all scripts in scripts/ directory
-        if [[ -d "scripts" ]]; then
-            for script in scripts/*.sh; do
-                if [[ -f "$script" ]]; then
-                    local script_name
-                    script_name=$(basename "$script")
-                    echo "### $script_name"
-                    echo ""
-                    echo "**Location**: \`$script\`"
-                    
-                    # Extract purpose from comments
-                    local purpose
-                    purpose=$(head -10 "$script" | grep "^#.*[Pp]urpose\|^#.*[Dd]escription" | head -1 | sed 's/^#[[:space:]]*//' || echo "Utility script")
-                    echo "**Purpose**: $purpose"
-                    echo ""
-                fi
-            done
-        fi
-        
-        echo "## Configuration Files"
-        echo ""
-        
-        # Document configuration files
-        if [[ -f "Makefile" ]]; then
-            echo "### Makefile"
-            echo ""
-            echo "**Location**: \`Makefile\`"
-            echo "**Purpose**: Build system and task automation"
-            echo ""
-        fi
-        
-        if [[ -f "VERSION" ]]; then
-            echo "### VERSION"
-            echo ""
-            echo "**Location**: \`VERSION\`"
-            echo "**Purpose**: Version information file"
-            echo ""
-        fi
-        
-        if [[ -d "Formula" ]]; then
-            echo "### Formula/"
-            echo ""
-            echo "**Location**: \`Formula/\`"
-            echo "**Purpose**: Homebrew formula for package distribution"
-            echo ""
-        fi
-        
-    } > "$temp_file"
-    
-    if [[ -s "$temp_file" ]]; then
-        mkdir -p "$(dirname "$api_doc")"
-        mv "$temp_file" "$api_doc"
-        log_success "Generated API documentation: $api_doc"
+    if [[ -f "docs/API.md" ]]; then
+        log_success "API documentation exists and is preserved"
+        log_info "Note: API.md contains comprehensive technical documentation"
+        log_info "      and should be manually maintained by developers"
     else
-        rm -f "$temp_file"
-        log_error "Failed to generate API documentation"
+        log_warning "API documentation file (docs/API.md) not found"
+        log_info "Consider creating comprehensive API documentation"
     fi
 }
 
@@ -350,10 +331,9 @@ validate_cross_references() {
 sync_all_documentation() {
     log_info "Starting comprehensive documentation synchronization..."
     
-    # Update project structure in key documents
+    # Update project structure in key documents (but NOT API.md)
     local docs_to_update=(
         "README.md"
-        "docs/API.md"
         ".warp/project-context.md"
     )
     
@@ -364,8 +344,8 @@ sync_all_documentation() {
         fi
     done
     
-    # Generate/update API documentation
-    generate_api_docs
+    # Preserve existing API documentation (do not regenerate)
+    preserve_api_docs
     
     # Sync version references
     sync_version_references
@@ -384,8 +364,8 @@ case "${1:-sync}" in
     --validate-only)
         validate_cross_references
         ;;
-    --api-docs)
-        generate_api_docs
+    --preserve-api)
+        preserve_api_docs
         ;;
     --version-sync)
         sync_version_references
