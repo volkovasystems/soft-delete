@@ -186,6 +186,25 @@ else
     git status --short
 fi
 
+# Check for dangling generated files that should not be committed
+log_info "Checking for dangling generated files..."
+generated_files_count=0
+
+# Check for report files that should be ignored
+while IFS= read -r -d '' file; do
+    if [[ "$file" =~ \.(tap|log)$ ]] || [[ "$file" =~ reports/.*\.(txt|tap)$ ]]; then
+        # Check if file is tracked in git (should not be)
+        if git ls-files --error-unmatch "$file" >/dev/null 2>&1; then
+            log_error "Generated file should not be tracked: $file"
+            generated_files_count=$((generated_files_count + 1))
+        fi
+    fi
+done < <(find . -name "*.tap" -o -name "*.log" -o -path "./reports/*.txt" -o -path "./reports/*.tap" -print0 2>/dev/null)
+
+if [[ $generated_files_count -eq 0 ]]; then
+    log_success "Generated files: 100% compliant (no tracked generated files)"
+fi
+
 # Recent commit message format verification (last 5 commits)
 log_info "Verifying recent commit message formats..."
 commit_format_failures=0

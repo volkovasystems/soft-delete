@@ -199,6 +199,36 @@ find docs/ -name "*.md" -not -perm 644 | wc -l     # Must be 0
 find . -name "Makefile" -not -perm 644 | wc -l     # Must be 0
 ```
 
+#### Generated File Management (MANDATORY)
+**Prohibited: Tracking generated files**
+```bash
+# REQUIRED: Generated files must not be tracked in git
+# Reports, logs, and temporary files must be gitignored
+
+# Check for tracked generated files (ZERO TOLERANCE)
+find . -name "*.tap" -o -name "*.log" | while read file; do
+    git ls-files --error-unmatch "$file" && exit 1
+done
+
+# Reports directory files must not be tracked
+find reports/ -name "*.txt" -o -name "*.tap" | while read file; do
+    git ls-files --error-unmatch "$file" && exit 1
+done
+```
+
+**Required .gitignore patterns:**
+```gitignore
+# Generated reports (exclude from version control)
+reports/*.tap
+reports/*.txt
+reports/**/*.tap
+reports/**/*.txt
+
+# Temporary and log files
+*.log
+*.tmp
+```
+
 ### 6. Security Compliance (MANDATORY 100%)
 
 #### Sensitive Data Protection (ZERO TOLERANCE)

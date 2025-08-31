@@ -44,6 +44,12 @@
 !*/**/*.yml
 !*/**/*.yaml
 
+# Generated reports (exclude from version control)
+reports/*.tap
+reports/*.txt
+reports/**/*.tap
+reports/**/*.txt
+
 # Deployment state files
 .deploy/
 *.state
