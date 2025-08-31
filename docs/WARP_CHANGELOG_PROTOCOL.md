@@ -36,6 +36,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - For vulnerabilities or mitigations
 ```
 
+## Organization Principles
+
+### Grouping and Structure
+- **Use subheadings (####)** to group related items within sections
+- **Organize by functional area** (Core Features, Development Infrastructure, Documentation, etc.)
+- **Keep entries concise** but descriptive enough to be meaningful
+- **Avoid excessive detail** - focus on user/developer impact
+- **Group related changes** logically rather than chronologically
+
+### Common Grouping Categories
+- **Core Features**: Main functionality and user-facing features
+- **Development Infrastructure**: Testing, build systems, CI/CD
+- **Documentation**: Guides, API docs, README updates
+- **Utility Scripts**: Helper scripts and tools
+- **Build & Automation**: Makefile, packaging, installation
+- **Configuration**: Config files, linting, formatting
+
 ## Section Guidelines
 
 ### Added
@@ -45,14 +62,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **New integrations** or tools
 - **New documentation** sections
 
-**Format**: Use present tense, be specific about what was added.
+**Format**: Use present tense, be specific about what was added. Group related items using subheadings (####) for better organization.
 
 **Examples**:
 ```markdown
-- Comprehensive deployment automation system with branch-based workflow
-- Version management script (`scripts/version.sh`) with semantic versioning
-- Make targets for developer-friendly deployment operations
-- Extensive deployment documentation (`docs/DEPLOYMENT.md`)
+#### Core Features
+- Safe file deletion with timestamped backups in `/tmp`
+- Command-line interface with comprehensive options
+- File permission preservation and atomic move operations
+
+#### Development Infrastructure  
+- Docker-based testing environment with TAP compliance
+- Comprehensive test suite with 45 test cases achieving 100% pass rate
+- ShellCheck configuration achieving 100% compliance
+
+#### Deployment System
+- Complete deployment script (`scripts/deploy.sh`) with branch-based workflow
+- Four deployment types: staging, release, test, and version-specific
+- Automated develop → staging → release workflow
 ```
 
 ### Changed
