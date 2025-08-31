@@ -240,13 +240,32 @@ check_version_updated() {
     local source_version
     source_version="$(git show "$source_branch:VERSION" 2>/dev/null || echo "0.0.0")"
     
+    # Special case for deploy-release: check if develop has newer version than release
+    # This handles the case where user updated version on develop but hasn't deployed to staging yet
+    if [[ "$source_branch" == "staging" && "$target_branch" == "release" ]]; then
+        local develop_version
+        develop_version="$(git show "develop:VERSION" 2>/dev/null || echo "0.0.0")"
+        
+        # If develop has newer version than release, but staging doesn't, suggest deploy-staging first
+        if [[ "$develop_version" != "$target_version" && "$source_version" == "$target_version" ]]; then
+            log_error "Version updated on develop ($develop_version) but not deployed to staging yet."
+            log_error "Staging: $source_version, Release: $target_version"
+            log_error "Please deploy to staging first: make deploy-staging"
+            return 1
+        fi
+    fi
+    
     if [[ "$source_version" == "$target_version" ]]; then
         log_error "Version not updated. Source ($source_branch): $source_version, Target ($target_branch): $target_version"
-        log_error "Please update the version before deployment using: ./scripts/version.sh patch|minor|major"
+        if [[ "$source_branch" == "develop" ]]; then
+            log_error "Please update the version before deployment using: ./scripts/version.sh patch|minor|major"
+        else
+            log_error "Source branch ($source_branch) needs to have a newer version than target ($target_branch)"
+        fi
         return 1
     fi
     
-    log_info "Version check passed. Source: $source_version, Target: $target_version"
+    log_info "Version check passed. Source ($source_branch): $source_version, Target ($target_branch): $target_version"
     return 0
 }
 
