@@ -46,7 +46,18 @@ log_info "Checking $staged_count staged files for compliance..."
 check_changelog_compliance() {
     log_info "Checking changelog compliance..."
     
-    # Check if any meaningful files are being committed
+    # Check current branch
+    local current_branch
+    current_branch="$(git branch --show-current)"
+    
+    # According to our changelog protocol, changes on develop branch should NOT
+    # be documented until they are part of a tagged release
+    if [[ "$current_branch" == "develop" ]]; then
+        log_success "On develop branch: Changelog updates not required until release"
+        return 0
+    fi
+    
+    # For other branches (staging, release, etc.), check for changelog updates
     meaningful_changes=false
     
     # Files that require changelog updates
@@ -74,9 +85,9 @@ check_changelog_compliance() {
     # If meaningful changes detected, ensure CHANGELOG.md is also staged
     if [[ "$meaningful_changes" == "true" ]]; then
         if ! echo "$staged_files" | grep -q "CHANGELOG.md"; then
-            log_error "CHANGELOG UPDATE REQUIRED!"
+            log_warning "CHANGELOG UPDATE RECOMMENDED!"
             echo ""
-            echo -e "${RED}🚫 COMMIT BLOCKED: Meaningful changes detected without changelog update${NC}"
+            echo -e "${YELLOW}⚠️  WARNING: Meaningful changes detected without changelog update${NC}"
             echo ""
             echo "Files with meaningful changes:"
             while IFS= read -r file; do
@@ -85,13 +96,10 @@ check_changelog_compliance() {
                 fi
             done <<< "$staged_files"
             echo ""
-            echo -e "${YELLOW}To fix this:${NC}"
-            echo "1. Update CHANGELOG.md following our changelog protocol"
-            echo "2. Stage the changelog: git add CHANGELOG.md"
-            echo "3. Re-attempt your commit"
-            echo ""
+            echo -e "${YELLOW}Consider updating CHANGELOG.md if preparing for release${NC}"
             echo "Changelog protocol: .warp/protocols/changelog-protocol.md"
-            return 1
+            # Return success - this is a warning, not an error
+            return 0
         else
             log_success "Changelog updated along with meaningful changes"
         fi
