@@ -164,6 +164,11 @@ This release represents the completion of a comprehensive quality assurance prog
   - Enhanced version checking to better handle develop → staging → release branch workflow
   - Added intelligent error messaging when version updates exist on develop but haven't been deployed to staging
   - Improved guidance for users when deployment branches are out of sync with latest version changes
+- **Critical Deployment Script Bug Fixes**: Fixed script execution issues preventing proper dry-run functionality
+  - Fixed log_debug function causing script exit due to `set -euo pipefail` when VERBOSE=false
+  - Fixed argument parsing to properly handle options placed after commands (e.g., `deploy-staging --dry-run`)
+  - Resolved script termination issues that prevented dry-run operations from completing successfully
+  - Enhanced error handling and debugging capabilities for deployment troubleshooting
 - Resolved all shellcheck warnings, achieving 100% compliance across 12 shell files
 - Addressed SC2155 warnings by separating variable declarations
 - Fixed SC2164 warnings with enhanced error handling for cd commands
