@@ -1,7 +1,8 @@
 class SoftDelete < Formula
   desc "Safe file deletion utility that moves files to timestamped backup locations"
   homepage "https://github.com/volkovasystems/soft-delete"
-  url "https://github.com/volkovasystems/soft-delete/archive/refs/tags/v0.0.0.tar.gz"
+  # Version is maintained in /VERSION file - update via deployment scripts
+  url "https://github.com/volkovasystems/soft-delete/archive/refs/tags/v#{version}.tar.gz"
   sha256 "PLACEHOLDER_SHA256"
   license "MIT"
 
