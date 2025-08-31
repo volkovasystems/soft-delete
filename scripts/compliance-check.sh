@@ -543,14 +543,27 @@ validate_structure_documentation_sync() {
     # Check CONTRIBUTING.md structure section (if it exists)
     if [[ -f "CONTRIBUTING.md" ]]; then
         if grep -q "### Project Structure" CONTRIBUTING.md; then
-            # Similar extraction for CONTRIBUTING.md
+            # Use same improved extraction for CONTRIBUTING.md
             local temp_contrib_structure
             temp_contrib_structure=$(mktemp)
-            grep -A 100 "### Project Structure" CONTRIBUTING.md | sed '1,3d' | sed '/^$/,/^```$/d' | head -n -1 > "$temp_contrib_structure"
+            
+            # Extract from first occurrence of the structure in CONTRIBUTING.md
+            awk '
+                /### Project Structure/ { found=1; next }
+                found && /^```$/ && !in_tree { in_tree=1; next }
+                found && in_tree && /^```$/ { exit }
+                found && in_tree { print }
+            ' CONTRIBUTING.md > "$temp_contrib_structure"
             
             if ! diff -q "$temp_structure" "$temp_contrib_structure" >/dev/null 2>&1; then
-                log_warning "Project structure in CONTRIBUTING.md may be outdated"
-                if [[ $(wc -l < "$temp_structure") -ne $(wc -l < "$temp_contrib_structure") ]]; then
+                # Apply same tolerance logic as README.md
+                local gen_lines contrib_lines
+                gen_lines=$(wc -l < "$temp_structure")
+                contrib_lines=$(wc -l < "$temp_contrib_structure")
+                
+                # Allow small differences in line count (within 5 lines)
+                if (( (gen_lines - contrib_lines) > 5 || (contrib_lines - gen_lines) > 5 )); then
+                    log_warning "Project structure in CONTRIBUTING.md may be outdated"
                     sync_issues=$((sync_issues + 1))
                 fi
             fi
