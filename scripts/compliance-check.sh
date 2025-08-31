@@ -256,7 +256,12 @@ fi
 
 # Check for hardcoded credentials in files (exclude security scanner itself and workflow files)
 log_info "Scanning for hardcoded credentials..."
-credential_matches=$(grep -r -i "password\s*=\s*['\"][^'\"]*['\"]\|api[_-]?key\s*=\s*['\"][^'\"]*['\"]" . --exclude-dir=.git --exclude-dir=node_modules --exclude="*.log" --exclude="security-scan.sh" --exclude="*.yml" 2>/dev/null | wc -l)
+credential_results=$(grep -r "password\s*=\|api_key\s*=\|secret\s*=" . --exclude-dir=.git --exclude-dir=node_modules --exclude="*.log" --exclude="security-scan.sh" --exclude="*.yml" 2>/dev/null | grep -v "compliance-check.sh" || true)
+if [[ -z "$credential_results" ]]; then
+    credential_matches=0
+else
+    credential_matches=$(echo "$credential_results" | wc -l)
+fi
 if [[ $credential_matches -eq 0 ]]; then
     log_success "Credentials: 100% compliant (no hardcoded values)"
 else
