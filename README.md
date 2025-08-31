@@ -2,7 +2,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Bash](https://img.shields.io/badge/bash-%3E%3D4.0-green.svg)](https://www.gnu.org/software/bash/)
-[![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)](https://github.com/volkovasystems/soft-delete)
+[![Version](https://img.shields.io/badge/version-0.0.0-blue.svg)](https://github.com/volkovasystems/soft-delete)
 
 A safe file deletion utility that moves files and directories to timestamped backup locations instead of permanently deleting them.
 

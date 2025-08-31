@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+- **REVERTED VERSION**: Reverted version from 0.1.0 back to 0.0.0 by developer request
+- Updated VERSION file: 0.1.0 → 0.0.0
+- Updated README.md version badge: 0.1.0 → 0.0.0
+
+### Added
+- **AI Version Control Protocol**: Established strict protocol preventing AI from modifying version numbers
+- Created `.warp/AI_VERSION_CONTROL_PROTOCOL.md` with absolute prohibition rules
+- Enhanced structural alignment validation to check for version control protocol compliance
+- Version protection system ensuring only developers can modify version numbers
+
+### Security
+- **Version Management Security**: AI systems now cannot modify versions without explicit developer authorization
+- Established version change validation requirements and exception conditions
+- Added protocol violation consequences and enforcement mechanisms
+
 ## [0.1.0] - 2025-08-31
 
 ### Added
