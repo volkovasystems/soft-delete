@@ -406,6 +406,49 @@ deploy_staging() {
     fi
 }
 
+# Function to check if staging deployment was completed
+check_staging_deployment() {
+    log_step "Verifying staging deployment status..."
+    
+    # Check if staging deployment state exists
+    if ! load_state "staging" 2>/dev/null; then
+        log_error "No staging deployment found. Please deploy to staging first."
+        log_error "Run: $SCRIPT_NAME deploy-staging"
+        return 1
+    fi
+    
+    # Verify staging branch is up to date with remote
+    log_debug "Checking staging branch synchronization..."
+    git fetch origin staging --quiet
+    
+    local local_staging_commit
+    local_staging_commit="$(git rev-parse staging)"
+    local remote_staging_commit
+    remote_staging_commit="$(git rev-parse origin/staging)"
+    
+    if [[ "$local_staging_commit" != "$remote_staging_commit" ]]; then
+        log_error "Local staging branch is not synchronized with remote."
+        log_error "Local:  $local_staging_commit"
+        log_error "Remote: $remote_staging_commit"
+        log_error "Please ensure staging deployment completed successfully."
+        return 1
+    fi
+    
+    # Verify staging branch contains develop changes
+    log_debug "Checking staging contains latest develop changes..."
+    local develop_commit
+    develop_commit="$(git rev-parse develop)"
+    
+    if ! git merge-base --is-ancestor "$develop_commit" staging 2>/dev/null; then
+        log_error "Staging branch does not contain latest develop changes."
+        log_error "Please redeploy to staging: $SCRIPT_NAME deploy-staging"
+        return 1
+    fi
+    
+    log_success "Staging deployment verification passed"
+    return 0
+}
+
 # Function to deploy to release
 deploy_release() {
     local dry_run="${1:-false}"
@@ -422,6 +465,11 @@ deploy_release() {
     if [[ "$force" != "true" ]]; then
         check_working_directory || return 1
         check_remote_access || return 1
+        
+        # Check staging deployment was completed
+        if ! check_staging_deployment; then
+            return 1
+        fi
         
         # Check version was updated
         if ! check_version_updated "staging" "release"; then
