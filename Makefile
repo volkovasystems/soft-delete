@@ -172,11 +172,13 @@ deploy-staging-dry:
 	@./scripts/deploy.sh deploy-staging --dry-run
 
 .PHONY: deploy-release
-deploy-release:
+deploy-release: deploy-staging
+	@echo "Staging deployment completed. Now deploying to release..."
 	@./scripts/deploy.sh deploy-release
 
 .PHONY: deploy-release-dry
-deploy-release-dry:
+deploy-release-dry: deploy-staging-dry
+	@echo "Staging deployment (dry-run) completed. Now deploying to release (dry-run)..."
 	@./scripts/deploy.sh deploy-release --dry-run
 
 .PHONY: deploy-test
@@ -368,6 +370,9 @@ help:
 	@echo "  version-major    - Increment major version (x.0.0)"
 	@echo "  version-minor    - Increment minor version (x.y.0)"
 	@echo "  version-patch    - Increment patch version (x.y.z)"
+	@echo "  deploy-staging   - Deploy develop to staging"
+	@echo "  deploy-release   - Deploy to staging first, then to release (full pipeline)"
+	@echo "  deploy-test      - Deploy develop to test branch"
 	@echo "  help             - Show this help message"
 	@echo ""
 	@echo "Docker Test Targets:"
