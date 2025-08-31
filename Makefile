@@ -213,28 +213,32 @@ revert-test:
 docker-test: build
 	@echo "Running tests in Docker with TAP output..."
 	@mkdir -p reports
-	@docker-compose -f docker-compose.test.yml up --build test
+	@docker-compose -f docker-compose.test.yml down --remove-orphans 2>/dev/null || true
+	@docker-compose -f docker-compose.test.yml up --build --force-recreate test
 	@echo "Tests completed. TAP reports available in ./reports/"
 
 .PHONY: docker-test-verbose
 docker-test-verbose: build
 	@echo "Running verbose tests in Docker..."
 	@mkdir -p reports
-	@docker-compose -f docker-compose.test.yml up --build test-verbose
+	@docker-compose -f docker-compose.test.yml down --remove-orphans 2>/dev/null || true
+	@docker-compose -f docker-compose.test.yml up --build --force-recreate test-verbose
 	@echo "Verbose tests completed. Reports available in ./reports/"
 
 .PHONY: docker-test-single
 docker-test-single: build
 	@echo "Running single test file in Docker..."
 	@mkdir -p reports
-	@docker-compose -f docker-compose.test.yml up --build test-single
+	@docker-compose -f docker-compose.test.yml down --remove-orphans 2>/dev/null || true
+	@docker-compose -f docker-compose.test.yml up --build --force-recreate test-single
 	@echo "Single test completed. Reports available in ./reports/"
 
 .PHONY: docker-lint
 docker-lint: build
 	@echo "Running shellcheck in Docker..."
 	@mkdir -p reports
-	@docker-compose -f docker-compose.test.yml up --build lint
+	@docker-compose -f docker-compose.test.yml down --remove-orphans 2>/dev/null || true
+	@docker-compose -f docker-compose.test.yml up --build --force-recreate lint
 	@echo "Linting completed. Results available in ./reports/shellcheck.txt"
 
 .PHONY: docker-clean

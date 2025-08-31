@@ -3,7 +3,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.test
-    container_name: soft-delete-test
+    # Remove fixed container name to avoid conflicts
+    # Docker Compose will generate unique names automatically
     volumes:
       # Mount source code (read-only)
       - ./bin:/app/bin:ro
