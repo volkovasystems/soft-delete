@@ -35,11 +35,15 @@ These rules define how AI agents should behave when working with the `soft-delet
 
 ### During Development
 ```bash
-# Development cycle
+# Continuous commit development cycle
 1. make build               # Build changes
-2. make docker-test         # Test changes
-3. Fix any failures         # Address issues
-4. Repeat until 100% pass   # Ensure quality
+2. ./scripts/quick-commit.sh implement feature "description"  # Immediate commit
+3. make docker-test         # Test changes
+4. ./scripts/quick-commit.sh -t "test results - status"       # Commit test results
+5. Fix any failures         # Address issues
+6. ./scripts/quick-commit.sh fix issue "description"          # Commit fixes immediately
+7. Repeat until 100% pass   # Ensure quality
+8. ./scripts/checkpoint.sh -t "milestone description"        # Create checkpoint
 ```
 
 ### After Changes
@@ -113,6 +117,34 @@ These rules define how AI agents should behave when working with the `soft-delet
 - Use `main` for stable releases
 - Create feature branches for large changes
 - Ensure clean git history
+
+### Continuous Commit Protocol (CRITICAL)
+**MANDATORY**: Every change must be committed immediately following these rules:
+
+1. **Immediate Commits**: Use `./scripts/quick-commit.sh` for every change
+   ```bash
+   # After any file modification
+   ./scripts/quick-commit.sh implement parser "add validation logic"
+   ./scripts/quick-commit.sh fix bug "handle edge case"
+   ./scripts/quick-commit.sh update docs "clarify usage examples"
+   ```
+
+2. **Test Result Commits**: Always commit test results immediately
+   ```bash
+   make docker-test
+   ./scripts/quick-commit.sh -t "all tests passing (45/45)"
+   # OR if tests fail
+   ./scripts/quick-commit.sh -t "3 tests failed in validation module"
+   ```
+
+3. **Milestone Checkpoints**: Use `./scripts/checkpoint.sh` for significant progress
+   ```bash
+   ./scripts/checkpoint.sh "core functionality complete with tests"
+   ./scripts/checkpoint.sh -t "feature ready for review"
+   ```
+
+4. **NEVER** leave uncommitted changes in working directory
+5. **Safe Revert**: Use `git reset --soft HEAD~N` to revert commits while preserving changes
 
 ## Communication Rules
 

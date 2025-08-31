@@ -47,4 +47,14 @@ Warp.dev reads files in this order:
 3. `.warp/rules/*.md` (behavioral rules and constraints)
 4. Root-level `WARP.md` (fallback for compatibility)
 
+## Rule Loading System
+
+Warp.dev automatically loads and recognizes established rules from this repository. When new rules are added to the `.warp/` directory structure, they become part of the project's development context.
+
+### Auto-Loading Behavior
+- **Protocols** in `.warp/protocols/` define standard workflows
+- **Rules** in `.warp/rules/` establish behavioral guidelines
+- **Templates** in `.warp/templates/` provide consistent formatting
+- **New additions** are automatically incorporated into agent knowledge
+
 This structure ensures comprehensive context while maintaining organization and maintainability.
