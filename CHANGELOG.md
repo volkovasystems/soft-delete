@@ -133,6 +133,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated regex patterns to use proper markdown link matching
 - Added source file comment to soft-delete.sh reference in docs/TESTING.md
 - Ensured all documented directories exist and are tracked
+- **Directory Structure Validation**: Enhanced compliance validation to handle subdirectories correctly
+- Fixed false positives for directories like tap/, junit/, coverage/, artifacts/
+- Improved validation to check root, reports/, and .warp/ subdirectories
 
 ### Security
 - Implemented comprehensive vulnerability scanning

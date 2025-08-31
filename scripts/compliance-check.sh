@@ -353,19 +353,40 @@ log_info "🏗️  Checking Structural Alignment Compliance..."
 
 # Structural alignment validation functions
 validate_directory_structure() {
-    # Extract documented directories from all documentation
+    # Extract documented directories from all documentation with context
     local documented_dirs=()
+    local missing_dirs=0
+    
+    # Check for directories mentioned in directory tree structures
     while IFS= read -r line; do
         if [[ "$line" =~ ├──[[:space:]]+([a-zA-Z0-9_.-]+/) ]]; then
-            documented_dirs+=("${BASH_REMATCH[1]}")
+            local dir_name="${BASH_REMATCH[1]}"
+            documented_dirs+=("$dir_name")
         fi
     done < <(grep -h "├──" docs/*.md .warp/*.md README.md 2>/dev/null || true)
     
-    # Get actual directories
-    local missing_dirs=0
+    # Check each documented directory
     for doc_dir in "${documented_dirs[@]}"; do
-        if [[ -n "$doc_dir" && ! -d "$doc_dir" ]]; then
-            log_error "Documented directory missing: $doc_dir"
+        if [[ -n "$doc_dir" ]]; then
+            # Check if it's a root-level directory first
+            if [[ -d "$doc_dir" ]]; then
+                continue  # Directory exists at root level
+            fi
+            
+            # Check if it's a subdirectory of reports/
+            if [[ -d "reports/$doc_dir" ]]; then
+                continue  # Directory exists as reports subdirectory
+            fi
+            
+            # Check if it's documented as part of .warp structure
+            if [[ "$doc_dir" == "protocols" || "$doc_dir" == "rules" || "$doc_dir" == "templates" ]]; then
+                if [[ -d ".warp/$doc_dir" ]]; then
+                    continue  # Directory exists as .warp subdirectory
+                fi
+            fi
+            
+            # If we get here, the directory is missing
+            log_error "Documented directory missing: $doc_dir (checked root, reports/, and .warp/)"
             missing_dirs=$((missing_dirs + 1))
         fi
     done
