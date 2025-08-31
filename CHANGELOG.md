@@ -8,97 +8,58 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.0.0] - 2025-08-31
 
 ### Added
-- Initial core features for soft-delete
-- Command-line interface and standard options
-- Safe file deletion with timestamped backups
-- File permission preservation system
-- Backup directory with unique identifiers
-- Homebrew formula and installation support
-- Makefile targets for automation and version management
-- GitHub Actions workflow with testing and release automation
-- Docker-based testing environment with TAP compliance
-- Docker Compose orchestration for test services
-- TAP version 14 compliant test output
-- Isolated test environment with volume mounting
-- BATS libraries integration (bats-support, bats-assert, bats-file)
-- Test report generation and artifact management
-- Comprehensive cleanup script for build and deployment
-- Selective cleanup by artifact type (build, temp, docker, reports, deployment)
-- Dry-run mode with cleanup preview and statistics
-- Force mode and confirmation prompts for safety
-- Verbose and quiet modes for different use cases
-- Multiple cleanup targets for Makefile
-- Cleanup integration with build process
-- Test helper functions with TAP-compliant logging
-- Enhanced error handling and validation in tests
-- Comprehensive security scanning and vulnerability detection
-- Hardcoded secrets detection and path traversal protection
-- Input validation analysis and Docker security scanning
-- Performance benchmarking suite with memory usage analysis
-- Performance regression testing and detailed reporting
-- Concurrent operation and stress testing capabilities
-- Comprehensive edge case testing for special characters and Unicode
-- Binary file, symlink, and filesystem edge case coverage
-- Concurrent operation testing and data integrity verification
-- Comprehensive shellcheck configuration and git attributes
-- Editor configuration for consistent code formatting
-- Support for files starting with dash using -- argument handling
-- Enhanced argument parsing with proper -- end-of-options support
+
+#### Core Features
+- Safe file deletion with timestamped backups in `/tmp`
+- Command-line interface with comprehensive options (`--help`, `--version`, `--path`, `--verbose`)
+- File permission preservation and atomic move operations
+- Support for files starting with dash using proper `--` argument handling
 - Broken symbolic link detection and handling capabilities
-- Comprehensive test suite with error handling and validation
-- Comprehensive API documentation with function-level references
-- Comprehensive Docker testing documentation
-- Cleanup system usage guide and examples
-- Troubleshooting guide for Docker testing
-- TAP compliance and testing best practices
-- Performance benchmarking and security scanning documentation
-- Basic usage examples and installation guide
+
+#### Development & Testing Infrastructure
+- Docker-based testing environment with TAP version 14 compliance
+- Comprehensive test suite with 45 test cases achieving 100% pass rate
+- BATS integration with support libraries (bats-support, bats-assert, bats-file)
+- ShellCheck configuration achieving 100% compliance across 14 shell scripts
+- Performance benchmarking suite with memory usage analysis
+- Security scanning with vulnerability detection and path traversal protection
+
+#### Build & Automation
+- Comprehensive Makefile with build, test, lint, and package targets
+- GitHub Actions CI/CD pipeline with automated testing and releases
+- Homebrew formula and installation support
+- Cross-platform compatibility (Linux, macOS, BSD, Windows WSL, Android Termux)
+
+#### Documentation & Guides
+- Complete API documentation with function-level references
+- Comprehensive testing guide and Docker setup instructions
 - Contributing guidelines and code of conduct
-- Homebrew installation instructions
-- Makefile for project automation and packaging
-- .gitignore for project organization
-- Comprehensive linting configuration and project standards
-- Configuration management with `.markdownlint.yaml` for consistent markdown standards and quality compliance
-- TAP-compliant test results (`reports/tap/results.tap`) with 45 comprehensive test cases
-- Comprehensive update to README.md with current project structure and capabilities
-- Enhanced API.md with complete function documentation and examples
-- Comprehensive utility scripts in `scripts/` directory:
-  - `security-scan.sh`: Comprehensive security vulnerability scanner
-  - `benchmark.sh`: Performance testing and memory analysis
-  - `cleanup.sh`: Comprehensive cleanup utility with safety features
-  - `run-tests.sh`: Docker-based test runner
-  - `tap-formatter.sh`: TAP output formatter
-- Enhanced GitHub Actions workflow with security improvements and better error handling
-- `docs/` directory with API documentation and testing guides
-- Comprehensive Docker testing infrastructure with TAP compliance
-- Markdown linting, security scanning, and performance benchmarking
-- WARP.md guidance file for AI-assisted development
-- Production-ready deployment preparation and validation
-- Centralized VERSION file as single source of truth for version numbers
-- Version management script (`scripts/version.sh`) with semantic versioning support
-- Makefile integration for version management (version-major, version-minor, version-patch targets)
-- **Comprehensive Deployment Automation System**:
-  - Complete deployment script (`scripts/deploy.sh`) with branch-based workflow
-  - Four deployment types: staging, release, test, and version-specific deployments
-  - Automated develop → staging → release workflow with master/main synchronization
-  - Version validation requirements before deployments
-  - Remote connectivity and push access verification
-  - Dry-run capabilities for safe deployment previewing
-  - Force merge functionality with target branch overwrite protection
-  - Automatic semantic version tagging on release deployments
-  - State tracking system for deployment history and rollback support
-  - Comprehensive revert system for all deployment types with confirmation prompts
-  - Emergency rollback capabilities with full state restoration
-  - Make targets for developer-friendly deployment operations
-  - Extensive deployment documentation (`docs/DEPLOYMENT.md`)
-- **Advanced Developer Experience for Deployments**:
-  - Make targets: `deploy-staging`, `deploy-release`, `deploy-test`, `revert-*`
-  - Dry-run targets: `deploy-staging-dry`, `deploy-release-dry`, `deploy-test-dry`
-  - Status and cleanup targets: `deploy-status`, `deploy-cleanup`
-  - Color-coded logging with step-by-step deployment progress
-  - Comprehensive error handling and validation throughout deployment process
-  - Interactive confirmation prompts for destructive operations
-  - Deployment state files (.deploy/) for tracking and rollback capabilities
+- Performance benchmarking and security scanning documentation
+
+#### Utility Scripts
+- `scripts/security-scan.sh`: Security vulnerability scanner
+- `scripts/benchmark.sh`: Performance testing and analysis
+- `scripts/cleanup.sh`: Comprehensive cleanup utility with safety features
+- `scripts/run-tests.sh`: Docker-based test runner
+- `scripts/tap-formatter.sh`: TAP output formatter
+- `scripts/version.sh`: Semantic version management
+
+#### Version Management System
+- Centralized VERSION file as single source of truth
+- Semantic versioning script with increment operations (major, minor, patch)
+- Makefile integration for version management targets
+
+#### Deployment Automation System
+- Complete deployment script (`scripts/deploy.sh`) with branch-based workflow
+- Four deployment types: staging, release, test, and version-specific
+- Automated develop → staging → release workflow with master/main synchronization
+- Version validation and remote connectivity verification
+- Dry-run capabilities and force merge protection
+- Automatic semantic version tagging on releases
+- Comprehensive revert system with state tracking
+- Developer-friendly Make targets for all deployment operations
+- Extensive deployment documentation (`docs/DEPLOYMENT.md`)
+- Warp.dev changelog protocol documentation (`docs/WARP_CHANGELOG_PROTOCOL.md`)
 
 ### Changed
 - Streamlined and organized all configuration files for better maintainability:
