@@ -412,25 +412,23 @@ check_staging_deployment() {
     
     # Check if staging deployment state exists
     if ! load_state "staging" 2>/dev/null; then
-        log_error "No staging deployment found. Please deploy to staging first."
-        log_error "Run: $SCRIPT_NAME deploy-staging"
+        log_warn "No staging deployment found."
         return 1
     fi
     
     # Verify staging branch is up to date with remote
     log_debug "Checking staging branch synchronization..."
-    git fetch origin staging --quiet
+    git fetch origin staging --quiet 2>/dev/null || true
     
     local local_staging_commit
-    local_staging_commit="$(git rev-parse staging)"
+    local_staging_commit="$(git rev-parse staging 2>/dev/null || echo "none")"
     local remote_staging_commit
-    remote_staging_commit="$(git rev-parse origin/staging)"
+    remote_staging_commit="$(git rev-parse origin/staging 2>/dev/null || echo "none")"
     
     if [[ "$local_staging_commit" != "$remote_staging_commit" ]]; then
-        log_error "Local staging branch is not synchronized with remote."
-        log_error "Local:  $local_staging_commit"
-        log_error "Remote: $remote_staging_commit"
-        log_error "Please ensure staging deployment completed successfully."
+        log_warn "Local staging branch is not synchronized with remote."
+        log_debug "Local:  $local_staging_commit"
+        log_debug "Remote: $remote_staging_commit"
         return 1
     fi
     
@@ -440,13 +438,37 @@ check_staging_deployment() {
     develop_commit="$(git rev-parse develop)"
     
     if ! git merge-base --is-ancestor "$develop_commit" staging 2>/dev/null; then
-        log_error "Staging branch does not contain latest develop changes."
-        log_error "Please redeploy to staging: $SCRIPT_NAME deploy-staging"
+        log_warn "Staging branch does not contain latest develop changes."
         return 1
     fi
     
     log_success "Staging deployment verification passed"
     return 0
+}
+
+# Function to auto-deploy to staging if needed
+auto_deploy_staging_if_needed() {
+    local dry_run="${1:-false}"
+    local force="${2:-false}"
+    
+    log_info "Checking if staging deployment is needed..."
+    
+    if check_staging_deployment; then
+        log_info "Staging deployment is up to date, proceeding to release"
+        return 0
+    fi
+    
+    log_warn "Staging deployment is missing or outdated"
+    log_info "Automatically deploying to staging first..."
+    
+    # Run staging deployment with same options
+    if deploy_staging "$dry_run" "$force"; then
+        log_success "Staging deployment completed successfully"
+        return 0
+    else
+        log_error "Staging deployment failed, cannot proceed to release"
+        return 1
+    fi
 }
 
 # Function to deploy to release
@@ -466,8 +488,8 @@ deploy_release() {
         check_working_directory || return 1
         check_remote_access || return 1
         
-        # Check staging deployment was completed
-        if ! check_staging_deployment; then
+        # Auto-deploy to staging if needed
+        if ! auto_deploy_staging_if_needed "$dry_run" "$force"; then
             return 1
         fi
         
