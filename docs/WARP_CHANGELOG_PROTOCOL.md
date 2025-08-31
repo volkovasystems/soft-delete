@@ -15,8 +15,6 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
-
 ## [Version] - YYYY-MM-DD
 
 ### Added
@@ -113,19 +111,20 @@ Follow [Semantic Versioning 2.0.0](https://semver.org/spec/v2.0.0.html):
 ### Release Date Format
 Use ISO 8601 date format: `YYYY-MM-DD`
 
-### Unreleased Section
-Always maintain an `[Unreleased]` section at the top for ongoing work:
+### Version Structure
+Each release should be documented with a complete version entry:
 
 ```markdown
-## [Unreleased]
+## [1.0.0] - 2025-08-31
 
 ### Added
-- Work-in-progress features
+- New features for this release
 
 ### Changed
-- Ongoing improvements
+- Improvements made in this release
 
-## [1.0.0] - 2025-08-31
+### Fixed
+- Bug fixes included in this release
 ```
 
 ## Warp.dev Integration
@@ -249,7 +248,7 @@ git commit -m "chore: bump version to X.Y.Z with changelog updates"
 ### Regular Reviews
 - **Monthly**: Review changelog for consistency
 - **Before releases**: Ensure all changes are documented
-- **After major features**: Update unreleased section
+- **After major features**: Update current release entry
 
 ### Link Updates
 Maintain working links to:
