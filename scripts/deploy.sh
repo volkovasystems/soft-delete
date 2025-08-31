@@ -861,12 +861,16 @@ main() {
             deploy-staging|deploy-release|deploy-test|deploy-version|revert-staging|revert-release|revert-test|revert-version|status|cleanup)
                 command="$1"
                 shift
-                break
                 ;;
             *)
-                log_error "Unknown option: $1"
-                usage
-                exit 1
+                if [[ -z "$command" ]]; then
+                    log_error "Unknown option: $1"
+                    usage
+                    exit 1
+                else
+                    # This must be an argument to the command (like version number)
+                    break
+                fi
                 ;;
         esac
     done
