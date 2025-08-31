@@ -274,9 +274,9 @@ echo "✅ Testing: 100% compliant"
 # 3. Documentation Compliance
 echo "📚 Checking documentation compliance..."
 # Check for broken links
-find docs/ .warp/ -name "*.md" -exec grep -l '\[.*\](.*\.md)' {} \; | while read file; do
-    grep -o '\[.*\](.*\.md)' "$file" | while read link; do
-        target=$(echo "$link" | sed 's/.*(\([^)]*\)).*/\1/')
+find docs/ .warp/ -name "*.md" -exec grep -l '\[.*\]([^)]*\.md[^)]*)' {} \; | while read file; do
+    grep -o '\[.*\]([^)]*\.md[^)]*)' "$file" | while read link; do
+        target=$(echo "$link" | sed -n 's/.*](\([^)#]*\)).*/\1/p')
         [[ -f "$target" ]] || { echo "❌ Broken link in $file: $target"; exit 1; }
     done
 done

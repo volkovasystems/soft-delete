@@ -99,7 +99,7 @@ tests/
 ```yaml
 volumes:
   - ./bin:/app/bin:ro              # Source code (read-only)
-  - ./soft-delete.sh:/app/soft-delete.sh:ro
+  - ./soft-delete.sh:/app/soft-delete.sh:ro  # Source file mount
   - ./tests:/app/tests:ro
   - ./reports:/app/reports:rw      # Test reports (read-write)
   - test-workspace:/tmp/test-workspace:rw  # Isolated workspace
