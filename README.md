@@ -281,7 +281,8 @@ soft-delete/
 ├── docs/
 │   ├── API.md               # Comprehensive API documentation
 │   ├── DEPLOYMENT.md        # Deployment automation guide
-│   └── TESTING.md           # Testing guide and infrastructure
+│   ├── TESTING.md           # Testing guide and infrastructure
+│   └── WARP_CHANGELOG_PROTOCOL.md  # Warp.dev changelog protocol
 ├── examples/
 │   ├── README.md            # Examples documentation
 │   ├── basic_usage.sh       # Basic usage examples
