@@ -177,22 +177,21 @@ validate_executable_consistency() {
     local inconsistencies=0
     
     # Check for incorrect .sh references in user-facing documentation
-    for file in README.md; do
-        if [[ -f "$file" ]]; then
-            # Look for soft-delete.sh references that should be just soft-delete
-            while IFS= read -r line; do
-                # Skip lines that clearly refer to source code or development
-                if [[ "$line" =~ (source|repository|development|clone|git|\.sh.*#) ]]; then
-                    continue
-                fi
-                
-                # Check for .sh usage in examples or commands
-                if [[ "$line" =~ soft-delete\.sh[[:space:]] ]]; then
-                    log_warning "Potential .sh usage in user example in $file: $line"
-                fi
-            done < <(grep "soft-delete\.sh" "$file" 2>/dev/null || true)
-        fi
-    done
+    local readme_file="README.md"
+    if [[ -f "$readme_file" ]]; then
+        # Look for soft-delete.sh references that should be just soft-delete
+        while IFS= read -r line; do
+            # Skip lines that clearly refer to source code or development
+            if [[ "$line" =~ (source|repository|development|clone|git|\.sh.*#) ]]; then
+                continue
+            fi
+            
+            # Check for .sh usage in examples or commands
+            if [[ "$line" =~ soft-delete\.sh[[:space:]] ]]; then
+                log_warning "Potential .sh usage in user example in $readme_file: $line"
+            fi
+        done < <(grep "soft-delete\.sh" "$readme_file" 2>/dev/null || true)
+    fi
     
     # Check docs and examples directories
     for dir in docs examples; do
@@ -302,29 +301,28 @@ validate_table_of_contents() {
     local toc_failures=0
     
     # Check major documentation files for TOC accuracy
-    for doc in README.md; do
-        if [[ -f "$doc" ]]; then
-            # Look for table of contents sections
-            if grep -q "## Table of Contents\|# Table of Contents" "$doc"; then
-                # Extract TOC links
-                while IFS= read -r toc_link; do
-                    local anchor
-                    anchor=$(echo "$toc_link" | sed -n 's/.*](#\([^)]*\)).*/\1/p')
+    local readme_file="README.md"
+    if [[ -f "$readme_file" ]]; then
+        # Look for table of contents sections
+        if grep -q "## Table of Contents\|# Table of Contents" "$readme_file"; then
+            # Extract TOC links
+            while IFS= read -r toc_link; do
+                local anchor
+                anchor=$(echo "$toc_link" | sed -n 's/.*](#\([^)]*\)).*/\1/p')
+                
+                if [[ -n "$anchor" ]]; then
+                    # Convert anchor to header format
+                    local expected_header
+                    expected_header=$(echo "$anchor" | tr '-' ' ' | sed 's/.*/\L&/' | sed 's/\b\(.\)/\u\1/g')
                     
-                    if [[ -n "$anchor" ]]; then
-                        # Convert anchor to header format
-                        local expected_header
-                        expected_header=$(echo "$anchor" | tr '-' ' ' | sed 's/.*/\L&/' | sed 's/\b\(.\)/\u\1/g')
-                        
-                        # Check if corresponding header exists (simplified check)
-                        if ! grep -qi "^#.*$expected_header" "$doc" 2>/dev/null; then
-                            log_warning "Potential TOC mismatch in $doc: anchor #$anchor"
-                        fi
+                    # Check if corresponding header exists (simplified check)
+                    if ! grep -qi "^#.*$expected_header" "$readme_file" 2>/dev/null; then
+                        log_warning "Potential TOC mismatch in $readme_file: anchor #$anchor"
                     fi
-                done < <(grep -o '\[.*\](#[^)]*)' "$doc" 2>/dev/null | head -10)
-            fi
+                fi
+            done < <(grep -o '\[.*\](#[^)]*)' "$readme_file" 2>/dev/null | head -10)
         fi
-    done
+    fi
     
     # Check docs and .warp directories
     for dir in docs .warp; do

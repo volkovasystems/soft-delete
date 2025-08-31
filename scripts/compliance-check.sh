@@ -406,7 +406,8 @@ validate_internal_links() {
         if [[ -f "$file" ]]; then
             while IFS= read -r link; do
                 # Extract the link target
-                local target=$(echo "$link" | sed -n 's/.*](\([^)#]*\)).*/\1/p')
+                local target
+                target=$(echo "$link" | sed -n 's/.*](\([^)#]*\)).*/\1/p')
                 
                 # Skip external links and anchors
                 if [[ "$target" =~ ^https?:// || "$target" =~ ^# || -z "$target" ]]; then

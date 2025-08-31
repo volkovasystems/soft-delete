@@ -268,7 +268,22 @@ sync_version_references() {
     fi
     
     # Update other version references as needed
-    for file in docs/*.md .warp/*.md CONTRIBUTING.md 2>/dev/null; do
+    local doc_files=()
+    if [[ -d "docs" ]]; then
+        while IFS= read -r -d '' file; do
+            doc_files+=("$file")
+        done < <(find docs/ -name "*.md" -type f -print0)
+    fi
+    if [[ -d ".warp" ]]; then
+        while IFS= read -r -d '' file; do
+            doc_files+=("$file")
+        done < <(find .warp/ -name "*.md" -type f -print0)
+    fi
+    if [[ -f "CONTRIBUTING.md" ]]; then
+        doc_files+=("CONTRIBUTING.md")
+    fi
+    
+    for file in "${doc_files[@]}"; do
         if [[ -f "$file" && -w "$file" ]]; then
             # Look for version patterns and update them (conservatively)
             if grep -q "v[0-9]*\.[0-9]*\.[0-9]*" "$file"; then
@@ -285,7 +300,25 @@ validate_cross_references() {
     local broken_refs=0
     
     # Check internal markdown links
-    for file in docs/*.md .warp/*.md README.md CONTRIBUTING.md 2>/dev/null; do
+    local check_files=()
+    if [[ -d "docs" ]]; then
+        while IFS= read -r -d '' file; do
+            check_files+=("$file")
+        done < <(find docs/ -name "*.md" -type f -print0 2>/dev/null)
+    fi
+    if [[ -d ".warp" ]]; then
+        while IFS= read -r -d '' file; do
+            check_files+=("$file")
+        done < <(find .warp/ -name "*.md" -type f -print0 2>/dev/null)
+    fi
+    if [[ -f "README.md" ]]; then
+        check_files+=("README.md")
+    fi
+    if [[ -f "CONTRIBUTING.md" ]]; then
+        check_files+=("CONTRIBUTING.md")
+    fi
+    
+    for file in "${check_files[@]}"; do
         if [[ -f "$file" ]]; then
             while IFS= read -r link; do
                 local target
