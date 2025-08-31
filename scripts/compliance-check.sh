@@ -265,11 +265,16 @@ fi
 
 # Check for path traversal vulnerabilities (exclude legitimate relative paths to VERSION file)
 log_info "Checking for path traversal vulnerabilities..."
-path_traversal_count=$(grep -r "\.\./\|\.\.\\\\" . --exclude-dir=.git --include="*.sh" 2>/dev/null | grep -cv "VERSION")
-if [[ $path_traversal_count -eq 0 ]]; then
+path_traversal_results=$(find . -name "*.sh" -exec grep -H "\.\./" {} \; 2>/dev/null | grep -v "VERSION" || true)
+if [[ -z "$path_traversal_results" ]]; then
+    path_traversal_matches=0
+else
+    path_traversal_matches=$(echo "$path_traversal_results" | wc -l)
+fi
+if [[ $path_traversal_matches -eq 0 ]]; then
     log_success "Path security: 100% compliant"
 else
-    log_error "Path security: COMPLIANCE FAILURE ($path_traversal_count potential issues)"
+    log_error "Path security: COMPLIANCE FAILURE ($path_traversal_matches potential issues)"
 fi
 
 # 7. CONSISTENCY COMPLIANCE
