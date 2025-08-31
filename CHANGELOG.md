@@ -136,6 +136,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Directory Structure Validation**: Enhanced compliance validation to handle subdirectories correctly
 - Fixed false positives for directories like tap/, junit/, coverage/, artifacts/
 - Improved validation to check root, reports/, and .warp/ subdirectories
+- **Internal Link Validation**: Fixed false positives in markdown link checking by excluding code blocks
+- Improved directory name extraction to remove trailing slashes for consistent validation
+- Enhanced internal link pattern matching to ignore regex patterns like `*.md` in shell commands
+- Added proper code block filtering using AWK to prevent shell commands being treated as markdown links
 
 ### Security
 - Implemented comprehensive vulnerability scanning

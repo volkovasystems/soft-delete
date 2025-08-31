@@ -361,6 +361,8 @@ validate_directory_structure() {
     while IFS= read -r line; do
         if [[ "$line" =~ ├──[[:space:]]+([a-zA-Z0-9_.-]+/) ]]; then
             local dir_name="${BASH_REMATCH[1]}"
+            # Remove trailing slash if present for consistent checking
+            dir_name="${dir_name%/}"
             documented_dirs+=("$dir_name")
         fi
     done < <(grep -h "├──" docs/*.md .warp/*.md README.md 2>/dev/null || true)
@@ -382,6 +384,13 @@ validate_directory_structure() {
             if [[ "$doc_dir" == "protocols" || "$doc_dir" == "rules" || "$doc_dir" == "templates" ]]; then
                 if [[ -d ".warp/$doc_dir" ]]; then
                     continue  # Directory exists as .warp subdirectory
+                fi
+            fi
+            
+            # Check if it's a reports/ subdirectory (e.g., tap, junit, coverage, artifacts)
+            if [[ "$doc_dir" =~ ^(tap|junit|coverage|artifacts)$ ]]; then
+                if [[ -d "reports/$doc_dir" ]]; then
+                    continue  # Directory exists as reports subdirectory
                 fi
             fi
             
@@ -426,13 +435,27 @@ validate_internal_links() {
     # Check markdown links in documentation
     while IFS= read -r file; do
         if [[ -f "$file" ]]; then
+            # Extract content outside of code blocks for link checking
+            local content_without_code_blocks
+            content_without_code_blocks=$(awk '
+                /^```/ {
+                    if (in_code_block) {
+                        in_code_block = 0
+                    } else {
+                        in_code_block = 1
+                    }
+                    next
+                }
+                !in_code_block { print }
+            ' "$file")
+            
             while IFS= read -r link; do
                 # Extract the link target
                 local target
                 target=$(echo "$link" | sed -n 's/.*](\([^)#]*\)).*/\1/p')
                 
-                # Skip external links and anchors
-                if [[ "$target" =~ ^https?:// || "$target" =~ ^# || -z "$target" ]]; then
+                # Skip external links, anchors, and regex patterns
+                if [[ "$target" =~ ^https?:// || "$target" =~ ^# || -z "$target" || "$target" =~ \*|\.\* ]]; then
                     continue
                 fi
                 
@@ -441,7 +464,7 @@ validate_internal_links() {
                     log_error "Broken internal link in $file: $target"
                     broken_links=$((broken_links + 1))
                 fi
-            done < <(grep -o '\[.*\]([^)]*\.md[^)]*)' "$file" 2>/dev/null || true)
+            done < <(echo "$content_without_code_blocks" | grep -o '\[.*\]([^)]*\.md[^)]*)' 2>/dev/null || true)
         fi
     done < <(find docs/ .warp/ -name "*.md" 2>/dev/null; echo "README.md"; echo "CONTRIBUTING.md")
     
