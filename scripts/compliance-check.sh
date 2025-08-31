@@ -292,11 +292,17 @@ if [[ -f "VERSION" ]]; then
     # Check if this is a Homebrew project (has Formula directory)
     if [[ -d "Formula" ]]; then
         if [[ -f "Formula/soft-delete.rb" ]]; then
-            formula_version=$(grep -o 'version "[^"]*"' Formula/soft-delete.rb | cut -d'"' -f2 2>/dev/null || echo "")
-            if [[ "$version_content" == "$formula_version" ]]; then
-                log_success "Version consistency: 100% compliant"
+            # Check if Formula uses dynamic version reference (#{version})
+            if grep -q "#{version}" Formula/soft-delete.rb; then
+                log_success "Version consistency: Formula uses dynamic version reference"
             else
-                log_error "Version consistency: VERSION ($version_content) != Formula ($formula_version)"
+                # Check for hardcoded version
+                formula_version=$(grep -o 'version "[^"]*"' Formula/soft-delete.rb | cut -d'"' -f2 2>/dev/null || echo "")
+                if [[ "$version_content" == "$formula_version" ]]; then
+                    log_success "Version consistency: 100% compliant"
+                else
+                    log_error "Version consistency: VERSION ($version_content) != Formula ($formula_version)"
+                fi
             fi
         else
             log_error "Version consistency: Formula directory exists but soft-delete.rb missing"
