@@ -444,8 +444,8 @@ make deploy-staging      # Deploy develop → staging
 # Deploy to release
 make deploy-release      # Deploy staging → release (creates tags)
 
-# Deploy specific version
-./scripts/deploy.sh deploy-version 1.2.3
+# Deploy specific version (replace with desired version)
+./scripts/deploy.sh deploy-version 1.0.1
 
 # Check deployment status
 make deploy-status
@@ -468,9 +468,9 @@ make deploy-status
 ```bash
 # Version management
 make version-show        # Show current version
-make version-patch      # Increment patch: 1.0.0 → 1.0.1
-make version-minor      # Increment minor: 1.0.0 → 1.1.0
-make version-major      # Increment major: 1.0.0 → 2.0.0
+make version-patch      # Increment patch: current → current+0.0.1
+make version-minor      # Increment minor: current → current+0.1.0
+make version-major      # Increment major: current → current+1.0.0
 ```
 
 ### Deployment Features
@@ -504,7 +504,7 @@ The project uses GitHub Actions for automated testing and releases:
 
 #### Automated Release Process
 
-- **Trigger**: Git tags matching `v*` (e.g., `v1.0.0`)
+- **Trigger**: Git tags matching `v*` (e.g., version from VERSION file)
 - **Pipeline Stages**:
   1. **Testing**: Docker-based testing with TAP output
   2. **Security**: Linting and security scanning
@@ -514,9 +514,9 @@ The project uses GitHub Actions for automated testing and releases:
 #### Release Workflow
 
 ```bash
-# Create and push a release tag
-git tag v1.0.0
-git push origin v1.0.0
+# Create and push a release tag (version read from VERSION file)
+git tag v$(cat VERSION)
+git push origin v$(cat VERSION)
 
 # GitHub Actions will automatically:
 # 1. Run comprehensive tests

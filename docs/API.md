@@ -131,7 +131,7 @@ main "$@"
 
 | Variable | Type | Description | Default |
 |----------|------|-------------|---------|
-| `VERSION` | readonly string | Current version | "0.0.0" |
+| `VERSION` | readonly string | Current version | "1.0.0" |
 | `SCRIPT_NAME` | readonly string | Script basename | Derived from `$0` |
 | `VERBOSE` | boolean | Debug output flag | false |
 | `TARGET_PATH` | string | Path to process | "" |

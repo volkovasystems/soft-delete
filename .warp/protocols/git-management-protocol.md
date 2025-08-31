@@ -312,7 +312,7 @@ git commit -m "docs: clarify previous commit intent"
 
 #### VERSION File Requirements
 - **Location**: Root directory `/VERSION` file
-- **Format**: Single line with semantic version (e.g., `1.2.3`)
+- **Format**: Single line with semantic version (e.g., `X.Y.Z`)
 - **Usage**: All version references must read from this file
 - **Updates**: Only via version management scripts or deployment system
 
@@ -353,9 +353,9 @@ VERSION := $(shell cat VERSION)
 ❌ **Hardcoded versions**:
 ```bash
 # NEVER do this
-VERSION="1.2.3"  # Hardcoded
-echo "Version 1.2.3"  # Hardcoded in output
-# Current version: 1.2.3  # Hardcoded in docs
+VERSION="X.Y.Z"  # Hardcoded - NEVER do this
+echo "Version X.Y.Z"  # Hardcoded in output - NEVER do this
+# Current version: X.Y.Z  # Hardcoded in docs - NEVER do this
 ```
 
 ## Integration with Deployment System
@@ -364,11 +364,11 @@ echo "Version 1.2.3"  # Hardcoded in output
 When using the deployment system:
 ```bash
 # Deployment system handles version tagging
-./scripts/deploy.sh deploy-version 1.2.3
+./scripts/deploy.sh deploy-version NEW_VERSION
 
 # This creates properly tagged commits automatically
 # Manual version commits should follow this pattern:
-git commit -m "chore: bump version to 1.2.3 for release"
+git commit -m "chore: bump version to $(cat VERSION) for release"
 ```
 
 ### Version Management Workflow
@@ -391,7 +391,7 @@ git commit -m "chore: bump version to $(cat VERSION) for release"
 ```bash
 # Update changelog first
 git add CHANGELOG.md
-git commit -m "docs: update changelog for version 1.2.3 release"
+git commit -m "docs: update changelog for version $(cat VERSION) release"
 
 # Then use deployment system
 ./scripts/deploy.sh deploy-release

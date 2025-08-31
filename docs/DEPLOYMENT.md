@@ -93,8 +93,8 @@ make deploy-release
 ### 3. Deploy Specific Version
 
 ```bash
-# Deploy version 1.2.3 through staging to release
-./scripts/deploy.sh deploy-version 1.2.3
+# Deploy specific version through staging to release
+./scripts/deploy.sh deploy-version NEW_VERSION
 ```
 
 ## Deployment Commands
@@ -136,7 +136,7 @@ make deploy-release
 **What it does:**
 1. Validates version was updated
 2. Force merges `staging` → `release`
-3. Creates and pushes version tag (e.g., `v1.2.3`)
+3. Creates and pushes version tag (e.g., `v$(cat VERSION)`)
 4. Updates `master` and `main` branches with `release`
 5. Pushes all branches to remote
 6. Saves deployment state for potential revert
@@ -169,7 +169,7 @@ Deploys a specific version through the full pipeline.
 
 **Example:**
 ```bash
-./scripts/deploy.sh deploy-version 1.2.3
+./scripts/deploy.sh deploy-version 1.0.1
 ```
 
 **Requirements:**

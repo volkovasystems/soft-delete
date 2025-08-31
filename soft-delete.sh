@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # soft-delete.sh - Soft Delete Tool
-# Version: 0.0.0
+# Version: 1.0.0
 # Author: Richeve S. Bebedor <richeve.bebedor@gmail.com>
 # Description: Safely moves files/directories to a temporary backup location
 #              instead of permanently deleting them

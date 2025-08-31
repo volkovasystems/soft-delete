@@ -61,6 +61,8 @@ soft-delete/
 ├── bin/                    # Built executable (git-tracked)
 ├── docs/                   # Documentation
 │   ├── API.md              # API documentation
+│   ├── DEPLOYMENT.md       # Deployment guide
+│   ├── SECURITY.md         # Security policy and reporting
 │   └── TESTING.md          # Testing guide
 ├── examples/               # Usage examples
 │   ├── README.md           # Examples documentation
@@ -69,12 +71,20 @@ soft-delete/
 ├── Formula/                # Homebrew formula
 │   └── soft-delete.rb     # Homebrew package definition
 ├── reports/                # Test reports (created during testing)
-├── scripts/                # Utility scripts
+├── scripts/                # Utility scripts (13 shell scripts)
 │   ├── benchmark.sh        # Performance testing
+│   ├── checkpoint.sh       # Quick checkpoint commits
 │   ├── cleanup.sh          # System cleanup utilities
+│   ├── compliance-check.sh # 100% compliance verification
+│   ├── deploy.sh           # Deployment automation
+│   ├── pre-commit-hook.sh  # Git pre-commit validation
+│   ├── quick-commit.sh     # Fast commit helper
 │   ├── run-tests.sh        # Docker test runner
 │   ├── security-scan.sh    # Security scanner
-│   └── tap-formatter.sh    # TAP output formatter
+│   ├── sync-structure.sh   # Repository structure sync
+│   ├── tap-formatter.sh    # TAP output formatter
+│   ├── validate-structural-alignment.sh # Structure validation
+│   └── version.sh          # Semantic version management
 ├── tests/                  # Test suite
 │   ├── edge-cases.bats     # Edge case tests
 │   ├── soft-delete.bats    # Main test suite
@@ -92,7 +102,11 @@ soft-delete/
 ├── LICENSE                 # MIT License
 ├── Makefile                # Build automation
 ├── README.md               # Main documentation
-├── WARP.md                 # WARP AI guidance
+├── .warp/                  # AI development protocols and rules
+│   ├── project-context.md  # Project context (replaces WARP.md)
+│   ├── protocols/          # Development protocols
+│   ├── rules/              # AI agent rules and guidelines
+│   └── templates/          # Rule templates
 └── soft-delete.sh          # Source script
 ```
 
@@ -370,8 +384,8 @@ Releases are handled by maintainers:
 
 1. Update version in `soft-delete.sh`
 2. Update `CHANGELOG.md`
-3. Tag release: `git tag v0.0.0`
-4. Push: `git push origin v0.0.0`
+3. Tag release: `git tag v1.0.0`
+4. Push: `git push origin v1.0.0`
 5. Create GitHub release
 
 ## Getting Help

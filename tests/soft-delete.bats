@@ -51,14 +51,14 @@ teardown() {
 @test "show version with --version" {
     run ./soft-delete --version
     [ "$status" -eq 0 ]
-    [[ "$output" == *"soft-delete 0.0.0"* ]]
+    [[ "$output" == *"soft-delete 1.0.0"* ]]
     [[ "$output" == *"volkovasystems utility collection"* ]]
 }
 
 @test "show version with -v" {
     run ./soft-delete -v
     [ "$status" -eq 0 ]
-    [[ "$output" == *"soft-delete 0.0.0"* ]]
+    [[ "$output" == *"soft-delete 1.0.0"* ]]
 }
 
 @test "show usage when no arguments provided" {

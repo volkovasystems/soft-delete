@@ -39,7 +39,7 @@ fi
 if [[ -f "$VERSION_FILE" ]]; then
     VERSION=$(cat "$VERSION_FILE" | tr -d '\n\r' | tr -d ' ')
 else
-    VERSION="0.0.0"  # Fallback only if VERSION file missing
+    VERSION="1.0.0"  # Fallback only if VERSION file missing
 fi
 readonly VERSION
 ```
@@ -47,7 +47,7 @@ readonly VERSION
 ### Makefile Integration (REQUIRED)
 ```makefile
 # REQUIRED pattern for Makefiles
-VERSION := $(shell cat VERSION 2>/dev/null || echo "0.0.0")
+VERSION := $(shell cat VERSION 2>/dev/null || echo "1.0.0")
 
 # Use $(VERSION) throughout Makefile
 version-info:
@@ -93,7 +93,7 @@ Version 1.2.3 introduces...
 All shell scripts in `scripts/` directory must:
 1. Read version from /VERSION file using the required pattern
 2. Use readonly VERSION variable
-3. Provide 0.0.0 fallback only if VERSION file missing
+3. Provide 1.0.0 fallback only if VERSION file missing
 4. Never hardcode version numbers
 
 ### Build and Configuration Files
@@ -101,7 +101,7 @@ All shell scripts in `scripts/` directory must:
 #### Makefile ✅ (Already Compliant)
 - ✅ Reads VERSION from file: `VERSION := $(shell cat VERSION)`
 - ✅ Uses $(VERSION) variable throughout
-- ✅ Provides fallback: `2>/dev/null || echo "0.0.0"`
+- ✅ Provides fallback: `2>/dev/null || echo "1.0.0"`
 
 #### Formula/soft-delete.rb ✅ (Now Compliant)
 - ✅ Uses dynamic version reference: `#{version}`
@@ -243,7 +243,7 @@ git checkout HEAD~1 -- VERSION
 ### Missing VERSION File
 ```bash
 # Acceptable fallback pattern
-VERSION=$(cat VERSION 2>/dev/null || echo "0.0.0")
+VERSION=$(cat VERSION 2>/dev/null || echo "1.0.0")
 
 # Log warning but continue
 if [[ ! -f VERSION ]]; then
