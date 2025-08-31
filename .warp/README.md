@@ -12,6 +12,7 @@ This directory contains all Warp.dev-specific configuration files and protocols 
 ├── project-context.md           # Main project context (replaces WARP.md)
 ├── protocols/
 │   ├── changelog-protocol.md    # Changelog management protocol
+│   ├── compliance-protocol.md   # 100% compliance standards and verification protocol
 │   ├── consistency-protocol.md  # Cross-file consistency protocol  
 │   ├── continuous-commit-protocol.md # Continuous commit workflow protocol
 │   ├── git-management-protocol.md # Git workflow and branch management protocol

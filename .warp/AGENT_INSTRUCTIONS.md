@@ -77,7 +77,7 @@ Warp.dev automatically loads rules from multiple interconnected files in this pr
    - Build system and testing framework
    - Project-specific patterns
 
-### Current Rule Coverage (25+ Rules Extracted)
+### Current Rule Coverage (28+ Rules Extracted)
 
 #### Git & Version Control (5 rules)
 - Atomic commits with single logical changes
@@ -107,13 +107,14 @@ Warp.dev automatically loads rules from multiple interconnected files in this pr
 - No permanent deletion (soft-delete mechanism only)
 - Atomic move operations with permission preservation
 
-#### Development Workflow (6 rules)
+#### Development Workflow (7 rules)
 - Build-before-test cycle (`make build && make docker-test`)
 - Immediate commits with helper scripts
 - Structured commit patterns (conventional commits)
 - Clean working directory policy
 - No WIP commits for agentic AI
 - Cross-file consistency requirement (all related files updated)
+- 100% compliance requirement (zero tolerance for non-compliance)
 
 #### Project Management (3 rules)
 - Deployment script usage (automated branch management)
