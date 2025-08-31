@@ -233,6 +233,7 @@ get_current_version() {
 check_version_updated() {
     local source_branch="$1"
     local target_branch="$2"
+    local dry_run="${3:-false}"
     
     # Get current version on target branch
     local target_version
@@ -247,6 +248,12 @@ check_version_updated() {
     if [[ "$source_branch" == "staging" && "$target_branch" == "release" ]]; then
         local develop_version
         develop_version="$(git show "develop:VERSION" 2>/dev/null || echo "0.0.0")"
+        
+        # In dry-run mode, if we just auto-deployed staging, use develop version as expected staging version
+        if [[ "$dry_run" == "true" && "$develop_version" != "$target_version" ]]; then
+            source_version="$develop_version"
+            log_debug "Dry-run mode: Using develop version ($develop_version) as expected staging version"
+        fi
         
         # If develop has newer version than release, but staging doesn't, suggest deploy-staging first
         if [[ "$develop_version" != "$target_version" && "$source_version" == "$target_version" ]]; then
@@ -494,7 +501,7 @@ deploy_release() {
         fi
         
         # Check version was updated
-        if ! check_version_updated "staging" "release"; then
+        if ! check_version_updated "staging" "release" "$dry_run"; then
             return 1
         fi
     fi
