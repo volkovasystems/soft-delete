@@ -4,8 +4,8 @@
 
 ## Rule Loading Status: ✅ COMPLETE
 
-**Total Rules**: 25+ rules extracted from protocols and integrated into the rule system
-**Implementation Status**: ✅ 25 IMPLEMENTED | ⏳ 1 PENDING | ❌ 0 REJECTED
+**Total Rules**: 27+ rules extracted from protocols and integrated into the rule system
+**Implementation Status**: ✅ 26 IMPLEMENTED | ⏳ 1 PENDING | ❌ 0 REJECTED
 
 ## Rule System Architecture
 
@@ -51,11 +51,13 @@ Key rules:
 - **No Permanent Deletion**: Use soft-delete mechanism only
 - **Atomic Operations**: Preserve permissions, use atomic moves
 
-#### Development Workflow (4 rules)
+#### Development Workflow (6 rules)
 - **Build-Test Cycle**: `make build && make docker-test`
 - **Immediate Commits**: Use helper scripts for structured commits
 - **Helper Scripts**: `quick-commit.sh` and `checkpoint.sh` usage
 - **Clean Directory**: Never leave uncommitted changes
+- **No WIP Commits**: Use proper conventional commit types for agentic AI
+- **Cross-File Consistency**: Update all related files when making changes
 
 #### Project Management (3 rules)
 - **Deployment Scripts**: Use automation for branch management
@@ -68,6 +70,7 @@ Key rules:
 
 Files loaded:
 - changelog-protocol.md
+- consistency-protocol.md
 - continuous-commit-protocol.md
 - git-management-protocol.md
 - testing-protocol.md

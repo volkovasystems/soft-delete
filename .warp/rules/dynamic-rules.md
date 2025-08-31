@@ -185,6 +185,13 @@ This file contains:
 - **Rationale**: Agentic AI should make complete, deliberate commits, not "work in progress" - every change is intentional
 - **Note**: Historical WIP commits (5 remaining) preserved for git history integrity - all future commits follow proper conventional format
 
+#### Cross-File Consistency Requirement (from user requirement)
+- **Rule**: Every change to any file must trigger consistency check and update of all related files
+- **Context**: User requirement on 2025-08-31 - maintain repository-wide alignment and consistency
+- **Status**: ✅ IMPLEMENTED
+- **Location**: .warp/protocols/consistency-protocol.md with comprehensive workflow guidance
+- **Rationale**: Prevents fragmentation, outdated references, and inconsistencies across documentation, code, and configuration files
+
 ### Project Management
 
 #### Deployment Script Usage (from git-management-protocol.md)

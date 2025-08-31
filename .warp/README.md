@@ -7,20 +7,21 @@ This directory contains all Warp.dev-specific configuration files and protocols 
 ```
 .warp/
 ├── README.md                    # This file - explains the structure
+├── RULES_SUMMARY.md             # Comprehensive summary of all rules
+├── AGENT_INSTRUCTIONS.md        # Agent behavior and rule suggestion guidelines
 ├── project-context.md           # Main project context (replaces WARP.md)
 ├── protocols/
 │   ├── changelog-protocol.md    # Changelog management protocol
+│   ├── consistency-protocol.md  # Cross-file consistency protocol  
+│   ├── continuous-commit-protocol.md # Continuous commit workflow protocol
+│   ├── git-management-protocol.md # Git workflow and branch management protocol
 │   ├── testing-protocol.md      # Testing workflow protocol
-│   ├── deployment-protocol.md   # Deployment and release protocol
-│   └── code-style-protocol.md   # Code quality and style guidelines
+│   └── version-protocol.md      # VERSION file management protocol
 ├── rules/
-│   ├── development-rules.md     # Development workflow rules
-│   ├── security-rules.md        # Security and safety rules
-│   └── ai-agent-rules.md        # AI agent behavior rules
+│   ├── ai-agent-rules.md        # AI agent behavior rules
+│   └── dynamic-rules.md         # Protocol-derived and suggested rules
 └── templates/
-    ├── commit-message.md         # Commit message templates
-    ├── changelog-entry.md        # Changelog entry templates
-    └── pr-template.md            # Pull request templates
+    └── rule-template.md          # Template for documenting complex rules
 ```
 
 ## Usage
