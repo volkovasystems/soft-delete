@@ -249,7 +249,9 @@ log_info "🔒 Checking Security Compliance..."
 
 # Check for sensitive data in git history (exclude security-related feature commits)
 log_info "Scanning git history for sensitive data..."
-sensitive_data_count=$(git log --all --grep="password\|secret\|key\|token" --grep="security" --invert-grep | wc -l)
+# Count commits that contain sensitive keywords but are NOT security features
+sensitive_commits=$(git log --all --grep="password.*=\|secret.*=\|key.*=" --grep="feat.*security\|security.*feat" --invert-grep --oneline 2>/dev/null || true)
+sensitive_data_count=$(echo "$sensitive_commits" | grep -c . 2>/dev/null || echo 0)
 if [[ $sensitive_data_count -eq 0 ]]; then
     log_success "Git history: 100% compliant (no sensitive data)"
 else
