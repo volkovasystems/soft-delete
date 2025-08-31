@@ -128,7 +128,7 @@ install-deps:
 	fi
 
 # Version management
-VERSION := $(shell grep 'VERSION=' $(SOURCE_SCRIPT) | cut -d'"' -f2)
+VERSION := $(shell cat VERSION | tr -d '\n\r' | tr -d ' ')
 
 # Package target - create distribution archive
 .PHONY: package
@@ -141,10 +141,26 @@ package: clean build
 		*
 	@echo "Package created: dist/$(SCRIPT_NAME)-$(VERSION).tar.gz"
 
-# Version target
+# Version targets
 .PHONY: version
 version:
 	@echo "$(VERSION)"
+
+.PHONY: version-show
+version-show:
+	@./scripts/version.sh show
+
+.PHONY: version-major
+version-major:
+	@./scripts/version.sh major
+
+.PHONY: version-minor
+version-minor:
+	@./scripts/version.sh minor
+
+.PHONY: version-patch
+version-patch:
+	@./scripts/version.sh patch
 
 # Docker-based testing targets
 .PHONY: docker-test
@@ -243,6 +259,11 @@ help:
 	@echo "  check            - Verify installation"
 	@echo "  install-deps     - Install development dependencies"
 	@echo "  package          - Create distribution archive (version: $(VERSION))"
+	@echo "  version          - Show current version (short)"
+	@echo "  version-show     - Show detailed version information"
+	@echo "  version-major    - Increment major version (x.0.0)"
+	@echo "  version-minor    - Increment minor version (x.y.0)"
+	@echo "  version-patch    - Increment patch version (x.y.z)"
 	@echo "  help             - Show this help message"
 	@echo ""
 	@echo "Docker Test Targets:"

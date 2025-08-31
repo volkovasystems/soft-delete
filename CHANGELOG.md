@@ -73,6 +73,9 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - Markdown linting, security scanning, and performance benchmarking
 - WARP.md guidance file for AI-assisted development
 - Production-ready deployment preparation and validation
+- Centralized VERSION file as single source of truth for version numbers
+- Version management script (`scripts/version.sh`) with semantic versioning support
+- Makefile integration for version management (version-major, version-minor, version-patch targets)
 
 ### Changed
 - Streamlined and organized all configuration files for better maintainability:
@@ -165,11 +168,17 @@ This project uses [Semantic Versioning 2.0.0](https://semver.org/spec/v2.0.0.htm
 - **PATCH**: Backwards-compatible bug fixes
 
 ### Release Process
-1. Update the version number in `soft-delete.sh`.
+1. Update the version number using `./scripts/version.sh` or `make version-patch/minor/major`.
 2. Update this CHANGELOG.md with release notes.
 3. Create git tag, e.g. `git tag v0.0.0`.
 4. Push tag: `git push origin v0.0.0`.
 5. Create GitHub release with the release notes.
+
+### Version Management
+The project uses a centralized VERSION file as the single source of truth:
+- **VERSION file**: Contains only the current version number (e.g., 0.0.0)
+- **Version script**: `./scripts/version.sh` for managing version updates
+- **Makefile integration**: Version targets for easy version management
 
 ### Section Definitions
 - **Added**: For new features.

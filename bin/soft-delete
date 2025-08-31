@@ -10,7 +10,27 @@
 set -euo pipefail
 
 # Script metadata
-readonly VERSION="0.0.0"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+readonly SCRIPT_DIR
+
+# Find VERSION file (try multiple locations)
+if [[ -f "$SCRIPT_DIR/VERSION" ]]; then
+    VERSION_FILE="$SCRIPT_DIR/VERSION"
+elif [[ -f "$(dirname "$SCRIPT_DIR")/VERSION" ]]; then
+    VERSION_FILE="$(dirname "$SCRIPT_DIR")/VERSION"
+else
+    VERSION_FILE=""
+fi
+readonly VERSION_FILE
+
+# Read version from VERSION file
+if [[ -f "$VERSION_FILE" ]]; then
+    VERSION=$(cat "$VERSION_FILE" | tr -d '\n\r' | tr -d ' ')
+else
+    VERSION="0.0.0"  # Fallback version
+fi
+readonly VERSION
+
 SCRIPT_NAME="$(basename "$0")"
 readonly SCRIPT_NAME
 
