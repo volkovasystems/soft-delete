@@ -545,10 +545,10 @@ validate_warp_structure_consistency() {
         actual_protocols=$(find .warp/protocols -name "*.md" -type f 2>/dev/null | wc -l)
         actual_rules=$(find .warp/rules -name "*.md" -type f 2>/dev/null | wc -l)
         
-        # Check documentation mentions correct counts
+        # Check documentation mentions correct counts (handle multiple occurrences)
         if grep -q "protocol files" README.md; then
             local documented_protocols
-            documented_protocols=$(grep -o "[0-9]\+ protocol files" README.md | grep -o "[0-9]\+")
+            documented_protocols=$(grep -o "[0-9]\+ protocol files" README.md | grep -o "[0-9]\+" | head -1)
             if [[ "$actual_protocols" != "$documented_protocols" ]]; then
                 log_error "Protocol file count mismatch: actual=$actual_protocols, documented=$documented_protocols"
                 warp_issues=$((warp_issues + 1))
@@ -557,7 +557,7 @@ validate_warp_structure_consistency() {
         
         if grep -q "rule files" README.md; then
             local documented_rules
-            documented_rules=$(grep -o "[0-9]\+ rule files" README.md | grep -o "[0-9]\+")
+            documented_rules=$(grep -o "[0-9]\+ rule files" README.md | grep -o "[0-9]\+" | head -1)
             if [[ "$actual_rules" != "$documented_rules" ]]; then
                 log_error "Rule file count mismatch: actual=$actual_rules, documented=$documented_rules"
                 warp_issues=$((warp_issues + 1))
