@@ -394,6 +394,8 @@ deploy_staging() {
     if [[ "$dry_run" != "true" ]]; then
         push_branch "staging" "origin" "$dry_run"
         log_success "Successfully deployed develop to staging"
+    else
+        log_success "DRY RUN: Would deploy develop to staging successfully"
     fi
     
     # Return to original branch
@@ -454,6 +456,9 @@ deploy_release() {
         
         log_success "Successfully deployed staging to release (v$version)"
         log_success "Updated master and main branches"
+    else
+        log_success "DRY RUN: Would deploy staging to release (v$version) successfully"
+        log_success "DRY RUN: Would update master and main branches"
     fi
     
     # Return to original branch

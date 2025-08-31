@@ -156,6 +156,14 @@ This release represents the completion of a comprehensive quality assurance prog
 - Project structure reorganized to include comprehensive API reference and testing guides
 
 ### Fixed
+- **Deployment Script Dry-Run Improvements**: Enhanced dry-run functionality in deploy.sh to properly handle staging and release deployments
+  - Added success messages for dry-run operations to prevent premature script exits
+  - Improved Makefile compatibility by ensuring deploy-staging and deploy-release targets complete successfully in dry-run mode
+  - Enhanced user feedback with clear dry-run status messages for both staging and release deployments
+- **Deployment Version Comparison Enhancement**: Improved version validation logic in deployment workflow
+  - Enhanced version checking to better handle develop → staging → release branch workflow
+  - Added intelligent error messaging when version updates exist on develop but haven't been deployed to staging
+  - Improved guidance for users when deployment branches are out of sync with latest version changes
 - Resolved all shellcheck warnings, achieving 100% compliance across 12 shell files
 - Addressed SC2155 warnings by separating variable declarations
 - Fixed SC2164 warnings with enhanced error handling for cd commands
