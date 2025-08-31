@@ -270,11 +270,6 @@ bats tests/edge-cases.bats
 ## Development
 
 ### Project Structure
-
-### Project Structure
-
-🔄 REPOSITORY STRUCTURE SYNCHRONIZATION
-========================================
 ```
 soft-delete/
 ├── .editorconfig            # Code formatting standards
