@@ -1,0 +1,60 @@
+# soft-delete Runtime Container
+# 
+# This Dockerfile creates a minimal runtime container for soft-delete
+# providing a consistent execution environment across different systems.
+#
+# Build: docker build -f Dockerfile.runtime -t soft-delete:1.0.0 .
+# Run:   docker run --rm -v /path/to/files:/workspace soft-delete:1.0.0 [options] [file]
+
+FROM alpine:3.19
+
+# Metadata
+LABEL maintainer="richeve.bebedor@gmail.com" \
+      description="Safe file deletion utility with timestamped backups" \
+      version="1.0.0" \
+      source="https://github.com/volkovasystems/soft-delete"
+
+# Install runtime dependencies
+RUN apk add --no-cache \
+    bash \
+    coreutils \
+    util-linux \
+    findutils \
+    && addgroup -g 1000 softdel \
+    && adduser -D -G softdel -u 1000 softdel
+
+# Create necessary directories
+RUN mkdir -p /app /workspace /tmp/soft-delete-backups \
+    && chown -R softdel:softdel /app /workspace /tmp/soft-delete-backups
+
+# Copy the soft-delete binary
+COPY --chown=softdel:softdel bin/soft-delete /usr/local/bin/soft-delete
+
+# Set executable permissions
+RUN chmod 755 /usr/local/bin/soft-delete
+
+# Switch to non-root user
+USER softdel
+
+# Set working directory
+WORKDIR /workspace
+
+# Set environment variables
+ENV PATH="/usr/local/bin:${PATH}" \
+    SOFT_DELETE_BACKUP_DIR="/tmp/soft-delete-backups" \
+    USER="softdel"
+
+# Health check to verify soft-delete is working
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD soft-delete --version || exit 1
+
+# Default entrypoint
+ENTRYPOINT ["soft-delete"]
+
+# Default command (show help if no args provided)
+CMD ["--help"]
+
+# Usage examples in image metadata
+LABEL usage.basic="docker run --rm -v \$(pwd):/workspace soft-delete:1.0.0 filename.txt" \
+      usage.verbose="docker run --rm -v \$(pwd):/workspace soft-delete:1.0.0 --verbose filename.txt" \
+      usage.help="docker run --rm soft-delete:1.0.0 --help"

@@ -277,6 +277,60 @@ cleanup-dry-run:
 clean-all: clean clean-temp clean-dist clean-reports docker-clean
 	@echo "Full cleanup complete."
 
+# Analysis and Statistics targets
+.PHONY: analyze
+analyze:
+	@echo "=== Script Analysis ==="
+	@echo "Total shell scripts: $(shell find . -name '*.sh' | wc -l)"
+	@echo "Lines of code: $(shell find . -name '*.sh' -exec cat {} \; | wc -l)"
+	@echo "Functions: $(shell grep -r 'function\|.*()' --include='*.sh' . | wc -l)"
+	@echo "Test coverage: $(shell grep -c '^@test' tests/*.bats 2>/dev/null || echo '0') test cases"
+	@echo "Compliance status: $(shell bash scripts/compliance-check.sh >/dev/null 2>&1 && echo 'PASSING' || echo 'FAILING')"
+	@echo "Repository size: $(shell du -sh . --exclude=.git | cut -f1)"
+
+.PHONY: docs-stats
+docs-stats:
+	@echo "=== Documentation Statistics ==="
+	@echo "Documentation files: $(shell find . -name '*.md' | wc -l)"
+	@echo "Protocol files: $(shell find .warp/protocols -name '*.md' 2>/dev/null | wc -l)"
+	@echo "Rule files: $(shell find .warp/rules -name '*.md' 2>/dev/null | wc -l)"
+	@echo "Total documentation lines: $(shell find . -name '*.md' -exec cat {} \; | wc -l)"
+	@echo "README size: $(shell wc -l README.md | cut -d' ' -f1) lines"
+	@echo "API docs size: $(shell wc -l docs/API.md 2>/dev/null | cut -d' ' -f1 || echo '0') lines"
+	@echo "Testing docs size: $(shell wc -l docs/TESTING.md 2>/dev/null | cut -d' ' -f1 || echo '0') lines"
+
+.PHONY: benchmark-suite
+benchmark-suite:
+	@echo "Running comprehensive performance benchmarks..."
+	@./scripts/benchmark.sh --comprehensive
+	@echo "Performance baseline established"
+	@echo "Results available in reports/ directory"
+
+# Container targets
+.PHONY: container-build
+container-build: build
+	@echo "Building soft-delete container image..."
+	@docker build -f Dockerfile.runtime -t soft-delete:$(VERSION) .
+	@docker tag soft-delete:$(VERSION) soft-delete:latest
+	@echo "Container built: soft-delete:$(VERSION)"
+
+.PHONY: container-test
+container-test: container-build
+	@echo "Testing container functionality..."
+	@docker run --rm soft-delete:$(VERSION) --version
+	@echo "Container test passed"
+
+.PHONY: container-run
+container-run: container-build
+	@echo "Running soft-delete container (use Ctrl+C to exit)..."
+	@docker run --rm -it -v $$(pwd):/workspace soft-delete:$(VERSION)
+
+.PHONY: container-clean
+container-clean:
+	@echo "Cleaning container images..."
+	@docker rmi soft-delete:$(VERSION) soft-delete:latest 2>/dev/null || echo "No images to remove"
+	@echo "Container cleanup complete"
+
 # Help target
 .PHONY: help
 help:
