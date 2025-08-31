@@ -7,86 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.0.0] - 2025-08-31
 
-### Changed
-- **REVERTED VERSION**: Reverted version from 0.1.0 back to 0.0.0 by developer request
-- Updated VERSION file: 0.1.0 → 0.0.0
-- Updated README.md version badge: 0.1.0 → 0.0.0
-
-### Added
-- **AI Version Control Protocol**: Established strict protocol preventing AI from modifying version numbers
-- Created `.warp/AI_VERSION_CONTROL_PROTOCOL.md` with absolute prohibition rules
-- Enhanced structural alignment validation to check for version control protocol compliance
-- Version protection system ensuring only developers can modify version numbers
-
-### Fixed
-- **Compliance Check**: Fix changelog version parsing to correctly identify semantic versions [x.y.z]
-- Prevent false matches on "[Keep a Changelog]" links in CHANGELOG.md header
-- Improve version pattern detection with proper regex matching
-- Increase search range to 15 lines for better version detection accuracy
-
-### Security
-- **Version Management Security**: AI systems now cannot modify versions without explicit developer authorization
-- Established version change validation requirements and exception conditions
-- Added protocol violation consequences and enforcement mechanisms
-
-## [0.1.0] - 2025-08-31
-
-### Added
-
-#### Structural Alignment & Documentation Synchronization System
-- Comprehensive structural alignment protocol (`.warp/protocols/structural-alignment-protocol.md`)
-- Automated structure synchronization tool (`scripts/sync-structure.sh`)
-- Structural alignment validation script (`scripts/validate-structural-alignment.sh`)
-- Enhanced compliance system with Section 8: Structural Alignment Compliance
-- 100% structural uniformity and documentation synchronization capabilities
-- Six core alignment rules (SA-001 through SA-006) for maintaining perfect consistency
-- Real-time validation of directory structure, file references, internal links, and version consistency
-- Automatic detection of structural misalignments with precise error reporting
-- Integration with existing 100% compliance verification system
-
-#### Enhanced Compliance & Quality Assurance
-- Advanced security scanning with precise pattern matching for credential detection
-- Improved git history vulnerability scanning with false positive elimination
-- Path traversal vulnerability detection with legitimate pattern exclusion
-- Enhanced ShellCheck compliance validation across entire codebase
-- Comprehensive file reference integrity checking
-- Internal link validation for all markdown documentation
-- Version consistency verification across multiple files (README badges, Homebrew formulas)
-- Documentation example accuracy validation
-
-### Changed
-- Enhanced compliance verification script with 8 comprehensive sections
-- Improved security scanning logic to eliminate false positives from legitimate security development
-- Refined credential detection patterns for more accurate vulnerability identification
-- Updated compliance reporting to include structural alignment metrics
-- Strengthened bash strict mode enforcement across all shell scripts
-- Enhanced file encoding and line ending validation
-- Improved commit message format verification with conventional commit standards
-
-### Fixed
-- Resolved security scanning syntax errors that prevented completion of compliance checks
-- Fixed sensitive data count calculation using proper empty string validation
-- Corrected path traversal pattern matching to avoid complex regex escaping issues
-- Fixed version consistency checks to handle dynamic version references in Homebrew formulas
-- Eliminated false positives in git history security scanning for legitimate development commits
-- Resolved bash syntax errors in compliance validation functions
-- Fixed credential scanning regex patterns to prevent infinite loops and hanging
-- Corrected directory structure validation logic for accurate missing directory detection
-
-### Security
-- Enhanced credential detection with more precise assignment pattern matching
-- Improved path traversal vulnerability detection with context-aware filtering
-- Strengthened security scanning to exclude legitimate security feature development
-- Added protection against false security alerts from documentation and development references
-- Enhanced git history scanning with intelligent filtering for security-related commits
-
-### Documentation
-- Updated README.md version badge to match VERSION file (0.1.0)
-- Fixed version consistency between documentation and versioning system
-- Resolved pre-commit hook warnings about version mismatches
-
-## [0.0.0] - 2025-08-31
-
 ### Added
 
 #### Core Features
@@ -123,6 +43,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `scripts/run-tests.sh`: Docker-based test runner
 - `scripts/tap-formatter.sh`: TAP output formatter
 - `scripts/version.sh`: Semantic version management
+- `scripts/sync-structure.sh`: Repository structure synchronization tool
+- `scripts/validate-structural-alignment.sh`: Structural alignment validation script
+- `scripts/compliance-check.sh`: 100% compliance verification system
+
+#### AI Version Control & Protocols
+- **AI Version Control Protocol**: Strict protocol preventing AI from modifying version numbers without explicit developer authorization
+- Created `.warp/AI_VERSION_CONTROL_PROTOCOL.md` with absolute prohibition rules and enforcement mechanisms
+- Comprehensive structural alignment protocol (`.warp/protocols/structural-alignment-protocol.md`)
+- Enhanced compliance system with Section 8: Structural Alignment Compliance
+- Version protection system ensuring only developers can modify version numbers
+- Six core alignment rules (SA-001 through SA-006) for maintaining perfect consistency
+
+#### Enhanced Compliance & Quality Assurance
+- Advanced security scanning with precise pattern matching for credential detection
+- Improved git history vulnerability scanning with false positive elimination
+- Path traversal vulnerability detection with legitimate pattern exclusion
+- Enhanced ShellCheck compliance validation across entire codebase
+- Comprehensive file reference integrity checking
+- Internal link validation for all markdown documentation
+- Version consistency verification across multiple files (README badges, Homebrew formulas)
+- Real-time validation of directory structure, file references, internal links, and version consistency
+- Automatic detection of structural misalignments with precise error reporting
 
 #### Version Management System
 - Centralized VERSION file as single source of truth
@@ -177,6 +119,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Enhanced CONTRIBUTING.md with Docker-first testing approach and updated project structure
 - Improved TESTING.md with accurate test helper function documentation
 - Updated all documentation for consistency and deployment readiness
+- **ShellCheck Compliance**: Fixed SC2155 warning in compliance-check.sh (separate declare and assign)
+- Fixed SC1073, SC1058, SC1072 errors in sync-structure.sh (broken for loops with glob patterns)
+- Fixed SC2043 warnings in validate-structural-alignment.sh (single-item loops)
+- **Compliance Check**: Fixed changelog version parsing to correctly identify semantic versions [x.y.z]
+- Prevent false matches on "[Keep a Changelog]" links in CHANGELOG.md header
+- Improved version pattern detection with proper regex matching
+- Corrected file permissions: scripts to 755, documentation to 644
+- Updated .warp/README.md to document structural-alignment-protocol.md
 
 ### Security
 - Implemented comprehensive vulnerability scanning
@@ -189,6 +139,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated all actions to latest secure versions
 - Added security scanning integration to development process
 - Enhanced security-conscious development practices in documentation
+- **AI Version Control Security**: AI systems cannot modify versions without explicit developer authorization
+- Established version change validation requirements and exception conditions
+- Added protocol violation consequences and enforcement mechanisms
+- Enhanced credential detection with more precise assignment pattern matching
+- Improved path traversal vulnerability detection with context-aware filtering
 
 ### Performance
 - Optimized file operations for single atomic moves
