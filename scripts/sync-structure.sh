@@ -301,6 +301,16 @@ validate_cross_references() {
     
     for file in "${check_files[@]}"; do
         if [[ -f "$file" ]]; then
+            # Create a temporary file without code blocks to avoid false positives
+            local temp_file
+            temp_file=$(mktemp)
+            
+            # Remove code blocks using awk to prevent regex patterns being treated as links
+            awk '
+                /^```/ { in_code = !in_code; next }
+                !in_code { print }
+            ' "$file" > "$temp_file"
+            
             while IFS= read -r link; do
                 local target
                 target=$(echo "$link" | sed -n 's/.*](\([^)#]*\)).*/\1/p')
@@ -315,7 +325,9 @@ validate_cross_references() {
                     log_error "Broken reference in $file: $target"
                     ((broken_refs++))
                 fi
-            done < <(grep -o '\[.*\]([^)]*\.md[^)]*)' "$file" 2>/dev/null || true)
+            done < <(grep -o '\[.*\]([^)]*\.md[^)]*)' "$temp_file" 2>/dev/null || true)
+            
+            rm -f "$temp_file"
         fi
     done
     
