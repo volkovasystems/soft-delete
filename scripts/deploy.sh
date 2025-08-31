@@ -371,6 +371,18 @@ push_branch() {
     log_success "Pushed $branch_name to $remote"
 }
 
+# Function to check if staging deployment is already current
+check_staging_already_deployed() {
+    log_step "Checking if staging deployment is already current..."
+    
+    # Check if staging deployment exists and is current
+    if check_staging_deployment 2>/dev/null; then
+        return 0  # Already deployed
+    else
+        return 1  # Not deployed or outdated
+    fi
+}
+
 # Function to deploy to staging
 deploy_staging() {
     local dry_run="${1:-false}"
@@ -387,6 +399,14 @@ deploy_staging() {
     if [[ "$force" != "true" ]]; then
         check_working_directory || return 1
         check_remote_access || return 1
+        
+        # Check if staging is already deployed and current
+        if check_staging_already_deployed; then
+            log_warn "Staging deployment is already current and up-to-date."
+            log_info "Staging branch contains the latest develop changes."
+            log_info "No staging deployment needed. Use --force to redeploy anyway."
+            return 0
+        fi
         
         # Check version was updated
         if ! check_version_updated "develop" "staging"; then
