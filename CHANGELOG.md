@@ -5,6 +5,35 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- Add comprehensive changelog management system with automated reminders
+- **Git Workflow Enforcement**: Comprehensive branch validation and remote synchronization for deployments
+  - `check_on_develop_branch()`: Ensures deployments start from develop branch
+  - `check_develop_pushed()`: Automatically pushes develop branch if not synchronized with remote
+  - `push_all_deployment_artifacts()`: Pushes all relevant branches and tags after deployments
+- **Smart Deployment Prevention**: Automatic detection and prevention of unnecessary staging re-deployments
+  - Staging deployment status checking to avoid redundant deployments unless forced
+  - Enhanced deployment flow with current state validation
+- **Enhanced Deployment Integration**: 
+  - Pre-deployment branch checks in all deployment functions (`deploy_staging`, `deploy_release`, `deploy_test`)
+  - Post-deployment automatic push of all involved branches and version tags
+  - Comprehensive remote connectivity verification before deployment operations
+
+### Fixed
+- **Deployment Script Dry-Run Mode**: Enhanced dry-run handling for version checks and deployment validation
+  - Improved dry-run mode behavior in version comparison functions
+  - Better error handling and user feedback during dry-run operations
+- **Documentation Structure**: Removed duplicated project structure sections from README.md
+- **Structure Synchronization**: Improved validation logic with better AWK extraction for file pattern matching
+- **Repository Compliance**: Fixed file permissions and structure validation issues
+
+### Changed
+- **Deployment Workflow**: Enhanced develop → staging → release workflow with automatic synchronization
+- **Release Process**: Improved staging verification in release deployment function
+- **Project Structure**: Cleaned up documentation organization and removed redundancies
+
 ## [1.0.0] - 2025-08-31
 
 🎉 **FIRST STABLE RELEASE** - Production Ready

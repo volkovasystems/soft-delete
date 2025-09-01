@@ -301,7 +301,7 @@ teardown() {
 2. **Update Documentation**
 
    - Update `README.md` if adding features
-   - Update `CHANGELOG.md` with your changes
+   - **REQUIRED:** Update `CHANGELOG.md` with your changes (see [Changelog Management](#changelog-management) below)
    - Add examples if appropriate
 
 3. **Commit Guidelines**
@@ -381,15 +381,268 @@ teardown() {
 - Test examples to ensure they work
 - Keep examples simple and clear
 
+## Changelog Management
+
+**⚠️ IMPORTANT:** Every commit that changes functionality, fixes bugs, or adds features **MUST** be documented in the changelog before committing. This is enforced by our pre-commit hooks.
+
+### Why Changelog Matters
+
+The changelog serves as:
+- **Release Documentation**: Clear record of all changes for each version
+- **User Communication**: Helps users understand what's new, changed, or fixed
+- **Developer Reference**: Historical context for development decisions
+- **Automated Releases**: Powers automatic release note generation
+
+### Quick Start
+
+#### 1. Set Up Changelog Automation
+
+```bash
+# Install git hooks (run once)
+make setup-hooks
+
+# This enables automatic changelog reminders on commits
+```
+
+#### 2. Add Changelog Entries
+
+```bash
+# Add a new feature
+make changelog-add ENTRY="Add support for custom backup locations" CATEGORY="Added"
+
+# Add a bug fix
+make changelog-add ENTRY="Fix permission handling for symbolic links" CATEGORY="Fixed"
+
+# Add with auto-detection (from conventional commit format)
+make changelog-add ENTRY="feat: add new configuration option"
+```
+
+#### 3. Validate Your Changes
+
+```bash
+# Check changelog format
+make changelog-validate
+
+# See recent commits for reference
+make changelog-recent
+```
+
+### Detailed Guide
+
+#### Changelog Script Usage
+
+The `scripts/changelog.sh` script provides full changelog management:
+
+```bash
+# Add entries (manual categorization)
+./scripts/changelog.sh add "Your change description" [category]
+
+# Prepare for release (maintainers only)
+./scripts/changelog.sh prepare-release "1.2.0"
+
+# Validate format
+./scripts/changelog.sh validate
+
+# View recent commits for reference
+./scripts/changelog.sh recent-commits [count]
+
+# Show help
+./scripts/changelog.sh help
+```
+
+#### Make Targets
+
+```bash
+# Quick changelog operations via make
+make changelog-add ENTRY="description" [CATEGORY="Added"]
+make changelog-prepare VERSION="x.y.z"  # Maintainers only
+make changelog-validate
+make changelog-recent [COUNT=10]
+make changelog-help
+```
+
+### Categories
+
+Use these standard categories based on [Keep a Changelog](https://keepachangelog.com/):
+
+- **Added** - New features
+- **Changed** - Changes in existing functionality
+- **Deprecated** - Soon-to-be removed features
+- **Removed** - Removed features
+- **Fixed** - Bug fixes
+- **Security** - Vulnerability fixes
+
+### Examples
+
+#### Manual Categorization
+
+```bash
+# New feature
+make changelog-add ENTRY="Add --dry-run option for preview mode" CATEGORY="Added"
+
+# Bug fix
+make changelog-add ENTRY="Fix crash when processing empty files" CATEGORY="Fixed"
+
+# Security improvement
+make changelog-add ENTRY="Improve input validation to prevent injection" CATEGORY="Security"
+```
+
+#### Auto-Detection (Recommended)
+
+The script automatically detects conventional commit formats:
+
+```bash
+# These are automatically categorized:
+make changelog-add ENTRY="feat: add new configuration system"     # → Added
+make changelog-add ENTRY="fix: resolve memory leak in cleanup"    # → Fixed
+make changelog-add ENTRY="docs: update API documentation"         # → Changed
+make changelog-add ENTRY="security: fix path traversal issue"     # → Security
+```
+
+### Git Hooks Integration
+
+After running `make setup-hooks`, git will:
+
+1. **Remind you about changelog updates** when committing significant changes
+2. **Validate changelog format** if you're modifying CHANGELOG.md
+3. **Allow you to continue or cancel** the commit to update changelog first
+
+#### Hook Behavior
+
+**Will remind you for:**
+- Code changes (any non-documentation files)
+- Feature commits (`feat:`, `fix:`, etc.)
+- Functional modifications
+
+**Will NOT remind you for:**
+- Documentation-only changes (`docs:`)
+- Style/formatting changes (`style:`)
+- Test-only changes (`test:`)
+- CI changes (`ci:`)
+- When CHANGELOG.md is already included in the commit
+
+#### Hook Interaction
+
+```
+📝 CHANGELOG REMINDER
+============================================
+
+  ℹ️  You're making changes that might need changelog documentation.
+
+  Quick commands:
+    ./scripts/changelog.sh add "Your change description"
+    ./scripts/changelog.sh recent-commits 5 # See recent commits
+
+  Continue with commit? (y/N)
+```
+
+### Best Practices
+
+#### 1. Write Clear Descriptions
+
+**Good:**
+```bash
+make changelog-add ENTRY="Add support for excluding files by pattern" CATEGORY="Added"
+make changelog-add ENTRY="Fix incorrect exit code when backup fails" CATEGORY="Fixed"
+```
+
+**Avoid:**
+```bash
+make changelog-add ENTRY="Update stuff" CATEGORY="Changed"      # Too vague
+make changelog-add ENTRY="Fix bug" CATEGORY="Fixed"             # Not descriptive
+```
+
+#### 2. Update Before Committing
+
+```bash
+# Recommended workflow:
+# 1. Make your code changes
+# 2. Test your changes
+make build && make docker-test
+
+# 3. Update changelog
+make changelog-add ENTRY="Add --verbose flag for detailed output" CATEGORY="Added"
+
+# 4. Commit everything together
+git add .
+git commit -m "feat: add verbose output option
+
+Adds --verbose flag to show detailed operation information
+Includes tests and documentation updates"
+```
+
+#### 3. Be Specific About Impact
+
+```bash
+# Include user impact
+make changelog-add ENTRY="Fix backup failure on systems with limited /tmp space" CATEGORY="Fixed"
+
+# Note breaking changes
+make changelog-add ENTRY="Change default backup location from /tmp to ~/.soft-delete (BREAKING)" CATEGORY="Changed"
+```
+
+### Troubleshooting
+
+#### Skip Hooks Temporarily
+
+```bash
+# Skip hooks for emergency commits (use sparingly)
+git commit --no-verify -m "emergency fix"
+```
+
+#### Manual Hook Setup
+
+```bash
+# If make setup-hooks doesn't work
+git config core.hooksPath .githooks
+chmod +x .githooks/pre-commit
+```
+
+#### Validate Changelog Format
+
+```bash
+# Check for formatting issues
+./scripts/changelog.sh validate
+
+# Common issues:
+# - Invalid version format (use semantic versioning: 1.2.3)
+# - Missing dates (format: YYYY-MM-DD)
+# - Malformed section headers
+```
+
+### Integration with Deployment
+
+Changelog updates are integrated with our deployment system:
+
+- **Staging deployments** require up-to-date changelog entries
+- **Release deployments** automatically reference changelog sections
+- **Version bumps** can prepare changelog for release
+
+See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for complete deployment workflows.
+
 ## Release Process
 
 Releases are handled by maintainers:
 
-1. Update version in `soft-delete.sh`
-2. Update `CHANGELOG.md`
-3. Tag release: `git tag v1.0.0`
-4. Push: `git push origin v1.0.0`
-5. Create GitHub release
+1. **Update changelog for release**:
+   ```bash
+   make changelog-prepare VERSION="1.2.0"
+   ```
+
+2. **Update version number**:
+   ```bash
+   make version-minor  # or version-major/version-patch
+   ```
+
+3. **Create and push release**:
+   ```bash
+   git add VERSION CHANGELOG.md
+   git commit -m "chore: prepare release 1.2.0"
+   git tag v1.2.0
+   git push origin v1.2.0
+   ```
+
+4. Create GitHub release (automated by CI)
 
 ## Getting Help
 

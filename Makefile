@@ -337,6 +337,44 @@ container-clean:
 	@docker rmi soft-delete:$(VERSION) soft-delete:latest 2>/dev/null || echo "No images to remove"
 	@echo "Container cleanup complete"
 
+# Changelog management targets
+.PHONY: changelog-add
+changelog-add:
+	@if [ -z "$(ENTRY)" ]; then \
+		echo "Usage: make changelog-add ENTRY='Your change description' [CATEGORY='Added']"; \
+		echo "Categories: Added, Changed, Fixed, Security, Deprecated, Removed"; \
+		echo "Example: make changelog-add ENTRY='Add new feature' CATEGORY='Added'"; \
+		exit 1; \
+	fi
+	@./scripts/changelog.sh add "$(ENTRY)" "$(CATEGORY)"
+
+.PHONY: changelog-prepare
+changelog-prepare:
+	@if [ -z "$(VERSION)" ]; then \
+		echo "Usage: make changelog-prepare VERSION='x.y.z'"; \
+		echo "Example: make changelog-prepare VERSION='1.1.0'"; \
+		exit 1; \
+	fi
+	@./scripts/changelog.sh prepare-release "$(VERSION)"
+
+.PHONY: changelog-validate
+changelog-validate:
+	@./scripts/changelog.sh validate
+
+.PHONY: changelog-recent
+changelog-recent:
+	@echo "Recent commits (useful for changelog entries):"
+	@./scripts/changelog.sh recent-commits $(COUNT)
+
+.PHONY: changelog-help
+changelog-help:
+	@./scripts/changelog.sh help
+
+# Git hooks setup
+.PHONY: setup-hooks
+setup-hooks:
+	@./scripts/setup-hooks.sh
+
 # Help target
 .PHONY: help
 help:
@@ -373,6 +411,12 @@ help:
 	@echo "  deploy-staging   - Deploy develop to staging"
 	@echo "  deploy-release   - Deploy to staging first, then to release (full pipeline)"
 	@echo "  deploy-test      - Deploy develop to test branch"
+	@echo "  changelog-add    - Add entry to changelog (ENTRY='text' [CATEGORY='Added'])"
+	@echo "  changelog-prepare - Prepare changelog for release (VERSION='x.y.z')"
+	@echo "  changelog-validate - Validate changelog format"
+	@echo "  changelog-recent - Show recent commits for changelog reference"
+	@echo "  changelog-help   - Show changelog script help"
+	@echo "  setup-hooks      - Install git hooks for changelog reminders"
 	@echo "  help             - Show this help message"
 	@echo ""
 	@echo "Docker Test Targets:"
