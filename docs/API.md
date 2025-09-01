@@ -412,6 +412,138 @@ OPTIONS:
 - **Report Generation**: Persistent test artifacts
 - **Flexible Execution**: Multiple test types and options
 
+### Version Management (version.sh)
+
+**Location**: `scripts/version.sh`  
+**Purpose**: Automated version management and tagging
+
+#### Features
+
+- **Semantic Versioning**: Support for major.minor.patch versioning
+- **Automatic Tagging**: Git tag creation with proper formatting
+- **Version Validation**: Ensures version format compliance
+- **Integration Ready**: Works with CI/CD pipelines
+
+### Changelog Generation (changelog.sh)
+
+**Location**: `scripts/changelog.sh`  
+**Purpose**: Automated changelog generation from git history
+
+#### Features
+
+- **Git Integration**: Extracts commit messages and metadata
+- **Markdown Format**: Generates properly formatted changelog
+- **Version Grouping**: Organizes changes by version releases
+- **Conventional Commits**: Supports conventional commit message parsing
+
+### Project Structure Synchronization (sync-structure.sh)
+
+**Location**: `scripts/sync-structure.sh`  
+**Purpose**: Maintains consistency between project structure and documentation
+
+#### Features
+
+- **Tree Generation**: Creates comprehensive directory tree views
+- **Documentation Sync**: Updates structure sections across files
+- **Duplicate Prevention**: Detects and prevents duplicate content
+- **Cross-reference Validation**: Ensures internal links are valid
+
+### Structure Validation (validate-structure.sh)
+
+**Location**: `scripts/validate-structure.sh`  
+**Purpose**: Validates project structure compliance and consistency
+
+#### Features
+
+- **File Existence**: Verifies required files are present
+- **Link Validation**: Checks internal and external references
+- **Format Compliance**: Ensures documentation follows standards
+- **Executable Consistency**: Validates naming conventions
+
+### Compliance Verification (compliance-check.sh)
+
+**Location**: `scripts/compliance-check.sh`  
+**Purpose**: 100% compliance verification across all project aspects
+
+#### Features
+
+- **Multi-level Checks**: File, documentation, and integration compliance
+- **Comprehensive Reporting**: Detailed compliance status reports
+- **Automated Fixes**: Suggests or applies compliance corrections
+- **Quality Gates**: Pass/fail thresholds for CI/CD integration
+
+### Development Checkpoint (checkpoint.sh)
+
+**Location**: `scripts/checkpoint.sh`  
+**Purpose**: Development checkpoint and backup utility
+
+#### Features
+
+- **State Preservation**: Creates development snapshots
+- **Backup Management**: Automated backup creation and rotation
+- **Restore Capability**: Easy restoration from checkpoints
+- **Progress Tracking**: Milestone and progress documentation
+
+### Duplicate Detection (check-duplicates.sh)
+
+**Location**: `scripts/check-duplicates.sh`  
+**Purpose**: Detects and reports duplicate content across project files
+
+#### Features
+
+- **Content Analysis**: Identifies duplicate text blocks
+- **File Comparison**: Cross-file duplicate detection
+- **Smart Filtering**: Excludes legitimate duplicates (licenses, etc.)
+- **Cleanup Suggestions**: Provides remediation recommendations
+
+### Deployment Automation (deploy.sh)
+
+**Location**: `scripts/deploy.sh`  
+**Purpose**: Automated deployment orchestration and management
+
+#### Features
+
+- **Multi-stage Deployment**: Development, staging, production
+- **Health Checks**: Pre and post-deployment validation
+- **Rollback Support**: Automated rollback on failure
+- **Environment Configuration**: Environment-specific deployments
+
+### Quick Commit Workflow (quick-commit.sh)
+
+**Location**: `scripts/quick-commit.sh`  
+**Purpose**: Streamlined commit workflow with automated checks
+
+#### Features
+
+- **Pre-commit Validation**: Runs linting and basic tests
+- **Commit Message Templates**: Conventional commit formatting
+- **Automatic Staging**: Smart file staging and commit creation
+- **Integration Hooks**: Triggers additional workflow steps
+
+### Git Hooks Management (setup-hooks.sh)
+
+**Location**: `scripts/setup-hooks.sh`  
+**Purpose**: Git hooks installation and configuration
+
+#### Features
+
+- **Hook Installation**: Automated git hook setup
+- **Configuration Management**: Hook behavior customization
+- **Team Consistency**: Ensures consistent hooks across team
+- **Validation Integration**: Links with project validation tools
+
+### Pre-commit Hook (pre-commit-hook.sh)
+
+**Location**: `scripts/pre-commit-hook.sh`  
+**Purpose**: Git pre-commit validation and enforcement
+
+#### Features
+
+- **Code Quality**: Linting and formatting validation
+- **Test Execution**: Runs relevant test suites
+- **Documentation Sync**: Updates documentation as needed
+- **Commit Prevention**: Blocks commits that fail validation
+
 ## Configuration Files
 
 ### Editor Configuration (.editorconfig)

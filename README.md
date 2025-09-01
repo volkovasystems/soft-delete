@@ -273,99 +273,98 @@ bats tests/edge-cases.bats
 
 ```
 soft-delete/
-├── bin/                     # Compiled executable binaries
-│   └── soft-delete              # Compiled executable binary
-├── CHANGELOG.md             # Version history and change tracking
-├── CONTRIBUTING.md          # Contribution guidelines and development setup
-├── dist/                    # Distribution and build artifacts
-│   └── .gitkeep                 # Git directory preservation marker
-├── docker-compose.test.yml  # Docker testing environment configuration
-├── Dockerfile.runtime       # Runtime container image definition
-├── Dockerfile.test          # Testing container image definition
-├── docs/                    # Comprehensive project documentation
-│   ├── API.md                   # Comprehensive API reference documentation
-│   ├── DEPLOYMENT.md            # Deployment procedures and automation guide
-│   ├── PROJECT-STRUCTURE.md                        # Markdown documentation file
-│   ├── SECURITY.md              # Security policies and vulnerability reporting
-│   └── TESTING.md               # Testing procedures and infrastructure guide
-├── .editorconfig            # Code formatting and editor standards
-├── examples/                # Usage examples and demonstrations
-│   ├── advanced_usage.sh        # Advanced integration examples
-│   ├── basic_usage.sh           # Basic usage examples and tutorials
-│   └── README.md                # Project overview and main documentation
-├── Formula/                  # Package manager formulas (Homebrew)
-│   └── soft-delete.rb           # Homebrew formula for package distribution
-├── .gitattributes           # Git file handling configuration
-├── .githooks/
-│   └── pre-commit                     # Executable file
-├── .github/                 # GitHub configuration and workflows
-│   └── workflows/               # GitHub Actions workflows
-│       └── release.yml              # GitHub Actions CI/CD release pipeline
-├── .gitignore               # Git ignore patterns and exclusions
-├── install.sh               # Installation script for end users
-├── LICENSE                  # MIT License terms and conditions
-├── Makefile                 # Build automation and development tasks
-├── .markdownlint.yaml       # Markdown linting rules and configuration
-├── README.md                # Project overview and main documentation
-├── reports/                 # Test reports and analysis artifacts
-│   ├── artifacts/
-│   │   └── .gitkeep                 # Git directory preservation marker
-│   ├── coverage/
-│   │   └── .gitkeep                 # Git directory preservation marker
-│   ├── .gitkeep                 # Git directory preservation marker
-│   ├── junit/
-│   │   └── .gitkeep                 # Git directory preservation marker
-│   └── tap/
-│       └── .gitkeep                 # Git directory preservation marker
-├── scripts/                 # Utility and automation scripts
-│   ├── benchmark.sh             # Performance testing and benchmarking
-│   ├── changelog.sh             # Automated changelog generation
-│   ├── check-duplicates.sh      # Duplicate content detection and cleanup
-│   ├── checkpoint.sh            # Development checkpoint and backup utility
-│   ├── cleanup.sh               # Comprehensive system cleanup utility
-│   ├── compliance-check.sh      # 100% compliance verification system
-│   ├── deploy.sh                # Deployment automation and orchestration
-│   ├── pre-commit-hook.sh                       # Shell script
-│   ├── quick-commit.sh                       # Shell script
-│   ├── run-tests.sh             # Docker-based comprehensive test runner
-│   ├── security-scan.sh         # Security vulnerability scanning
-│   ├── setup-hooks.sh                       # Shell script
-│   ├── sync-structure.sh        # Project structure synchronization
-│   ├── validate-structure.sh    # Project structure validation
-│   └── version.sh                       # Shell script
-├── .shellcheckrc            # Shell script linting configuration
-├── soft-delete.sh           # Main application source script
-├── tests/                   # Test suites and testing infrastructure
-│   ├── edge-cases.bats          # Edge case and boundary testing suite
-│   ├── soft-delete.bats         # Main application test suite
-│   └── test_helper.bash         # Test utilities and helper functions
-├── VERSION                  # Current version information
-└── .warp/                   # Warp.dev AI configuration and context
-    ├── project-context.md       # Main project context for AI assistance
-    ├── protocols/               # Development protocols and procedures
-    │   ├── ai-response-completeness-protocol.md                # Development protocol specification
-    │   ├── ai-version-control-protocol.md                # Development protocol specification
-    │   ├── auto-cleanup-protocol.md                # Development protocol specification
-    │   ├── changelog-protocol.md                # Development protocol specification
+├── bin/                                          # Compiled executable binaries
+│   └── soft-delete                               # Compiled executable binary
+├── CHANGELOG.md                                  # Version history and change tracking
+├── CONTRIBUTING.md                               # Contribution guidelines and development setup
+├── dist/                                         # Distribution and build artifacts
+│   └── .gitkeep                                  # Git directory preservation marker
+├── docker-compose.test.yml                       # Docker testing environment configuration
+├── Dockerfile.runtime                            # Runtime container image definition
+├── Dockerfile.test                               # Testing container image definition
+├── docs/                                         # Comprehensive project documentation
+│   ├── API.md                                    # Comprehensive API reference documentation
+│   ├── DEPLOYMENT.md                             # Deployment procedures and automation guide
+│   ├── PROJECT-STRUCTURE.md                      # Canonical project structure documentation
+│   ├── SECURITY.md                               # Security policies and vulnerability reporting
+│   └── TESTING.md                                # Testing procedures and infrastructure guide
+├── .editorconfig                                 # Code formatting and editor standards
+├── examples/                                     # Usage examples and demonstrations
+│   ├── advanced_usage.sh                         # Advanced integration examples
+│   ├── basic_usage.sh                            # Basic usage examples and tutorials
+│   └── README.md                                 # Project overview and main documentation
+├── Formula/                                      # Package manager formulas (Homebrew)
+│   └── soft-delete.rb                            # Homebrew formula for package distribution
+├── .gitattributes                                # Git file handling configuration
+├── .githooks/                                    # Git hooks for development workflow
+│   └── pre-commit                                # Git pre-commit hook executable
+├── .github/                                      # GitHub configuration and workflows
+│   └── workflows/                                # GitHub Actions workflows
+│       └── release.yml                           # GitHub Actions CI/CD release pipeline
+├── .gitignore                                    # Git ignore patterns and exclusions
+├── install.sh                                    # Installation script for end users
+├── LICENSE                                       # MIT License terms and conditions
+├── Makefile                                      # Build automation and development tasks
+├── .markdownlint.yaml                            # Markdown linting rules and configuration
+├── README.md                                     # Project overview and main documentation
+├── reports/                                      # Test reports and analysis artifacts
+│   ├── artifacts/                                # Build and test artifacts
+│   │   └── .gitkeep                              # Git directory preservation marker
+│   ├── coverage/                                 # Test coverage reports
+│   │   └── .gitkeep                              # Git directory preservation marker
+│   ├── .gitkeep                                  # Git directory preservation marker
+│   ├── junit/                                    # JUnit test result files
+│   │   └── .gitkeep                              # Git directory preservation marker
+│   └── tap/                                      # TAP (Test Anything Protocol) output
+│       └── .gitkeep                              # Git directory preservation marker
+├── scripts/                                      # Utility and automation scripts
+│   ├── benchmark.sh                              # Performance testing and benchmarking
+│   ├── changelog.sh                              # Automated changelog generation
+│   ├── check-duplicates.sh                       # Duplicate content detection and cleanup
+│   ├── checkpoint.sh                             # Development checkpoint and backup utility
+│   ├── cleanup.sh                                # Comprehensive system cleanup utility
+│   ├── compliance-check.sh                       # 100% compliance verification system
+│   ├── deploy.sh                                 # Deployment automation and orchestration
+│   ├── pre-commit-hook.sh                        # Git pre-commit validation hook
+│   ├── quick-commit.sh                           # Quick commit workflow automation
+│   ├── run-tests.sh                              # Docker-based comprehensive test runner
+│   ├── security-scan.sh                          # Security vulnerability scanning
+│   ├── setup-hooks.sh                            # Git hooks installation and setup
+│   ├── sync-structure.sh                         # Project structure synchronization
+│   ├── validate-structure.sh                     # Project structure validation
+│   └── version.sh                                # Version management and tagging
+├── .shellcheckrc                                 # Shell script linting configuration
+├── soft-delete.sh                                # Main application source script
+├── tests/                                        # Test suites and testing infrastructure
+│   ├── edge-cases.bats                           # Edge case and boundary testing suite
+│   ├── soft-delete.bats                          # Main application test suite
+│   └── test_helper.bash                          # Test utilities and helper functions
+├── VERSION                                       # Current version information
+└── .warp/                                        # Warp.dev AI configuration and context
+    ├── project-context.md                        # Main project context for AI assistance
+    ├── protocols/                                # Development protocols and procedures
+    │   ├── ai-response-completeness-protocol.md  # Development protocol specification
+    │   ├── ai-version-control-protocol.md        # Development protocol specification
+    │   ├── auto-cleanup-protocol.md              # Development protocol specification
+    │   ├── changelog-protocol.md                 # Development protocol specification
     │   ├── compliance-protocol.md                # Development protocol specification
-    │   ├── consistency-protocol.md                # Development protocol specification
-    │   ├── continuous-commit-protocol.md                # Development protocol specification
-    │   ├── git-management-protocol.md                # Development protocol specification
-    │   ├── structural-alignment-protocol.md                # Development protocol specification
-    │   ├── testing-protocol.md                # Development protocol specification
-    │   ├── universal-compliance-checklist.md                # Development protocol specification
-    │   └── version-protocol.md                # Development protocol specification
-    ├── README.md                # Project overview and main documentation
-    ├── rules/                   # AI agent behavioral rules
-    │   ├── agent-instructions.md                    # AI agent behavioral rule definition
-    │   ├── ai-agent-rules.md                    # AI agent behavioral rule definition
-    │   ├── dynamic-rules.md                    # AI agent behavioral rule definition
-    │   ├── rules-summary.md                    # AI agent behavioral rule definition
-    │   └── validate-response-completeness.sh                       # Shell script
-    └── templates/               # Template files for rules and protocols
-        └── rule-template.md                        # Markdown documentation file
+    │   ├── consistency-protocol.md               # Development protocol specification
+    │   ├── continuous-commit-protocol.md         # Development protocol specification
+    │   ├── git-management-protocol.md            # Development protocol specification
+    │   ├── structural-alignment-protocol.md      # Development protocol specification
+    │   ├── testing-protocol.md                   # Development protocol specification
+    │   ├── universal-compliance-checklist.md     # Development protocol specification
+    │   └── version-protocol.md                   # Development protocol specification
+    ├── README.md                                 # Project overview and main documentation
+    ├── rules/                                    # AI agent behavioral rules
+    │   ├── agent-instructions.md                 # AI agent behavioral rule definition
+    │   ├── ai-agent-rules.md                     # AI agent behavioral rule definition
+    │   ├── dynamic-rules.md                      # AI agent behavioral rule definition
+    │   ├── rules-summary.md                      # AI agent behavioral rule definition
+    │   └── validate-response-completeness.sh     # AI response validation script
+    └── templates/                                # Template files for rules and protocols
+        └── rule-template.md                      # Template for creating new rules
 ```
-
 ## Contributing
 
 We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for details.

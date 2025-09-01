@@ -212,6 +212,122 @@ validate_file_completeness() {
     return 0
 }
 
+# Validate comment alignment and format with improved alignment standards
+validate_comment_format() {
+    local validation_failed=0
+    local line_number=0
+    local in_code_block=false
+    
+    log_info "Validating comment format and alignment..."
+    
+    while IFS= read -r line; do
+        line_number=$((line_number + 1))
+        
+        # Track code block boundaries
+        if [[ "$line" == \`\`\`* ]]; then
+            if [[ "$in_code_block" == "true" ]]; then
+                in_code_block=false
+            else
+                in_code_block=true
+            fi
+            continue
+        fi
+        
+        # Skip lines outside code blocks
+        if [[ "$in_code_block" == "false" ]]; then
+            continue
+        fi
+        
+        # Skip empty lines and the main directory line
+        if [[ -z "$line" || "$line" == "soft-delete/" ]]; then
+            continue
+        fi
+        
+        # Validate tree structure and comments for content lines
+        if [[ "$line" =~ ^([│└├ ]+)(──+)[[:space:]]+([^#[:space:]]+[/]?)([[:space:]]*)(.*)$ ]]; then
+            local tree_prefix="${BASH_REMATCH[1]}"
+            local tree_connector="${BASH_REMATCH[2]}"
+            local filename_part="${BASH_REMATCH[3]}"
+            local spacing_before_comment="${BASH_REMATCH[4]}"
+            local comment_part="${BASH_REMATCH[5]}"
+            
+            # Filename part should already be clean, no trailing spaces
+            
+            # Calculate the position where comments should start
+            local full_tree_part="${tree_prefix}${tree_connector} ${filename_part}"
+            local tree_length=${#full_tree_part}
+            
+            # For files/directories that have comments, check alignment
+            if [[ -n "$comment_part" && "$comment_part" =~ ^# ]]; then
+                # We have a comment - the spacing is already captured in spacing_before_comment
+                # Comment should start with # followed by space
+                if [[ ! "$comment_part" =~ ^#[[:space:]] ]]; then
+                    log_error "Line $line_number: Comment format invalid - should be '# description'"
+                    log_error "  Line: '$line'"
+                    validation_failed=1
+                fi
+                
+                # Check for minimum spacing (captured spacing + any spacing in comment_part)
+                local total_spacing="${spacing_before_comment}"
+                if [[ ${#total_spacing} -lt 1 ]]; then
+                    log_error "Line $line_number: Comment spacing is less than minimum (1 space)"
+                    log_error "  Line: '$line'"
+                    validation_failed=1
+                elif [[ ${#total_spacing} -eq 1 ]]; then
+                    log_warn "Line $line_number: Comment spacing could be improved (only 1 space)"
+                    log_warn "  Line: '$line'"
+                fi
+                
+                # Check if alignment is reasonable (not too excessive)
+                local total_pre_comment_length=$((tree_length + ${#total_spacing}))
+                if [[ $total_pre_comment_length -gt 80 ]]; then
+                    log_warn "Line $line_number: Comment alignment may be too far right (past column 80)"
+                    log_warn "  Line: '$line'"
+                fi
+                
+                # Validate that the comment has actual content
+                local comment_content
+                comment_content=$(echo "$comment_part" | sed 's/^#[[:space:]]*//')
+                if [[ -z "$comment_content" ]]; then
+                    log_warn "Line $line_number: Comment exists but has no content"
+                    log_warn "  Line: '$line'"
+                fi
+            fi
+            
+            # Check for proper tree structure characters
+            if [[ ! "$tree_connector" =~ ^──+$ ]]; then
+                log_error "Line $line_number: Invalid tree connector - should be '──' (minimum)"
+                log_error "  Line: '$line'"
+                validation_failed=1
+            fi
+            
+            # Validate tree prefix characters
+            if [[ "$tree_prefix" =~ [^│└├[:space:]] ]]; then
+                log_error "Line $line_number: Invalid characters in tree prefix"
+                log_error "  Line: '$line'"
+                validation_failed=1
+            fi
+            
+        elif [[ "$line" =~ ^[[:space:]]*$ ]]; then
+            # Empty tree continuation line - acceptable
+            continue
+        else
+            # Line doesn't match expected tree structure
+            log_warn "Line $line_number: Unexpected line format in structure"
+            log_warn "  Line: '$line'"
+        fi
+        
+    done < "$STRUCTURE_FILE"
+    
+    if [[ $validation_failed -eq 0 ]]; then
+        log_success "Comment format and alignment validation passed"
+        return 0
+    else
+        log_error "Comment format and alignment validation failed"
+        return 1
+    fi
+}
+
 # Validate content completeness
 validate_content_completeness() {
     log_info "Validating content completeness..."
@@ -313,6 +429,10 @@ run_full_validation() {
     fi
     
     if ! validate_content_completeness; then
+        validation_failed=1
+    fi
+    
+    if ! validate_comment_format; then
         validation_failed=1
     fi
     
