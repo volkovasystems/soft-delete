@@ -279,6 +279,44 @@ if find docs/ .warp/ -name "*.md" -not -perm 644 2>/dev/null | grep -q .; then
 fi
 echo "✅ All file permissions correct"
 
+# 11. AUTO-CLEANUP COMPLIANCE VALIDATION (MANDATORY)
+echo "🧹 Auto-cleanup compliance validation..."
+
+# Check for dangling test files
+if find reports/ -name "*.tap" -o -name "*.txt" -o -name "*.xml" 2>/dev/null | grep -q .; then
+    echo "❌ Dangling test artifacts found - running cleanup"
+    find reports/ -name "*.tap" -o -name "*.txt" -o -name "*.xml" -delete 2>/dev/null || true
+fi
+
+# Check for temporary files
+if find . -name "*.tmp" -o -name "*.temp" -o -name "*~" 2>/dev/null | grep -q .; then
+    echo "❌ Temporary files found - running cleanup"
+    find . -name "*.tmp" -o -name "*.temp" -o -name "*~" -delete 2>/dev/null || true
+fi
+
+# Check for system files
+if find . -name ".DS_Store" -o -name "Thumbs.db" 2>/dev/null | grep -q .; then
+    echo "❌ System files found - running cleanup" 
+    find . -name ".DS_Store" -o -name "Thumbs.db" -delete 2>/dev/null || true
+fi
+
+# Verify no unexpected untracked files remain
+UNTRACKED_FILES=$(git ls-files --others --exclude-standard)
+if [[ -n "$UNTRACKED_FILES" ]]; then
+    # Allow specific patterns (.deploy/, reports/) but warn about others
+    UNEXPECTED_UNTRACKED=$(echo "$UNTRACKED_FILES" | grep -v -E '^\.deploy/|^reports/' | head -5)
+    if [[ -n "$UNEXPECTED_UNTRACKED" ]]; then
+        echo "⚠️  Unexpected untracked files detected:"
+        echo "$UNEXPECTED_UNTRACKED"
+        # Don't fail for this, just warn
+    fi
+fi
+
+# Clean old backup directories from /tmp
+find /tmp -name "backup-*" -type d -mtime +0 -exec rm -rf {} + 2>/dev/null || true
+
+echo "✅ Auto-cleanup compliance validated"
+
 echo ""
 echo "🎉 ALL AUTOMATED VALIDATIONS PASSED - 100% COMPLIANT"
 ```

@@ -11,6 +11,7 @@ This directory contains all Warp.dev-specific configuration files and protocols 
 ├── protocols/
 │   ├── ai-response-completeness-protocol.md # AI response completeness and commit requirements
 │   ├── ai-version-control-protocol.md # AI version control and modification rules
+│   ├── auto-cleanup-protocol.md # Automatic cleanup of generated files and dangling artifacts
 │   ├── changelog-protocol.md    # Changelog management protocol
 │   ├── compliance-protocol.md   # 100% compliance standards and verification protocol
 │   ├── consistency-protocol.md  # Cross-file consistency protocol  

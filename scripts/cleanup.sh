@@ -52,6 +52,7 @@ CLEANUP_TYPE:
     dist            Clean distribution packages only
     all             Clean everything (default)
     deployment      Clean deployment-specific artifacts
+    auto            Auto-cleanup mode (silent, comprehensive)
 
 OPTIONS:
     -h, --help      Show this help message
@@ -59,6 +60,7 @@ OPTIONS:
     -n, --dry-run   Show what would be cleaned without doing it
     -f, --force     Force cleanup without confirmation prompts
     -q, --quiet     Suppress output except errors
+    --auto          Enable auto-cleanup mode (force + quiet)
 
 EXAMPLES:
     $SCRIPT_NAME                    # Clean everything
@@ -294,6 +296,38 @@ clean_reports() {
     fi
 }
 
+# Function to perform auto-cleanup (silent, comprehensive)
+clean_auto() {
+    local dry_run="${1:-false}"
+    local verbose="${2:-false}"
+    
+    # Auto-cleanup is always quiet and comprehensive
+    # Clean test artifacts
+    find reports/ -name "*.tap" -o -name "*.txt" -o -name "*.xml" -delete 2>/dev/null || true
+    
+    # Clean temporary files
+    find . -name "*.tmp" -type f -delete 2>/dev/null || true
+    find . -name "*.temp" -type f -delete 2>/dev/null || true
+    find . -name "*~" -type f -delete 2>/dev/null || true
+    
+    # Clean system files
+    find . -name ".DS_Store" -delete 2>/dev/null || true
+    find . -name "Thumbs.db" -delete 2>/dev/null || true
+    
+    # Clean old backup directories from /tmp (current day only for safety)
+    find /tmp -name "backup-*" -type d -mtime +0 -exec rm -rf {} + 2>/dev/null || true
+    
+    # Clean editor files
+    find . -name "*.swp" -o -name "*.swo" -delete 2>/dev/null || true
+    
+    # Clean build artifacts (conditionally)
+    if [[ "$KEEP_BINARY" != "true" ]]; then
+        rm -f bin/soft-delete 2>/dev/null || true
+    fi
+    
+    # Don't log success in auto mode to keep it truly silent
+}
+
 # Function to perform deployment cleanup
 clean_deployment() {
     local dry_run="${1:-false}"
@@ -376,6 +410,9 @@ perform_cleanup() {
             clean_reports "$dry_run" "$verbose"
             clean_deployment "$dry_run" "$verbose"
             ;;
+        auto)
+            clean_auto "$dry_run" "$verbose"
+            ;;
         *)
             log_error "Unknown cleanup type: $cleanup_type"
             usage
@@ -415,7 +452,13 @@ main() {
                 quiet=true
                 shift
                 ;;
-            build|temp|docker|reports|dist|deployment|all)
+            --auto)
+                cleanup_type="auto"
+                quiet=true
+                force=true
+                shift
+                ;;
+            build|temp|docker|reports|dist|deployment|all|auto)
                 cleanup_type="$1"
                 shift
                 ;;
