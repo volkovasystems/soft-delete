@@ -331,6 +331,9 @@ clean_auto() {
     # Clean old backup directories from /tmp (current day only for safety)
     find /tmp -name "backup-*" -type d -mtime +0 -exec rm -rf {} + 2>/dev/null || true
     
+    # Clean deployment directories and state files
+    rm -rf .deploy/ 2>/dev/null || true
+    
     # Clean editor files (separate commands for reliable deletion)
     find . -name "*.swp" -delete 2>/dev/null || true
     find . -name "*.swo" -delete 2>/dev/null || true
