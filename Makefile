@@ -349,14 +349,8 @@ changelog-add:
 	fi
 	@./scripts/changelog.sh add "$(ENTRY)" "$(CATEGORY)" "$(VERSION)"
 
-.PHONY: changelog-new-version
-changelog-new-version:
-	@if [ -z "$(VERSION)" ]; then \
-		echo "Usage: make changelog-new-version VERSION='x.y.z' [DATE='YYYY-MM-DD']"; \
-		echo "Example: make changelog-new-version VERSION='1.2.0'"; \
-		exit 1; \
-	fi
-	@./scripts/changelog.sh new-version "$(VERSION)" "$(DATE)"
+# NOTE: changelog-new-version target removed per AI Version Control Protocol
+# Only developers can create new version sections via direct script usage
 
 .PHONY: changelog-validate
 changelog-validate:
@@ -413,7 +407,6 @@ help:
 	@echo "  deploy-release   - Deploy to staging first, then to release (full pipeline)"
 	@echo "  deploy-test      - Deploy develop to test branch"
 	@echo "  changelog-add    - Add entry to current version (ENTRY='text' [CATEGORY='Added'])"
-	@echo "  changelog-new-version - Create new version section (VERSION='x.y.z')"
 	@echo "  changelog-validate - Validate changelog format (no Unreleased sections)"
 	@echo "  changelog-recent - Show recent commits for changelog reference"
 	@echo "  changelog-help   - Show changelog script help"

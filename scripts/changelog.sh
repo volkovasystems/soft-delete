@@ -80,53 +80,16 @@ get_recent_commits() {
     fi
 }
 
-# Create new version section in changelog
+# VERSION FILE PROTECTION - AI SYSTEMS CANNOT CREATE NEW VERSIONS
 create_version_section() {
-    local version="$1"
-    local date="${2:-$(date +%Y-%m-%d)}"
-    
-    check_changelog_exists
-    
-    if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-        log_error "Invalid version format. Use semantic versioning (e.g., 1.2.3)"
-        return 1
-    fi
-    
-    # Check if version already exists
-    if grep -q "## \[$version\]" "$CHANGELOG_FILE"; then
-        log_error "Version [$version] already exists in changelog"
-        return 1
-    fi
-    
-    # Create backup
-    cp "$CHANGELOG_FILE" "${CHANGELOG_FILE}.backup"
-    
-    # Add new version section at the top (after header)
-    awk '
-    /^## \[/ && !version_added {
-        print "## ['"$version"'] - '"$date"'"
-        print ""
-        print "### Added"
-        print ""
-        print "### Changed"
-        print ""
-        print "### Fixed"
-        print ""
-        print "### Security"
-        print ""
-        print $0
-        version_added = 1
-        next
-    }
-    {print}
-    ' "$CHANGELOG_FILE" > "${CHANGELOG_FILE}.tmp"
-    mv "${CHANGELOG_FILE}.tmp" "$CHANGELOG_FILE"
-    
-    log_success "Created version section [$version] with date $date"
-    log_info "You can now add entries to this version using the 'add' command"
-    
-    # Clean up backup
-    rm -f "${CHANGELOG_FILE}.backup"
+    log_error "PROTOCOL VIOLATION: AI systems cannot create new version sections"
+    log_error "Only developers can update version numbers per AI Version Control Protocol"
+    log_error "Current version in VERSION file: $(get_current_version)"
+    log_info "AI must add entries to existing version: $(get_current_version)"
+    log_info "If a new version is needed, ask the developer to:"
+    log_info "  1. Update VERSION file using: ./scripts/version.sh major|minor|patch"
+    log_info "  2. Create corresponding changelog section if needed"
+    return 1
 }
 
 # Add entry to specific version section
