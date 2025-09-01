@@ -189,11 +189,20 @@ clean_build() {
     log_info "Cleaning build artifacts..."
     
     if [[ "$dry_run" == "true" ]]; then
-        echo "[DRY RUN] Would remove: bin/soft-delete"
+        if [[ -f "bin/soft-delete" ]] && ! git ls-files --error-unmatch bin/soft-delete >/dev/null 2>&1; then
+            echo "[DRY RUN] Would remove: bin/soft-delete (untracked)"
+        elif [[ -f "bin/soft-delete" ]]; then
+            echo "[DRY RUN] Would skip: bin/soft-delete (committed file)"
+        fi
         echo "[DRY RUN] Would remove: dist/ directory"
     else
         [[ "$verbose" == "true" ]] && log_info "Removing build executable..."
-        rm -f bin/soft-delete
+        # Only remove if file is not tracked by git
+        if [[ -f "bin/soft-delete" ]] && ! git ls-files --error-unmatch bin/soft-delete >/dev/null 2>&1; then
+            rm -f bin/soft-delete
+        elif [[ -f "bin/soft-delete" ]] && [[ "$verbose" == "true" ]]; then
+            log_info "Skipping bin/soft-delete (committed file)"
+        fi
         
         [[ "$verbose" == "true" ]] && log_info "Removing distribution directory..."
         rm -rf dist/
@@ -320,9 +329,12 @@ clean_auto() {
     # Clean editor files
     find . -name "*.swp" -o -name "*.swo" -delete 2>/dev/null || true
     
-    # Clean build artifacts (conditionally)
-    if [[ "$KEEP_BINARY" != "true" ]]; then
-        rm -f bin/soft-delete 2>/dev/null || true
+    # Clean build artifacts (conditionally) - but never delete committed files
+    if [[ "${KEEP_BINARY:-}" != "true" ]]; then
+        # Only remove if file is not tracked by git
+        if [[ -f "bin/soft-delete" ]] && ! git ls-files --error-unmatch bin/soft-delete >/dev/null 2>&1; then
+            rm -f bin/soft-delete 2>/dev/null || true
+        fi
     fi
     
     # Don't log success in auto mode to keep it truly silent
