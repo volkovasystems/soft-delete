@@ -2,6 +2,7 @@
 
 # Changelog Management Script
 # Automates changelog maintenance and ensures proper documentation of changes
+# Version: 1.0.0
 #
 # Usage:
 #   ./scripts/changelog.sh add "feat: new feature description"
