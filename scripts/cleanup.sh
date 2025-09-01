@@ -311,13 +311,18 @@ clean_auto() {
     local verbose="${2:-false}"
     
     # Auto-cleanup is always quiet and comprehensive
-    # Clean test artifacts
-    find reports/ -name "*.tap" -o -name "*.txt" -o -name "*.xml" -delete 2>/dev/null || true
+    # Clean test artifacts (separate commands for reliable deletion)
+    find reports/ -name "*.tap" -delete 2>/dev/null || true
+    find reports/ -name "*.txt" -delete 2>/dev/null || true
+    find reports/ -name "*.xml" -delete 2>/dev/null || true
     
     # Clean temporary files
     find . -name "*.tmp" -type f -delete 2>/dev/null || true
     find . -name "*.temp" -type f -delete 2>/dev/null || true
+    find . -name "*.log" -type f -delete 2>/dev/null || true
     find . -name "*~" -type f -delete 2>/dev/null || true
+    find . -name "*.orig" -type f -delete 2>/dev/null || true
+    find . -name "*.rej" -type f -delete 2>/dev/null || true
     
     # Clean system files
     find . -name ".DS_Store" -delete 2>/dev/null || true
@@ -326,8 +331,9 @@ clean_auto() {
     # Clean old backup directories from /tmp (current day only for safety)
     find /tmp -name "backup-*" -type d -mtime +0 -exec rm -rf {} + 2>/dev/null || true
     
-    # Clean editor files
-    find . -name "*.swp" -o -name "*.swo" -delete 2>/dev/null || true
+    # Clean editor files (separate commands for reliable deletion)
+    find . -name "*.swp" -delete 2>/dev/null || true
+    find . -name "*.swo" -delete 2>/dev/null || true
     
     # Clean build artifacts (conditionally) - but never delete committed files
     if [[ "${KEEP_BINARY:-}" != "true" ]]; then
