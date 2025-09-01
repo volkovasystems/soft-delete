@@ -18,6 +18,7 @@ This directory contains all Warp.dev-specific configuration files and protocols 
 │   ├── git-management-protocol.md # Git workflow and branch management protocol
 │   ├── structural-alignment-protocol.md # Repository structure documentation sync protocol
 │   ├── testing-protocol.md      # Testing workflow protocol
+│   ├── universal-compliance-checklist.md # MASTER CHECKLIST - All protocols and rules for every operation
 │   └── version-protocol.md      # VERSION file management protocol
 ├── rules/
 │   ├── agent-instructions.md    # Agent behavior and rule suggestion guidelines
@@ -44,13 +45,36 @@ Warp.dev will automatically read these files to understand:
 4. **Modular Organization**: Easy to maintain and update specific areas
 5. **Clear Separation**: Distinct from project documentation
 
+## Universal Compliance Checklist
+
+**CRITICAL**: The `universal-compliance-checklist.md` is the **MASTER CHECKLIST** that MUST be completed for every single AI operation on this repository.
+
+### Purpose
+- **Consolidates ALL protocols** into one actionable checklist
+- **Ensures 100% compliance** across every operation
+- **Prevents protocol violations** through systematic verification
+- **Provides immediate remediation** for compliance failures
+
+### Usage
+- **Pre-operation**: Validate system status before any changes
+- **During operation**: Follow protocol-specific requirements
+- **Post-operation**: Complete all commit and documentation requirements
+- **Final verification**: Run automated compliance checks
+
+### Enforcement Level
+- **ABSOLUTE**: No exceptions allowed
+- **IMMEDIATE**: Must be followed for every prompt
+- **COMPREHENSIVE**: Covers all protocols and rules
+- **AUTOMATED**: Includes validation commands for verification
+
 ## File Precedence
 
 Warp.dev reads files in this order:
-1. `.warp/project-context.md` (main project overview)
-2. `.warp/protocols/*.md` (specific workflow protocols)
-3. `.warp/rules/*.md` (behavioral rules and constraints)
-4. Root-level `WARP.md` (fallback for compatibility)
+1. `.warp/protocols/universal-compliance-checklist.md` (**CRITICAL - ALWAYS REQUIRED**)
+2. `.warp/project-context.md` (main project overview)
+3. `.warp/protocols/*.md` (specific workflow protocols)
+4. `.warp/rules/*.md` (behavioral rules and constraints)
+5. Root-level `WARP.md` (fallback for compatibility)
 
 ## Rule Loading System
 

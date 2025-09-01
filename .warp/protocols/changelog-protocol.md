@@ -1,11 +1,21 @@
-# Warp.dev Changelog Protocol
+# Warp.dev Changelog Protocol (AI Version Control Aligned)
 
-This document establishes the protocol for updating the CHANGELOG.md file when working in Warp.dev agentic development environments.
+**CRITICAL**: This protocol is strictly aligned with the AI Version Control Protocol. AI systems are FORBIDDEN from creating version sections or modifying version-related content.
+
+## Core Philosophy
+
+**NO "UNRELEASED" SECTIONS ALLOWED**
+
+This project follows a strict version-based changelog approach:
+- The VERSION file contains the current working version
+- If no git tag exists for that version = it represents unreleased work
+- All changelog entries go into the current version section
+- Only developers can create new version sections via git tags
 
 ## Format Standards
 
 ### Base Format
-Follow [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) format strictly:
+Follow [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) format with VERSION-BASED sections only:
 
 ```markdown
 # Changelog
@@ -15,25 +25,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Version] - YYYY-MM-DD
+## [1.0.0] - YYYY-MM-DD
 
 ### Added
-- For new features
+- New features added to this version
 
 ### Changed
-- For changes in existing functionality
-
-### Deprecated
-- For features soon-to-be removed
-
-### Removed
-- For now-removed features
+- Changes made to existing functionality
 
 ### Fixed
-- For any bug fixes
+- Bug fixes included in this version
 
 ### Security
-- For vulnerabilities or mitigations
+- Security improvements for this version
 ```
 
 ## Organization Principles
@@ -138,12 +142,21 @@ Follow [Semantic Versioning 2.0.0](https://semver.org/spec/v2.0.0.html):
 ### Unreleased Entries Policy
 **CRITICAL RULE**: **NEVER** create an "Unreleased" section in the changelog.
 
-- All changelog entries must be associated with a specific version number
-- Changes should only be documented when they are part of a tagged release
-- Use proper semantic versioning for all entries
-- If changes are made during development, wait until the version is determined before updating the changelog
+**VERSION-BASED APPROACH**:
+- All changelog entries MUST be associated with the current version in the VERSION file
+- If no git tag exists for that version = the version represents "unreleased" work
+- AI systems add entries to the CURRENT version section only
+- Only developers can create NEW version sections (when they tag releases)
+- Changes are documented immediately in the current working version
 
-**Rationale**: This project follows a release-based changelog approach where all documented changes are tied to specific, tagged versions for clarity and traceability.
+**Current Version Logic**:
+- Read version from `/VERSION` file (e.g., "1.0.0")
+- Check if git tag `v1.0.0` exists
+- If NO tag exists = version 1.0.0 is the current "unreleased" working version
+- All new entries go into the `## [1.0.0] - YYYY-MM-DD` section
+- When developer creates git tag `v1.0.0` = that version becomes "released"
+
+**Rationale**: This eliminates the need for "Unreleased" sections while maintaining clear version tracking. The VERSION file always represents the current working version, and git tags determine release status.
 
 ### Release Date Format
 Use ISO 8601 date format: `YYYY-MM-DD`
@@ -164,17 +177,53 @@ Each release should be documented with a complete version entry:
 - Bug fixes included in this release
 ```
 
+## AI System Restrictions
+
+### FORBIDDEN Operations for AI Systems
+
+**AI systems SHALL NEVER**:
+- Create new version sections (e.g., `## [1.1.0]`)
+- Modify version numbers in existing sections
+- Create "Unreleased" sections
+- Update the VERSION file
+- Determine when to increment versions
+- Create or suggest git tags
+- Modify version-related dates
+
+**AI systems MAY ONLY**:
+- Add entries to the CURRENT version section (as specified in VERSION file)
+- Format entries according to this protocol
+- Categorize entries (Added, Changed, Fixed, Security)
+- Auto-detect categories from conventional commit formats
+
+### Enforcement Mechanism
+
+The changelog management script (`scripts/changelog.sh`) contains:
+- Version protection that blocks AI from creating new versions
+- Automatic detection of current version from VERSION file
+- Validation that prevents forbidden operations
+
+**Violation Response**:
+```
+❌ PROTOCOL VIOLATION: AI systems cannot create new version sections
+❌ Only developers can update version numbers per AI Version Control Protocol
+❌ Current version in VERSION file: 1.0.0
+ℹ️  AI must add entries to existing version: 1.0.0
+```
+
 ## Warp.dev Integration
 
 ### Agent Instructions
 When updating CHANGELOG.md in Warp.dev:
 
-1. **Check existing format** before making changes
-2. **Use uniform formatting** as defined in this protocol
-3. **Maintain chronological order** (newest first)
-4. **Be specific and descriptive** in entries
-5. **Group related changes** under appropriate sections
-6. **Use consistent language** and tense
+1. **Read VERSION file** to determine current version
+2. **Check existing format** before making changes
+3. **Add entries to current version ONLY** (never create new versions)
+4. **Use uniform formatting** as defined in this protocol
+5. **Maintain chronological order** (newest first)
+6. **Be specific and descriptive** in entries
+7. **Group related changes** under appropriate sections
+8. **Use consistent language** and tense
 
 ### Commit Protocol
 When committing changelog updates:
@@ -293,4 +342,53 @@ Maintain working links to:
 - **Semantic Versioning**: https://semver.org/spec/v2.0.0.html
 - **Project repository**: Update when repository changes
 
-This protocol ensures consistent, professional changelog maintenance in Warp.dev agentic development environments.
+## Protocol Integration and Compliance
+
+### Integration with AI Version Control Protocol
+
+This changelog protocol is **STRICTLY ALIGNED** with:
+- `.warp/protocols/ai-version-control-protocol.md`
+- `.warp/protocols/version-protocol.md`
+
+**Key Integration Points**:
+1. **VERSION File Authority**: Only the VERSION file determines the current working version
+2. **AI Restrictions**: AI systems cannot create new version sections or modify version numbers
+3. **Developer Control**: Only developers can increment versions using `./scripts/version.sh`
+4. **Git Tag Logic**: Absence of git tag for current version = "unreleased" status
+5. **Automated Enforcement**: Scripts contain protocol violations checks and blocks
+
+### Compliance Validation
+
+**Required Checks**:
+- ✅ No [Unreleased] sections exist in changelog
+- ✅ All entries are associated with specific version numbers
+- ✅ Current version entries match VERSION file content
+- ✅ AI systems cannot access version creation functions
+- ✅ Changelog validation passes protocol requirements
+
+**Validation Command**:
+```bash
+./scripts/changelog.sh validate
+# Must return: ✅ No forbidden [Unreleased] sections found
+```
+
+### Protocol Enforcement
+
+**Automatic Enforcement via**:
+- `scripts/changelog.sh` - Version protection and validation
+- `Makefile` - Restricted targets for AI systems
+- `.githooks/pre-commit` - Format validation on commits
+- Documentation - Clear AI system restrictions
+
+**Manual Enforcement**:
+- Code reviews must verify no [Unreleased] sections
+- Deployment checks validate version consistency
+- Regular protocol compliance audits
+
+---
+
+**EFFECTIVE DATE**: 2025-09-01  
+**PROTOCOL VERSION**: 2.0.0 (AI Version Control Aligned)  
+**ENFORCEMENT**: IMMEDIATE AND ABSOLUTE
+
+This protocol ensures consistent, professional changelog maintenance in Warp.dev agentic development environments while maintaining strict adherence to AI Version Control restrictions.
