@@ -50,6 +50,10 @@ reports/*.txt
 reports/**/*.tap
 reports/**/*.txt
 
+# .githooks directory (CRITICAL: Must be committed for pre-commit functionality)
+!.githooks/
+!.githooks/**
+
 # Deployment state files
 .deploy/
 *.state
