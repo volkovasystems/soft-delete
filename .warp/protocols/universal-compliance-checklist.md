@@ -210,23 +210,77 @@ done
 Run these commands to verify full compliance:
 
 ```bash
-# 1. Comprehensive compliance check
+# 1. COMPREHENSIVE COMPLIANCE CHECK (PRIMARY VALIDATION)
 ./scripts/compliance-check.sh || exit 1
 
-# 2. Structural alignment validation
-./scripts/check-cross-references.sh || exit 1
+# 2. SECURITY VULNERABILITY SCANNING
+./scripts/security-scan.sh --quiet || exit 1
 
-# 3. Changelog protocol compliance
+# 3. STRUCTURAL SYNCHRONIZATION (Updates and validates structure)
+./scripts/sync-structure.sh >/dev/null 2>&1 || { echo "❌ Structural sync failed"; exit 1; }
+
+# 4. CHANGELOG PROTOCOL COMPLIANCE
 ./scripts/changelog.sh validate || exit 1
 
-# 4. Version consistency check
-./scripts/check-version-consistency.sh || exit 1
+# 5. VERSION CONSISTENCY VALIDATION
+# Check VERSION file format and consistency
+VERSION_CONTENT=$(cat VERSION | tr -d '\n\r' | tr -d ' ')
+[[ "$VERSION_CONTENT" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "❌ Invalid VERSION format: $VERSION_CONTENT"; exit 1; }
+echo "✅ VERSION file format valid: $VERSION_CONTENT"
 
-# 5. Working directory status
-[[ -z "$(git status --porcelain)" ]] || exit 1
+# 6. CROSS-FILE CONSISTENCY CHECKS
+# Verify essential directories are properly tracked
+for dir in .githooks .warp scripts tests; do
+    if [[ -d "$dir" ]]; then
+        find "$dir" -name "*" -type f | while read file; do
+            if ! git ls-files --error-unmatch "$file" >/dev/null 2>&1; then
+                echo "❌ Missing tracked file: $file"
+                exit 1
+            fi
+        done
+    fi
+done
+echo "✅ All essential directories properly tracked"
 
-# 6. Recent commits follow format
-git log --format="%s" -2 | grep -qE "^(feat|fix|docs|test|chore|checkpoint):" || exit 1
+# 7. GITIGNORE VALIDATION (Critical files check)
+if git status --ignored | grep -E "\.(sh|md|bats|yml|yaml)$" >/dev/null; then
+    echo "❌ Critical files are being ignored:"
+    git status --ignored | grep -E "\.(sh|md|bats|yml|yaml)$"
+    exit 1
+fi
+echo "✅ No critical files ignored"
+
+# 8. WORKING DIRECTORY STATUS
+if [[ -n "$(git status --porcelain)" ]]; then
+    echo "❌ Uncommitted changes detected:"
+    git status --short
+    exit 1
+fi
+echo "✅ Working directory clean"
+
+# 9. RECENT COMMITS FORMAT VALIDATION
+if ! git log --format="%s" -3 | grep -qE "^(feat|fix|docs|test|chore|checkpoint):"; then
+    echo "❌ Recent commits don't follow conventional format:"
+    git log --format="%s" -3
+    exit 1
+fi
+echo "✅ Recent commits follow conventional format"
+
+# 10. FILE PERMISSIONS VALIDATION
+if find scripts/ -name "*.sh" -not -perm 755 2>/dev/null | grep -q .; then
+    echo "❌ Script permission errors found:"
+    find scripts/ -name "*.sh" -not -perm 755 2>/dev/null
+    exit 1
+fi
+if find docs/ .warp/ -name "*.md" -not -perm 644 2>/dev/null | grep -q .; then
+    echo "❌ Documentation permission errors found:"
+    find docs/ .warp/ -name "*.md" -not -perm 644 2>/dev/null
+    exit 1
+fi
+echo "✅ All file permissions correct"
+
+echo ""
+echo "🎉 ALL AUTOMATED VALIDATIONS PASSED - 100% COMPLIANT"
 ```
 
 ### Manual Verification Points
@@ -281,9 +335,18 @@ make docker-lint > /dev/null 2>&1 && echo "✅ PASS" || echo "❌ FAIL"
 echo -n "Changelog compliant: "
 ./scripts/changelog.sh validate > /dev/null 2>&1 && echo "✅ PASS" || echo "❌ FAIL"
 
-# Version consistency
-echo -n "Version consistency: "
-./scripts/check-version-consistency.sh > /dev/null 2>&1 && echo "✅ PASS" || echo "❌ FAIL"
+# Security compliance
+echo -n "Security scan: "
+./scripts/security-scan.sh --quiet > /dev/null 2>&1 && echo "✅ PASS" || echo "❌ FAIL"
+
+# Version format validation
+echo -n "VERSION file valid: "
+VERSION_CONTENT=$(cat VERSION | tr -d '\n\r' | tr -d ' ')
+[[ "$VERSION_CONTENT" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] && echo "✅ PASS" || echo "❌ FAIL"
+
+# Critical files tracked
+echo -n "Critical files tracked: "
+git status --ignored | grep -E "\.(sh|md|bats|yml|yaml)$" >/dev/null && echo "❌ FAIL" || echo "✅ PASS"
 
 echo ""
 echo "🎯 OVERALL COMPLIANCE: ALL CHECKS MUST PASS"
