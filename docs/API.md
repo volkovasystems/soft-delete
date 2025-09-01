@@ -424,6 +424,55 @@ OPTIONS:
 - **Version Validation**: Ensures version format compliance
 - **Integration Ready**: Works with CI/CD pipelines
 
+### Version Protection (version-guard.sh)
+
+**Location**: `scripts/version-guard.sh`  
+**Purpose**: VERSION file protection and unauthorized modification prevention
+
+#### Protection Features
+
+- **File Immutability**: Uses Linux `chattr +i` to make VERSION file immutable
+- **Pre-commit Hooks**: Git hooks to block unauthorized VERSION modifications
+- **Checksum Validation**: SHA256 integrity verification and tamper detection
+- **AI Environment Detection**: Automatically detects AI/automated environments
+- **Developer Authentication**: Validates authorized developer credentials
+- **Access Logging**: Audit trails for VERSION file access attempts
+
+#### Security Controls
+
+1. **AI Prevention**: Blocks AI systems from modifying version numbers
+2. **Authentication**: Only authorized developers can update VERSION file
+3. **Integrity Monitoring**: Detects unauthorized tampering
+4. **Rollback Protection**: Prevents accidental version rollbacks
+5. **Audit Logging**: Complete access and modification history
+
+#### Usage
+
+```bash
+scripts/version-guard.sh [COMMAND] [OPTIONS]
+
+COMMANDS:
+    enable          Enable VERSION file protection
+    disable         Disable protection (requires --force)
+    status          Show protection status and file info
+    validate        Validate VERSION file integrity
+    reset           Reset protection system
+
+OPTIONS:
+    -h, --help      Show help
+    -v, --verbose   Verbose output
+    -f, --force     Force operation (disable only)
+```
+
+#### Make Integration
+
+```bash
+make version-guard-enable     # Enable protection
+make version-guard-status     # Check protection status
+make version-guard-validate   # Validate integrity
+make version-guard-disable    # Disable (requires confirmation)
+```
+
 ### Changelog Generation (changelog.sh)
 
 **Location**: `scripts/changelog.sh`  

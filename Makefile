@@ -162,6 +162,27 @@ version-minor:
 version-patch:
 	@./scripts/version.sh patch
 
+# Version Guard targets
+.PHONY: version-guard-enable
+version-guard-enable:
+	@./scripts/version-guard.sh enable
+
+.PHONY: version-guard-disable
+version-guard-disable:
+	@./scripts/version-guard.sh disable --force
+
+.PHONY: version-guard-status
+version-guard-status:
+	@./scripts/version-guard.sh status
+
+.PHONY: version-guard-validate
+version-guard-validate:
+	@./scripts/version-guard.sh validate
+
+.PHONY: version-guard-reset
+version-guard-reset:
+	@./scripts/version-guard.sh reset
+
 # Deployment targets
 .PHONY: deploy-staging
 deploy-staging:
