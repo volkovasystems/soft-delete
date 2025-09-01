@@ -187,6 +187,55 @@ check_working_directory() {
     return 0
 }
 
+# Function to check if we're on develop branch
+check_on_develop_branch() {
+    log_step "Verifying current branch is develop..."
+    
+    local current_branch
+    current_branch="$(git branch --show-current)"
+    
+    if [[ "$current_branch" != "develop" ]]; then
+        log_error "Deployment must be initiated from develop branch."
+        log_error "Current branch: $current_branch"
+        log_error "Please switch to develop: git checkout develop"
+        return 1
+    fi
+    
+    log_success "On develop branch"
+    return 0
+}
+
+# Function to ensure develop branch is pushed to remote
+check_develop_pushed() {
+    log_step "Ensuring develop branch is pushed to remote..."
+    
+    # Fetch latest from remote
+    git fetch origin develop --quiet 2>/dev/null || true
+    
+    local local_develop_commit
+    local_develop_commit="$(git rev-parse develop)"
+    local remote_develop_commit
+    remote_develop_commit="$(git rev-parse origin/develop 2>/dev/null || echo "none")"
+    
+    if [[ "$local_develop_commit" != "$remote_develop_commit" ]]; then
+        log_warn "Local develop branch is not synchronized with remote."
+        log_info "Local:  $local_develop_commit"
+        log_info "Remote: $remote_develop_commit"
+        log_info "Pushing develop branch to remote..."
+        
+        if ! git push origin develop; then
+            log_error "Failed to push develop branch to remote"
+            return 1
+        fi
+        
+        log_success "Develop branch pushed to remote"
+    else
+        log_success "Develop branch is up to date with remote"
+    fi
+    
+    return 0
+}
+
 # Function to check remote connectivity and push access
 check_remote_access() {
     local remote="origin"
@@ -217,6 +266,80 @@ check_remote_access() {
     fi
     
     log_success "Remote access verified"
+    return 0
+}
+
+# Function to push all deployment-related branches and tags
+push_all_deployment_artifacts() {
+    local deployment_type="$1"
+    local dry_run="${2:-false}"
+    local version="${3:-}"
+    
+    if [[ "$dry_run" == "true" ]]; then
+        log_info "DRY RUN: Would push all deployment artifacts to remote"
+        return 0
+    fi
+    
+    log_step "Pushing all deployment artifacts to remote..."
+    
+    # Always push develop branch
+    log_info "Pushing develop branch..."
+    git push origin develop || {
+        log_error "Failed to push develop branch"
+        return 1
+    }
+    
+    # Push deployment-specific branches
+    case "$deployment_type" in
+        "staging")
+            log_info "Pushing staging branch..."
+            git push origin staging || {
+                log_error "Failed to push staging branch"
+                return 1
+            }
+            ;;
+        "release")
+            log_info "Pushing staging branch..."
+            git push origin staging || {
+                log_error "Failed to push staging branch"
+                return 1
+            }
+            log_info "Pushing release branch..."
+            git push origin release || {
+                log_error "Failed to push release branch"
+                return 1
+            }
+            log_info "Pushing master branch..."
+            git push origin master || {
+                log_error "Failed to push master branch"
+                return 1
+            }
+            log_info "Pushing main branch..."
+            git push origin main || {
+                log_error "Failed to push main branch"
+                return 1
+            }
+            
+            # Push version tag if provided
+            if [[ -n "$version" ]]; then
+                local tag_name="v$version"
+                log_info "Pushing version tag $tag_name..."
+                git push origin "$tag_name" || {
+                    log_error "Failed to push tag $tag_name"
+                    return 1
+                }
+            fi
+            ;;
+        "test")
+            log_info "Pushing test branch..."
+            git push origin test || {
+                log_error "Failed to push test branch"
+                return 1
+            }
+            ;;
+    esac
+    
+    log_success "All deployment artifacts pushed to remote"
     return 0
 }
 
@@ -398,6 +521,8 @@ deploy_staging() {
     # Pre-deployment checks
     if [[ "$force" != "true" ]]; then
         check_working_directory || return 1
+        check_on_develop_branch || return 1
+        check_develop_pushed || return 1
         check_remote_access || return 1
         
         # Check if staging is already deployed and current
@@ -422,6 +547,10 @@ deploy_staging() {
     
     if [[ "$dry_run" != "true" ]]; then
         push_branch "staging" "origin" "$dry_run"
+        
+        # Push all deployment artifacts to remote
+        push_all_deployment_artifacts "staging" "$dry_run"
+        
         log_success "Successfully deployed develop to staging"
     else
         log_success "DRY RUN: Would deploy develop to staging successfully"
@@ -553,6 +682,9 @@ deploy_release() {
         force_merge "release" "main" "$dry_run"
         push_branch "main" "origin" "$dry_run"
         
+        # Push all deployment artifacts to remote
+        push_all_deployment_artifacts "release" "$dry_run" "$version"
+        
         log_success "Successfully deployed staging to release (v$version)"
         log_success "Updated master and main branches"
     else
@@ -581,6 +713,8 @@ deploy_test() {
     # Pre-deployment checks
     if [[ "$force" != "true" ]]; then
         check_working_directory || return 1
+        check_on_develop_branch || return 1
+        check_develop_pushed || return 1
         check_remote_access || return 1
     fi
     
@@ -592,7 +726,13 @@ deploy_test() {
     
     if [[ "$dry_run" != "true" ]]; then
         push_branch "test" "origin" "$dry_run"
+        
+        # Push all deployment artifacts to remote
+        push_all_deployment_artifacts "test" "$dry_run"
+        
         log_success "Successfully deployed develop to test"
+    else
+        log_success "DRY RUN: Would deploy develop to test successfully"
     fi
     
     # Return to original branch
