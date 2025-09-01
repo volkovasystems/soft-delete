@@ -169,6 +169,39 @@ git log --oneline -2 | grep -E "(feat|fix|docs|test|chore):"  # MUST match
 - [ ] ✅ **Atomic commits with single logical change**
 - [ ] ✅ **Pre-commit quality gates passed**
 
+### D. Gitignore Management Protocol (CRITICAL)
+
+**ABSOLUTE RULE**: Never modify the reverse-ignore logic in .gitignore
+
+**REQUIRED ACTIONS**:
+- [ ] ✅ **NEVER change the core gitignore logic**: The `*` and `!*/` patterns must remain unchanged
+- [ ] ✅ **Add new file extensions**: For new file types, add `!*.extension` patterns only
+- [ ] ✅ **Add new directories**: For new critical directories, add `!dirname/` and `!dirname/**` patterns
+- [ ] ✅ **Check ignored files**: Run `git status --ignored` to identify missing critical files
+- [ ] ✅ **Force add critical files**: Use `git add -f filename` for essential files that were ignored
+
+**FORBIDDEN OPERATIONS**:
+- [ ] ❌ **NEVER modify the base ignore pattern**: `*` must remain the first line
+- [ ] ❌ **NEVER remove directory inclusion**: `!*/` pattern must never be changed
+- [ ] ❌ **NEVER change file type patterns**: Only add new ones, never modify existing
+- [ ] ❌ **NEVER ignore critical workflow files**: .githooks/, scripts/, tests/, docs/ must be included
+
+**VALIDATION COMMANDS**:
+```bash
+# Check for ignored critical files
+git status --ignored | grep -E "\.(sh|md|bats|yml|yaml)$" && echo "❌ Critical files ignored" || echo "✅ No critical files ignored"
+
+# Verify essential directories are tracked
+find .githooks/ .warp/ scripts/ tests/ -name "*" -type f | while read file; do
+    git ls-files --error-unmatch "$file" >/dev/null 2>&1 || echo "❌ Missing: $file"
+done
+```
+
+**PROTOCOL JUSTIFICATION**:
+- Reverse-ignore pattern (`*` then `!pattern`) ensures explicit control over tracked files
+- Prevents accidental inclusion of generated files, logs, or sensitive data
+- Maintains clean repository while ensuring essential files are never accidentally ignored
+
 ---
 
 ## 📋 FINAL VALIDATION CHECKLIST
