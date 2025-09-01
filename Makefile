@@ -341,21 +341,22 @@ container-clean:
 .PHONY: changelog-add
 changelog-add:
 	@if [ -z "$(ENTRY)" ]; then \
-		echo "Usage: make changelog-add ENTRY='Your change description' [CATEGORY='Added']"; \
+		echo "Usage: make changelog-add ENTRY='Your change description' [CATEGORY='Added'] [VERSION='x.y.z']"; \
 		echo "Categories: Added, Changed, Fixed, Security, Deprecated, Removed"; \
+		echo "Version defaults to current VERSION file content"; \
 		echo "Example: make changelog-add ENTRY='Add new feature' CATEGORY='Added'"; \
 		exit 1; \
 	fi
-	@./scripts/changelog.sh add "$(ENTRY)" "$(CATEGORY)"
+	@./scripts/changelog.sh add "$(ENTRY)" "$(CATEGORY)" "$(VERSION)"
 
-.PHONY: changelog-prepare
-changelog-prepare:
+.PHONY: changelog-new-version
+changelog-new-version:
 	@if [ -z "$(VERSION)" ]; then \
-		echo "Usage: make changelog-prepare VERSION='x.y.z'"; \
-		echo "Example: make changelog-prepare VERSION='1.1.0'"; \
+		echo "Usage: make changelog-new-version VERSION='x.y.z' [DATE='YYYY-MM-DD']"; \
+		echo "Example: make changelog-new-version VERSION='1.2.0'"; \
 		exit 1; \
 	fi
-	@./scripts/changelog.sh prepare-release "$(VERSION)"
+	@./scripts/changelog.sh new-version "$(VERSION)" "$(DATE)"
 
 .PHONY: changelog-validate
 changelog-validate:
@@ -411,9 +412,9 @@ help:
 	@echo "  deploy-staging   - Deploy develop to staging"
 	@echo "  deploy-release   - Deploy to staging first, then to release (full pipeline)"
 	@echo "  deploy-test      - Deploy develop to test branch"
-	@echo "  changelog-add    - Add entry to changelog (ENTRY='text' [CATEGORY='Added'])"
-	@echo "  changelog-prepare - Prepare changelog for release (VERSION='x.y.z')"
-	@echo "  changelog-validate - Validate changelog format"
+	@echo "  changelog-add    - Add entry to current version (ENTRY='text' [CATEGORY='Added'])"
+	@echo "  changelog-new-version - Create new version section (VERSION='x.y.z')"
+	@echo "  changelog-validate - Validate changelog format (no Unreleased sections)"
 	@echo "  changelog-recent - Show recent commits for changelog reference"
 	@echo "  changelog-help   - Show changelog script help"
 	@echo "  setup-hooks      - Install git hooks for changelog reminders"

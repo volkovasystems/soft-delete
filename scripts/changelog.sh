@@ -1,12 +1,13 @@
 #!/bin/bash
 
 # Changelog Management Script
-# Automates changelog maintenance and ensures proper documentation of changes
-# Version: 1.0.0
+# Automates changelog maintenance following strict version-based protocol
+# NEVER uses "Unreleased" sections - all entries are version-specific
+# Version: 2.0.0
 #
 # Usage:
-#   ./scripts/changelog.sh add "feat: new feature description"
-#   ./scripts/changelog.sh prepare-release 1.1.0
+#   ./scripts/changelog.sh add "feat: new feature description" [category] [version]
+#   ./scripts/changelog.sh new-version 1.2.0
 #   ./scripts/changelog.sh validate
 #   ./scripts/changelog.sh recent-commits [count]
 
@@ -79,17 +80,93 @@ get_recent_commits() {
     fi
 }
 
-# Add entry to unreleased section
-add_changelog_entry() {
-    local entry="$1"
-    local category="${2:-Added}"
+# Create new version section in changelog
+create_version_section() {
+    local version="$1"
+    local date="${2:-$(date +%Y-%m-%d)}"
     
     check_changelog_exists
+    
+    if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+        log_error "Invalid version format. Use semantic versioning (e.g., 1.2.3)"
+        return 1
+    fi
+    
+    # Check if version already exists
+    if grep -q "## \[$version\]" "$CHANGELOG_FILE"; then
+        log_error "Version [$version] already exists in changelog"
+        return 1
+    fi
+    
+    # Create backup
+    cp "$CHANGELOG_FILE" "${CHANGELOG_FILE}.backup"
+    
+    # Add new version section at the top (after header)
+    awk '
+    /^## \[/ && !version_added {
+        print "## ['"$version"'] - '"$date"'"
+        print ""
+        print "### Added"
+        print ""
+        print "### Changed"
+        print ""
+        print "### Fixed"
+        print ""
+        print "### Security"
+        print ""
+        print $0
+        version_added = 1
+        next
+    }
+    {print}
+    ' "$CHANGELOG_FILE" > "${CHANGELOG_FILE}.tmp"
+    mv "${CHANGELOG_FILE}.tmp" "$CHANGELOG_FILE"
+    
+    log_success "Created version section [$version] with date $date"
+    log_info "You can now add entries to this version using the 'add' command"
+    
+    # Clean up backup
+    rm -f "${CHANGELOG_FILE}.backup"
+}
+
+# Add entry to specific version section
+add_changelog_entry() {
+    local entry="$1"
+    local category="${2:-}"
+    local version="${3:-}"
+    
+    check_changelog_exists
+    
+    # Get current version if not provided
+    if [[ -z "$version" ]]; then
+        version=$(get_current_version)
+        if [[ "$version" == "Unknown" ]]; then
+            log_error "Cannot determine version. Please specify version or ensure VERSION file exists."
+            return 1
+        fi
+    fi
+    
+    # Auto-detect category if not provided
+    if [[ -z "$category" ]]; then
+        if [[ "$entry" =~ ^feat(.*): ]]; then
+            category="Added"
+        elif [[ "$entry" =~ ^fix(.*): ]]; then
+            category="Fixed"
+        elif [[ "$entry" =~ ^docs(.*): ]]; then
+            category="Changed"
+        elif [[ "$entry" =~ ^refactor(.*): ]]; then
+            category="Changed"
+        elif [[ "$entry" =~ ^security(.*): ]]; then
+            category="Security"
+        else
+            category="Added"
+        fi
+    fi
     
     # Create a backup
     cp "$CHANGELOG_FILE" "${CHANGELOG_FILE}.backup"
     
-    # Determine the category and format the entry
+    # Format the entry based on category
     local formatted_entry
     case "$category" in
         "Added"|"add")
@@ -117,118 +194,40 @@ add_changelog_entry() {
             category="Removed"
             ;;
         *)
-            # Try to auto-detect from conventional commit format
-            if [[ "$entry" =~ ^feat(.*): ]]; then
-                formatted_entry="- **$(echo "$entry" | sed 's/^feat[^:]*: *//')**: ${entry#*: }"
-                category="Added"
-            elif [[ "$entry" =~ ^fix(.*): ]]; then
-                formatted_entry="- **$(echo "$entry" | sed 's/^fix[^:]*: *//')**: ${entry#*: }"
-                category="Fixed"
-            elif [[ "$entry" =~ ^docs(.*): ]]; then
-                formatted_entry="- **Documentation**: ${entry#*: }"
-                category="Changed"
-            elif [[ "$entry" =~ ^refactor(.*): ]]; then
-                formatted_entry="- **$(echo "$entry" | sed 's/^refactor[^:]*: *//')**: ${entry#*: }"
-                category="Changed"
-            else
-                formatted_entry="- $entry"
-                category="Added"
-            fi
+            formatted_entry="- $entry"
+            category="Added"
             ;;
     esac
     
-    # Check if [Unreleased] section exists
-    if ! grep -q "## \[Unreleased\]" "$CHANGELOG_FILE"; then
-        # Create [Unreleased] section after the header
-        awk '
-        /^## \[/ {
-            print "## [Unreleased]\n"
-            print "### Added\n"
-            print $0
-            next
-        }
-        {print}
-        ' "$CHANGELOG_FILE" > "${CHANGELOG_FILE}.tmp"
-        mv "${CHANGELOG_FILE}.tmp" "$CHANGELOG_FILE"
+    # Check if version section exists
+    if ! grep -q "## \[$version\]" "$CHANGELOG_FILE"; then
+        log_error "Version section [$version] not found in changelog."
+        log_info "Please create the version section first using: $0 new-version $version"
+        rm -f "${CHANGELOG_FILE}.backup"
+        return 1
     fi
     
-    # Check if the category exists in [Unreleased] section
-    if ! awk '/^## \[Unreleased\]/{flag=1; next} /^## \[/{flag=0} flag && /^### '"$category"'/{found=1} END{exit !found}' "$CHANGELOG_FILE"; then
-        # Add the category section
-        awk '
-        /^## \[Unreleased\]/{
-            print $0
-            getline
-            print $0
-            print "### '"$category"'\n"
-            next
-        }
-        {print}
-        ' "$CHANGELOG_FILE" > "${CHANGELOG_FILE}.tmp"
-        mv "${CHANGELOG_FILE}.tmp" "$CHANGELOG_FILE"
-    fi
-    
-    # Add the entry to the appropriate category
-    awk '
-    /^## \[Unreleased\]/{unreleased=1}
-    /^## \[/ && !/^## \[Unreleased\]/{unreleased=0}
-    unreleased && /^### '"$category"'/{
+    # Add the entry to the appropriate category in the version section
+    awk -v version="$version" -v category="$category" -v entry="$formatted_entry" '
+    /^## \['"$version"'\]/{in_version=1}
+    /^## \[/ && !/^## \['"$version"'\]/{in_version=0}
+    in_version && /^### '"$category"'$/{
         print $0
-        print "'"$formatted_entry"'"
-        category_found=1
+        print entry
         next
     }
     {print}
     ' "$CHANGELOG_FILE" > "${CHANGELOG_FILE}.tmp"
     mv "${CHANGELOG_FILE}.tmp" "$CHANGELOG_FILE"
     
-    log_success "Added entry to changelog under '$category' section"
+    log_success "Added entry to changelog version [$version] under '$category' section"
     log_info "Entry: $formatted_entry"
     
     # Clean up backup if successful
     rm -f "${CHANGELOG_FILE}.backup"
 }
 
-# Prepare release by moving [Unreleased] to versioned section
-prepare_release() {
-    local version="$1"
-    local date="${2:-$(date +%Y-%m-%d)}"
-    
-    check_changelog_exists
-    
-    if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-        log_error "Invalid version format. Use semantic versioning (e.g., 1.2.3)"
-        return 1
-    fi
-    
-    # Check if [Unreleased] section exists and has content
-    if ! grep -q "## \[Unreleased\]" "$CHANGELOG_FILE"; then
-        log_error "No [Unreleased] section found in changelog"
-        return 1
-    fi
-    
-    # Create backup
-    cp "$CHANGELOG_FILE" "${CHANGELOG_FILE}.backup"
-    
-    # Replace [Unreleased] with the version and add new [Unreleased] section
-    awk '
-    /^## \[Unreleased\]/{
-        print "## [Unreleased]\n"
-        print "## ['"$version"'] - '"$date"'"
-        next
-    }
-    {print}
-    ' "$CHANGELOG_FILE" > "${CHANGELOG_FILE}.tmp"
-    mv "${CHANGELOG_FILE}.tmp" "$CHANGELOG_FILE"
-    
-    log_success "Prepared release $version in changelog"
-    log_info "Don't forget to update the VERSION file and create a git tag!"
-    
-    # Clean up backup
-    rm -f "${CHANGELOG_FILE}.backup"
-}
-
-# Validate changelog format
+# Validate changelog format (updated for version-based approach)
 validate_changelog() {
     check_changelog_exists
     
@@ -242,13 +241,16 @@ validate_changelog() {
         ((errors++))
     fi
     
-    if ! grep -q "## \[Unreleased\]" "$CHANGELOG_FILE"; then
-        log_warning "No [Unreleased] section found (this is okay for released projects)"
+    # Check for "Unreleased" sections (should NOT exist per protocol)
+    if grep -q "## \[Unreleased\]" "$CHANGELOG_FILE"; then
+        log_error "Found FORBIDDEN [Unreleased] section - this violates the changelog protocol"
+        log_error "All entries must be associated with specific version numbers"
+        ((errors++))
     fi
     
     # Check for proper version format in sections
     local invalid_versions
-    invalid_versions=$(grep "^## \[" "$CHANGELOG_FILE" | grep -v "Unreleased" | grep -v -E "\[[0-9]+\.[0-9]+\.[0-9]+\]" || true)
+    invalid_versions=$(grep "^## \[" "$CHANGELOG_FILE" | grep -v -E "\[[0-9]+\.[0-9]+\.[0-9]+\]" || true)
     if [[ -n "$invalid_versions" ]]; then
         log_error "Found invalid version formats:"
         echo "$invalid_versions"
@@ -257,7 +259,7 @@ validate_changelog() {
     
     # Check for proper date formats
     local invalid_dates
-    invalid_dates=$(grep "^## \[" "$CHANGELOG_FILE" | grep -v "Unreleased" | grep -v -E "[0-9]{4}-[0-9]{2}-[0-9]{2}" || true)
+    invalid_dates=$(grep "^## \[" "$CHANGELOG_FILE" | grep -v -E "[0-9]{4}-[0-9]{2}-[0-9]{2}" || true)
     if [[ -n "$invalid_dates" ]]; then
         log_error "Found entries without proper date format (YYYY-MM-DD):"
         echo "$invalid_dates"
@@ -266,6 +268,9 @@ validate_changelog() {
     
     if [[ "$errors" -eq 0 ]]; then
         log_success "Changelog format validation passed!"
+        log_success "✓ No forbidden [Unreleased] sections found"
+        log_success "✓ All version entries follow semantic versioning"
+        log_success "✓ All dates follow ISO 8601 format (YYYY-MM-DD)"
         return 0
     else
         log_error "Changelog validation failed with $errors error(s)"
@@ -276,34 +281,54 @@ validate_changelog() {
 # Show help
 show_help() {
     cat << EOF
-Changelog Management Script
+Changelog Management Script (Version-Based Protocol)
+
+IMPORTANT: This script follows a strict protocol - NO "Unreleased" sections are allowed.
+All changelog entries must be associated with specific version numbers.
 
 Usage: $0 <command> [arguments]
 
 Commands:
-    add <entry> [category]     Add an entry to the [Unreleased] section
-                              Categories: Added, Changed, Fixed, Security, Deprecated, Removed
-                              If no category is specified, it will try to auto-detect from conventional commits
+    add <entry> [category] [version]    Add an entry to a specific version section
+                                       Categories: Added, Changed, Fixed, Security, Deprecated, Removed
+                                       Version defaults to current VERSION file content
+                                       Auto-detects category from conventional commit format
     
-    prepare-release <version> [date]  Move [Unreleased] entries to a versioned release section
-                                     Date format: YYYY-MM-DD (defaults to today)
+    new-version <version> [date]        Create a new version section in changelog
+                                       Date format: YYYY-MM-DD (defaults to today)
     
-    validate                  Validate changelog format
+    validate                           Validate changelog format and protocol compliance
+                                       (Checks for forbidden [Unreleased] sections)
     
-    recent-commits [count]    Show recent commits (useful for creating changelog entries)
-                             Default count: 10
+    recent-commits [count]             Show recent commits (useful for creating changelog entries)
+                                       Default count: 10
     
-    help                      Show this help message
+    help                              Show this help message
 
 Examples:
+    # Create new version section
+    $0 new-version 1.2.0
+    
+    # Add entries (will auto-detect version from VERSION file)
     $0 add "Add new file deletion feature" Added
-    $0 add "feat: improve error handling"  # Auto-detects as Added
-    $0 add "fix: resolve permission issue" # Auto-detects as Fixed
-    $0 prepare-release 1.2.0
+    $0 add "feat: improve error handling"    # Auto-detects as Added
+    $0 add "fix: resolve permission issue"  # Auto-detects as Fixed
+    
+    # Add entry to specific version
+    $0 add "Security improvement" Security 1.2.0
+    
+    # Check recent commits for reference
     $0 recent-commits 5
+    
+    # Validate format
     $0 validate
 
-Note: This script automatically detects conventional commit format and categorizes entries appropriately.
+Protocol Notes:
+- All entries must be tied to specific versions
+- No [Unreleased] sections are allowed
+- Use semantic versioning (X.Y.Z format)
+- Use ISO 8601 date format (YYYY-MM-DD)
+- Auto-detects conventional commit formats (feat:, fix:, docs:, etc.)
 EOF
 }
 
@@ -317,17 +342,17 @@ main() {
     case "$1" in
         "add")
             if [[ $# -lt 2 ]]; then
-                log_error "Usage: $0 add <entry> [category]"
+                log_error "Usage: $0 add <entry> [category] [version]"
                 return 1
             fi
-            add_changelog_entry "$2" "${3:-}"
+            add_changelog_entry "$2" "${3:-}" "${4:-}"
             ;;
-        "prepare-release")
+        "new-version")
             if [[ $# -lt 2 ]]; then
-                log_error "Usage: $0 prepare-release <version> [date]"
+                log_error "Usage: $0 new-version <version> [date]"
                 return 1
             fi
-            prepare_release "$2" "${3:-}"
+            create_version_section "$2" "${3:-}"
             ;;
         "validate")
             validate_changelog

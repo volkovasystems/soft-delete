@@ -407,7 +407,7 @@ make setup-hooks
 #### 2. Add Changelog Entries
 
 ```bash
-# Add a new feature
+# Add a new feature (uses current version from VERSION file)
 make changelog-add ENTRY="Add support for custom backup locations" CATEGORY="Added"
 
 # Add a bug fix
@@ -415,6 +415,9 @@ make changelog-add ENTRY="Fix permission handling for symbolic links" CATEGORY="
 
 # Add with auto-detection (from conventional commit format)
 make changelog-add ENTRY="feat: add new configuration option"
+
+# Add to specific version
+make changelog-add ENTRY="Security improvement" CATEGORY="Security" VERSION="1.2.0"
 ```
 
 #### 3. Validate Your Changes

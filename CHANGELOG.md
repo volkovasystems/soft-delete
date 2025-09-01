@@ -5,10 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.1.0] - 2025-09-01
 
 ### Added
-- Add comprehensive changelog management system with automated reminders
+- **Comprehensive Changelog Management System**: Automated changelog maintenance with pre-commit hooks
+  - `changelog.sh` script for adding, validating, and managing changelog entries
+  - Git pre-commit hooks with smart reminders for significant changes
+  - Make targets for changelog operations (`changelog-add`, `changelog-validate`, etc.)
+  - Support for conventional commit format auto-detection
+  - Integration with deployment workflows and version management
 - **Git Workflow Enforcement**: Comprehensive branch validation and remote synchronization for deployments
   - `check_on_develop_branch()`: Ensures deployments start from develop branch
   - `check_develop_pushed()`: Automatically pushes develop branch if not synchronized with remote
@@ -22,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Comprehensive remote connectivity verification before deployment operations
 
 ### Fixed
+- Fix changelog script to follow protocol - remove Unreleased section requirement
 - **Deployment Script Dry-Run Mode**: Enhanced dry-run handling for version checks and deployment validation
   - Improved dry-run mode behavior in version comparison functions
   - Better error handling and user feedback during dry-run operations
@@ -30,6 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Repository Compliance**: Fixed file permissions and structure validation issues
 
 ### Changed
+- Update documentation to reflect version-based changelog protocol
 - **Deployment Workflow**: Enhanced develop → staging → release workflow with automatic synchronization
 - **Release Process**: Improved staging verification in release deployment function
 - **Project Structure**: Cleaned up documentation organization and removed redundancies
