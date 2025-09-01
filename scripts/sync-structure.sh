@@ -26,11 +26,15 @@ log_warning() {
     echo "⚠️  $*" >&2
 }
 
-echo "🔄 REPOSITORY STRUCTURE SYNCHRONIZATION"
-echo "========================================"
+# Only show header when running as main script (not when generating tree)
+if [[ "${1:-sync}" != "--generate-tree" ]]; then
+    echo "🔄 REPOSITORY STRUCTURE SYNCHRONIZATION"
+    echo "========================================"
+fi
 
 # Generate current directory tree with comprehensive structure
 generate_directory_tree() {
+    # Generate ONLY the tree structure without any headers or extra output
     echo '```'
     echo "soft-delete/"
     
@@ -145,6 +149,108 @@ generate_directory_tree() {
     echo '```'
 }
 
+# Check for duplicate structure sections
+check_for_duplicates() {
+    local file="$1"
+    local duplicates=0
+    
+    # Count occurrences of structure indicators
+    local structure_count
+    structure_count=$(grep -c "soft-delete/" "$file" 2>/dev/null || echo 0)
+    
+    # Check for multiple code blocks with soft-delete/
+    if [[ $structure_count -gt 1 ]]; then
+        log_error "DUPLICATE DETECTED: Found $structure_count structure sections in $file"
+        duplicates=$structure_count
+    fi
+    
+    # Check for sync header duplication
+    local header_count
+    header_count=$(grep -c "🔄 REPOSITORY STRUCTURE SYNCHRONIZATION" "$file" 2>/dev/null || echo 0)
+    if [[ $header_count -gt 0 ]]; then
+        log_error "SYNC HEADER CONTAMINATION: Found sync headers in $file (should not exist)"
+        duplicates=$((duplicates + header_count))
+    fi
+    
+    return $duplicates
+}
+
+# Clean existing duplicate structures
+clean_duplicates() {
+    local file="$1"
+    local temp_file
+    temp_file=$(mktemp)
+    
+    log_info "Cleaning any existing duplicates in $file..."
+    
+    # Remove sync headers that shouldn't be in the file
+    sed '/🔄 REPOSITORY STRUCTURE SYNCHRONIZATION/d; /========================================/d' "$file" > "$temp_file"
+    mv "$temp_file" "$file"
+    
+    # Remove duplicate structure sections (keep only the first one)
+    local temp_file2
+    temp_file2=$(mktemp)
+    
+    awk '
+    BEGIN { structure_found = 0; in_structure = 0; skip_structure = 0 }
+    
+    # Detect start of structure section
+    /^#+ (Project|Directory) Structure$/ {
+        if (structure_found == 0) {
+            structure_found = 1
+            print $0
+            next
+        } else {
+            # This is a duplicate - skip entire section
+            skip_structure = 1
+            next
+        }
+    }
+    
+    # Handle content within structure sections
+    structure_found == 1 && !skip_structure {
+        if (/^```/) {
+            if (in_structure == 0) {
+                in_structure = 1
+                print $0
+                next
+            } else {
+                in_structure = 0
+                structure_found = 2  # Mark as completed
+                print $0
+                next
+            }
+        }
+        if (in_structure == 1 || /^$/) {
+            print $0
+            next
+        }
+        if (/^#+ /) {
+            structure_found = 2  # End of structure section
+            print $0
+            next
+        }
+        print $0
+        next
+    }
+    
+    # Skip duplicate structure content
+    skip_structure == 1 {
+        if (/^#+ / && !/^#+ (Project|Directory) Structure$/) {
+            skip_structure = 0
+            print $0
+        }
+        next
+    }
+    
+    # Print all other lines
+    { print }
+    ' "$file" > "$temp_file2"
+    
+    mv "$temp_file2" "$file"
+    log_success "Cleaned duplicates from $file"
+}
+
 # Update file listings in documentation
 update_file_listings() {
     local file="$1"
@@ -153,25 +259,46 @@ update_file_listings() {
     
     log_info "Updating file listings in $file..."
     
+    # First, check for and clean any duplicates
+    if ! check_for_duplicates "$file"; then
+        clean_duplicates "$file"
+    fi
+    
     # Look for sections that need updating
     if grep -q "# Project Structure\|# Directory Structure\|## Project Structure\|## Directory Structure" "$file"; then
         
-        # Replace the structure section
-        awk '
-        /^#+ (Project|Directory) Structure$/ {
-            print $0
-            print ""
-            while ((getline) > 0 && !/^#+ / && !/^```$/) {
-                # Skip old content until next section or end of code block
-                if (/^```$/) break
-            }
-            # Insert new structure
-            system("cd '"$REPO_ROOT"' && '"$0"' --generate-tree")
-            if (/^```$/) next
-            if (/^#+ /) print $0
-        }
-        !/^#+ (Project|Directory) Structure$/ { print }
-        ' "$file" > "$temp_file"
+        # Simple sed-based replacement approach
+        local in_structure=false
+        local structure_header_found=false
+        
+        while IFS= read -r line; do
+            # Check for structure header
+            if [[ "$line" =~ ^#+[[:space:]]+(Project|Directory)[[:space:]]+Structure[[:space:]]*$ ]]; then
+                if [[ "$structure_header_found" == "false" ]]; then
+                    echo "$line"
+                    echo ""
+                    "$0" --generate-tree
+                    structure_header_found=true
+                    in_structure=true
+                    # Skip until we find the closing code block
+                    while IFS= read -r inner_line; do
+                        if [[ "$inner_line" =~ ^```[[:space:]]*$ ]]; then
+                            break
+                        fi
+                    done
+                fi
+                # Skip duplicate headers
+                continue
+            elif [[ "$in_structure" == "true" && "$line" =~ ^```[[:space:]]*$ ]]; then
+                in_structure=false
+                continue
+            elif [[ "$in_structure" == "true" ]]; then
+                # Skip content inside structure block
+                continue
+            else
+                echo "$line"
+            fi
+        done < "$file" > "$temp_file"
         
         if [[ -s "$temp_file" ]]; then
             mv "$temp_file" "$file"
@@ -469,6 +596,47 @@ run_comprehensive_validation() {
     fi
 }
 
+# Final verification after synchronization
+final_verification() {
+    log_info "Running final verification for duplicate prevention..."
+    
+    local verification_failed=0
+    local docs_to_check=(
+        "README.md"
+        ".warp/project-context.md"
+    )
+    
+    for doc in "${docs_to_check[@]}"; do
+        if [[ -f "$doc" ]]; then
+            log_info "Checking $doc for duplicates..."
+            
+            # Check for duplicates
+            if ! check_for_duplicates "$doc"; then
+                log_error "VERIFICATION FAILED: Duplicates detected in $doc after synchronization"
+                verification_failed=1
+            else
+                log_success "$doc is clean - no duplicates detected"
+            fi
+            
+            # Verify structure sections are properly formatted
+            local structure_blocks
+            structure_blocks=$(grep -c "^```$" "$doc" 2>/dev/null || echo 0)
+            if [[ $structure_blocks -gt 0 && $((structure_blocks % 2)) -ne 0 ]]; then
+                log_error "VERIFICATION FAILED: Unmatched code blocks in $doc"
+                verification_failed=1
+            fi
+        fi
+    done
+    
+    if [[ $verification_failed -eq 0 ]]; then
+        log_success "🎉 Final verification passed - no duplicates detected!"
+        return 0
+    else
+        log_error "❌ Final verification failed - duplicates or formatting issues detected"
+        return 1
+    fi
+}
+
 # Main synchronization function
 sync_all_documentation() {
     log_info "Starting comprehensive documentation synchronization..."
@@ -495,6 +663,9 @@ sync_all_documentation() {
     # Validate all cross-references
     validate_cross_references
     
+    # Final verification to ensure no duplicates were created
+    final_verification
+    
     log_success "Documentation synchronization complete!"
 }
 
@@ -502,6 +673,36 @@ sync_all_documentation() {
 case "${1:-sync}" in
     --generate-tree)
         generate_directory_tree
+        ;;
+    --clean-duplicates)
+        log_info "Cleaning duplicates from documentation files..."
+        for doc in "README.md" ".warp/project-context.md"; do
+            if [[ -f "$doc" ]]; then
+                if ! check_for_duplicates "$doc"; then
+                    clean_duplicates "$doc"
+                else
+                    log_success "$doc is already clean"
+                fi
+            fi
+        done
+        log_success "Duplicate cleaning completed"
+        ;;
+    --check-duplicates)
+        log_info "Checking for duplicates in documentation files..."
+        found_duplicates=0
+        for doc in "README.md" ".warp/project-context.md"; do
+            if [[ -f "$doc" ]]; then
+                if ! check_for_duplicates "$doc"; then
+                    found_duplicates=1
+                fi
+            fi
+        done
+        if [[ $found_duplicates -eq 0 ]]; then
+            log_success "No duplicates found in any documentation files"
+        else
+            log_error "Duplicates found - run with --clean-duplicates to fix"
+            exit 1
+        fi
         ;;
     --validate-only)
         validate_cross_references
@@ -520,6 +721,9 @@ case "${1:-sync}" in
         ;;
     --version-sync)
         sync_version_references
+        ;;
+    --verify)
+        final_verification
         ;;
     sync|--sync|*)
         sync_all_documentation
