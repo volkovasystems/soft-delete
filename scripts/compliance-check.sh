@@ -660,8 +660,8 @@ if [[ -x "./scripts/security-scan.sh" ]]; then
     security_scan_exit_code=$?
     
     # Count warnings and errors in security scan output
-    security_warnings_count=$(echo "$security_scan_output" | grep -c "\[WARN\]" || echo "0")
-    security_errors_count=$(echo "$security_scan_output" | grep -c "\[FAIL\]" || echo "0")
+    security_warnings_count=$(echo "$security_scan_output" | grep -c "\[WARN\]" || true)
+    security_errors_count=$(echo "$security_scan_output" | grep -c "\[FAIL\]" || true)
     
     # ZERO TOLERANCE ENFORCEMENT: No warnings or errors allowed
     if [[ $security_scan_exit_code -eq 0 && $security_warnings_count -eq 0 && $security_errors_count -eq 0 ]]; then
@@ -707,8 +707,8 @@ if [[ -x "./scripts/security-scan.sh" ]]; then
                 log_info "Re-running security scan after auto-fix..."
                 security_scan_output=$(./scripts/security-scan.sh --quiet 2>&1)
                 security_scan_exit_code=$?
-                security_warnings_count=$(echo "$security_scan_output" | grep -c "\[WARN\]" || echo "0")
-                security_errors_count=$(echo "$security_scan_output" | grep -c "\[FAIL\]" || echo "0")
+                security_warnings_count=$(echo "$security_scan_output" | grep -c "\[WARN\]" || true)
+                security_errors_count=$(echo "$security_scan_output" | grep -c "\[FAIL\]" || true)
                 
                 if [[ $security_scan_exit_code -eq 0 && $security_warnings_count -eq 0 && $security_errors_count -eq 0 ]]; then
                     log_success "Auto-fix SUCCESS: Security compliance achieved (100% clean)"
