@@ -815,7 +815,7 @@ if [[ -n "$bypass_commits" ]]; then
 fi
 
 # Check for bypass patterns in current codebase
-bypass_code=$(grep -r "git.*commit.*no-verify\|--no-verify\|bypass.*security\|skip.*security" . --exclude-dir=.git --exclude-dir=reports 2>/dev/null | grep -v "# Safe:" | grep -v "PROHIBITED" | grep -v "NEVER use" | grep -v "detection code" | grep -v "legitimate security" | grep -v "shellcheck not found" | grep -v "impossible to detect" | grep -v "This bypasses ALL" | grep -v "quick fixes" | grep -v "attempt to bypass" | grep -v "bypass.*checks.*=" | grep -v "- ❌ NEVER bypass" || true) # Safe: legitimate security detection code
+bypass_code=$(grep -r "git.*commit.*no-verify\|--no-verify\|bypass.*security\|skip.*security" . --exclude-dir=.git --exclude-dir=reports 2>/dev/null | grep -v "# Safe:" | grep -v "PROHIBITED" | grep -v "NEVER use" | grep -v "detection code" | grep -v "legitimate security" | grep -v "shellcheck not found" | grep -v "impossible to detect" | grep -v "This bypasses ALL" | grep -v "quick fixes" | grep -v "attempt to bypass" | grep -v "bypass.*checks.*=" | grep -v "NEVER bypass" || true) # Safe: legitimate security detection code
 if [[ -n "$bypass_code" ]]; then
     log_error "CRITICAL SECURITY VIOLATION: Security bypass code found in repository"
     echo "$bypass_code"
