@@ -935,6 +935,48 @@ automated_security_remediation() {
 }
 ```
 
+## File Exclusion Policy
+
+### Zero Tolerance for Security-Critical File Exclusions
+
+**CRITICAL SECURITY REQUIREMENT**: NO files may be excluded from security scanning, especially security-critical files.
+
+#### Forbidden Actions:
+- **NEVER** exclude security-scan.sh from security scans
+- **NEVER** exclude security-protocol.md from security scans  
+- **NEVER** exclude compliance-check.sh from security scans
+- **NEVER** exclude documentation files (.warp/README.md) from security scans
+- **NEVER** use `--exclude` flags to bypass scanning of critical files
+
+#### Rationale:
+Excluding security-critical files from scanning creates dangerous security blind spots that could:
+- Allow malicious code injection without detection
+- Hide backdoors or vulnerabilities in security tools themselves
+- Compromise the integrity of the entire security framework
+- Enable attackers to modify security policies without detection
+
+#### Approved Alternatives:
+- Use intelligent pattern filtering to reduce false positives
+- Mark legitimate security documentation with appropriate context markers
+- Implement smart exclusion of specific patterns (not entire files)
+- Add `# Safe:` comments for legitimate security contexts
+
+#### Enforcement:
+The security-scan.sh script includes automated integrity validation that:
+- Detects any attempts to exclude critical files
+- Fails the security scan if exclusions are found
+- Reports violations as CRITICAL SECURITY VIOLATIONS
+- Prevents deployment until exclusions are removed
+
+#### Violation Consequences:
+Any attempt to exclude security-critical files will:
+1. Trigger immediate scan failure
+2. Block all deployment processes
+3. Require mandatory security review
+4. Generate incident documentation
+
+**Remember**: Security tools that cannot scan themselves are fundamentally compromised.
+
 ## Success Metrics and Validation
 
 ### Security KPIs (All Must Be 100%)

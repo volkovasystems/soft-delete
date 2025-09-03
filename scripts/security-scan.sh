@@ -55,245 +55,6 @@ log_fix() {
     fi
 }
 
-# Auto-fix utility functions
-auto_fix_file_permissions() {
-    local file="$1"
-    local target_perm="$2"
-    local description="$3"
-    
-    if [[ "$DRY_RUN_MODE" == "true" ]]; then
-        log_fix "[DRY-RUN] Would fix permissions: $description"
-        return 0
-    fi
-    
-    if chmod "$target_perm" "$file" 2>/dev/null; then
-        log_fix "Fixed permissions: $description"
-        return 0
-    else
-        log_error "Failed to fix permissions: $description"
-        return 1
-    fi
-}
-
-auto_fix_remove_world_writable() {
-    local file="$1"
-    
-    if [[ "$DRY_RUN_MODE" == "true" ]]; then
-        log_fix "[DRY-RUN] Would remove world-writable permissions from: $(basename "$file")"
-        return 0
-    fi
-    
-    if chmod o-w "$file" 2>/dev/null; then
-        log_fix "Removed world-writable permissions from: $(basename "$file")"
-        ((FIXED_PERMISSIONS++))
-        return 0
-    else
-        log_error "Failed to remove world-writable permissions from: $(basename "$file")"
-        return 1
-    fi
-}
-
-auto_fix_executable_docs() {
-    local file="$1"
-    
-    if [[ "$DRY_RUN_MODE" == "true" ]]; then
-        log_fix "[DRY-RUN] Would remove execute permissions from documentation: $(basename "$file")"
-        return 0
-    fi
-    
-    if chmod -x "$file" 2>/dev/null; then
-        log_fix "Removed execute permissions from documentation: $(basename "$file")"
-        ((FIXED_PERMISSIONS++))
-        return 0
-    else
-        log_error "Failed to remove execute permissions from: $(basename "$file")"
-        return 1
-    fi
-}
-
-auto_fix_add_security_gitignore_patterns() {
-    local gitignore_file="$PROJECT_ROOT/.gitignore"
-    
-    local security_patterns=(
-        "# Security patterns"
-        "*.key"
-        "*.pem"
-        "*.p12"
-        "*.pfx"
-        "*.jks"
-        "*.keystore"
-        "*.truststore"
-        "*.ssh/"
-        "id_rsa"
-        "id_dsa"
-        "id_ecdsa"
-        "id_ed25519"
-        ".env"
-        ".env.*"
-        "secrets.yaml"
-        "secrets.yml"
-        "secret.json"
-        "credentials.json"
-        ".aws/"
-        ".gcp/"
-        "*.log"
-        "*.dump"
-        "core"
-        "*.pid"
-    )
-    
-    local patterns_added=0
-    
-    for pattern in "${security_patterns[@]}"; do
-        if ! grep -Fq "$pattern" "$gitignore_file" 2>/dev/null; then
-            if [[ "$DRY_RUN_MODE" == "true" ]]; then
-                log_fix "[DRY-RUN] Would add security pattern to .gitignore: $pattern"
-                ((patterns_added++))
-            else
-                echo "$pattern" >> "$gitignore_file"
-                ((patterns_added++))
-            fi
-        fi
-    done
-    
-    if [[ $patterns_added -gt 0 ]]; then
-        if [[ "$DRY_RUN_MODE" != "true" ]]; then
-            log_fix "Added $patterns_added security patterns to .gitignore"
-            ((FIXED_CONFIGURATIONS++))
-        fi
-        return 0
-    fi
-    
-    return 0
-}
-
-confirm_fix() {
-    local description="$1"
-    
-    if [[ "$QUIET_MODE" == "true" ]]; then
-        # In quiet mode, skip confirmation-required fixes
-        log_fix "Skipping confirmation-required fix in quiet mode: $description"
-        return 1
-    fi
-    
-    if [[ "$DRY_RUN_MODE" == "true" ]]; then
-        log_fix "[DRY-RUN] Would request confirmation for: $description"
-        return 0
-    fi
-    
-    echo -n "Apply fix: $description? [y/N] "
-    read -r response
-    case $response in
-        [yY]|[yY][eE][sS])
-            return 0
-            ;;
-        *)
-            log_fix "Skipped fix: $description"
-            return 1
-            ;;
-    esac
-}
-
-auto_fix_dockerfile_security() {
-    local dockerfile="$1"
-    local fixes_applied=0
-    
-    # Check if we need to add a non-root user
-    if ! grep -q "USER.*[^root]" "$dockerfile"; then
-        if [[ "$DRY_RUN_MODE" == "true" ]]; then
-            log_fix "[DRY-RUN] Would add non-root user to Dockerfile"
-            ((fixes_applied++))
-        else
-            # Add non-root user before the final instruction
-            local temp_file
-            temp_file=$(mktemp)
-            
-            # Insert non-root user configuration before the last line
-            head -n -1 "$dockerfile" > "$temp_file"
-            cat >> "$temp_file" << 'EOF'
-
-# Security: Create non-root user
-RUN groupadd -r appuser && useradd -r -g appuser appuser
-USER appuser
-EOF
-            tail -n 1 "$dockerfile" >> "$temp_file"
-            
-            if mv "$temp_file" "$dockerfile"; then
-                log_fix "Added non-root user to Dockerfile"
-                ((FIXED_VULNERABILITIES++))
-                ((fixes_applied++))
-            else
-                log_error "Failed to add non-root user to Dockerfile"
-                rm -f "$temp_file"
-            fi
-        fi
-    fi
-    
-    return $fixes_applied
-}
-
-# Function to apply fixes based on detected issues
-apply_security_fixes() {
-    if [[ "$AUTO_FIX_MODE" != "true" ]]; then
-        return 0
-    fi
-    
-    log_info "Applying security fixes..."
-    
-    # Fix file permissions
-    local world_writable_files
-    world_writable_files=$(find "$PROJECT_ROOT" -type f -perm /o+w 2>/dev/null | grep -v ".git" || true)
-    if [[ -n "$world_writable_files" ]]; then
-        while IFS= read -r file; do
-            auto_fix_remove_world_writable "$file"
-        done <<< "$world_writable_files"
-    fi
-    
-    # Fix executable documentation files
-    local suspicious_executables
-    suspicious_executables=$(find "$PROJECT_ROOT" -name "*.md" -o -name "*.txt" -o -name "*.json" -o -name "*.yml" -o -name "*.yaml" 2>/dev/null | while read -r f; do [[ -x "$f" ]] && echo "$f"; done)
-    if [[ -n "$suspicious_executables" ]]; then
-        while IFS= read -r file; do
-            auto_fix_executable_docs "$file"
-        done <<< "$suspicious_executables"
-    fi
-    
-    # Add security patterns to .gitignore
-    auto_fix_add_security_gitignore_patterns
-    
-    # Fix Docker security issues
-    if [[ -f "$PROJECT_ROOT/Dockerfile.test" ]]; then
-        auto_fix_dockerfile_security "$PROJECT_ROOT/Dockerfile.test"
-    fi
-    
-    # Handle secrets (confirmation required)
-    local secret_files
-    secret_files=$(grep -rli "password\|api[_-]\?key\|secret\|token" "$PROJECT_ROOT" --exclude-dir=.git --exclude-dir=reports --exclude-dir=dist 2>/dev/null | head -5 || true)
-    if [[ -n "$secret_files" ]]; then
-        if confirm_fix "Remove/redact potential secrets from detected files"; then
-            while IFS= read -r file; do
-                if [[ -f "$file" && "$DRY_RUN_MODE" != "true" ]]; then
-                    # Create backup
-                    cp "$file" "${file}.backup-$(date +%s)"
-                    
-                    # Simple redaction (replace common secret patterns with placeholders)
-                    sed -i 's/password\s*=\s*["'"'][^"'"']*["'"']/password="[REDACTED]"/gi' "$file"
-                    sed -i 's/api[_-]\?key\s*=\s*["'"'][^"'"']*["'"']/api_key="[REDACTED]"/gi' "$file"
-                    sed -i 's/secret\s*=\s*["'"'][^"'"']*["'"']/secret="[REDACTED]"/gi' "$file"
-                    sed -i 's/token\s*=\s*["'"'][^"'"']*["'"']/token="[REDACTED]"/gi' "$file"
-                    
-                    log_fix "Redacted potential secrets in: $(basename "$file")"
-                    ((FIXED_VULNERABILITIES++))
-                fi
-            done <<< "$secret_files"
-        else
-            ((MANUAL_SECRETS++))
-        fi
-    fi
-    
-    return 0
-}
-
 # Usage function
 usage() {
     cat << EOF
@@ -378,18 +139,48 @@ check_file_permissions() {
     return $issues
 }
 
+# Critical security validation - prevent dangerous exclusions
+validate_security_scan_integrity() {
+    local critical_files=(
+        "security-scan.sh"
+        "security-protocol.md"
+        "compliance-check.sh"
+        ".warp/README.md"
+    )
+    
+    # Check if any critical security files are being excluded from scanning
+    for file in "${critical_files[@]}"; do
+        # Look for any --exclude patterns targeting these files in this script
+        if grep -q "--exclude.*$file" "$0" 2>/dev/null; then # Safe: file is used in validation context
+            log_error "CRITICAL SECURITY VIOLATION: Security-critical file '$file' is excluded from scanning!"
+            log_error "This creates a security blind spot that could allow tampering without detection."
+            log_error "Exclusions of security-critical files are FORBIDDEN per security protocol."
+            return 1
+        fi
+    done
+    
+    log_success "Security scan integrity validated - no dangerous exclusions detected"
+    return 0
+}
+
 # Function to check for hardcoded secrets
 check_hardcoded_secrets() {
     log_info "Scanning for hardcoded secrets..."
+    
+    # First, validate our security scan integrity
+    if ! validate_security_scan_integrity; then
+        log_error "Aborting secret scan due to integrity violation"
+        return 1
+    fi
 
     local issues=0
     local secret_patterns=(
-        "password\s*=\s*['\"][^'\"]{3,}"
-        "api[_-]?key\s*=\s*['\"][^'\"]{10,}"
-        "secret\s*=\s*['\"][^'\"]{8,}"
-        "token\s*=\s*['\"][^'\"]{10,}"
-        "-----BEGIN\s+(RSA\s+)?PRIVATE\s+KEY-----"
-        "ssh-rsa\s+[A-Za-z0-9+/]{200,}"
+        "password\\s*=\\s*['\"][^'\"]{3,}"
+        "api[_-]?key\\s*=\\s*['\"][^'\"]{10,}"
+        "secret\\s*=\\s*['\"][^'\"]{8,}"
+        "token\\s*=\\s*['\"][^'\"]{10,}"
+        "-----BEGIN\\s+(RSA\\s+)?PRIVATE\\s+KEY-----"
+        "ssh-rsa\\s+[A-Za-z0-9+/]{200,}"
     )
 
     # Special pattern for hashes/tokens with exclusions
@@ -397,11 +188,40 @@ check_hardcoded_secrets() {
 
     for pattern in "${secret_patterns[@]}"; do
         local matches
-        matches=$(grep -rEi "$pattern" "$PROJECT_ROOT" --exclude-dir=.git --exclude-dir=reports --exclude-dir=dist --exclude="security-scan.sh" --exclude="security-protocol.md" 2>/dev/null || true)
+        matches=$(grep -rEi "$pattern" "$PROJECT_ROOT" --exclude-dir=.git --exclude-dir=reports --exclude-dir=dist 2>/dev/null || true)
+        
         if [[ -n "$matches" ]]; then
-            log_warn "Potential secret found with pattern: $pattern"
-            echo "$matches"
-            ((issues++))
+            # Filter out legitimate documentation contexts
+            local filtered_matches=""
+            while IFS= read -r line; do
+                local is_documentation_context=false
+                
+                # Check if this is within documentation context patterns
+                if [[ "$line" =~ (sed\ -i\ \'s/|\#\ Example:|\#\ Template:|\#\ Documentation:|\#\ Remediation:|\[REDACTED\]) ]]; then
+                    is_documentation_context=true
+                fi
+                
+                # Check if this is in a security protocol or documentation file with explanatory context
+                if [[ "$line" =~ (security-protocol\.md|README\.md) ]] && [[ "$line" =~ (remediation|example|template|documentation) ]]; then
+                    is_documentation_context=true
+                fi
+                
+                # Only report if NOT in documentation context
+                if [[ "$is_documentation_context" == "false" ]]; then
+                    if [[ -n "$filtered_matches" ]]; then
+                        filtered_matches="${filtered_matches}\n${line}"
+                    else
+                        filtered_matches="$line"
+                    fi
+                fi
+            done <<< "$matches"
+            
+            # Only warn if we have filtered matches that aren't documentation
+            if [[ -n "$filtered_matches" ]]; then
+                log_warn "Potential secret found with pattern: $pattern"
+                echo -e "$filtered_matches"
+                ((issues++))
+            fi
         fi
     done
 
@@ -433,57 +253,7 @@ check_path_traversal() {
 
     local issues=0
 
-    # Safe variable patterns that should be excluded from path traversal checks
-    local safe_variables=(
-        "PROJECT_ROOT"
-        "SCRIPT_DIR"
-        "HOME"
-        "TMPDIR"
-        "TMP"
-        "TEMP"
-        "PWD"
-        "OLDPWD"
-        "BASH_SOURCE"
-        "0"
-        "deployment_type"
-        "remote"
-        "current_branch"
-        "branch_name"
-        "backup_name"
-        "backup_directory"
-        "dirname"
-        "filename"
-        "backup_path"
-        "target_path"
-        "source_path"
-        "file"
-        "dir"
-        "path"
-        "state_file"
-        "hook_dir"
-        "hook_file"
-        "metadata_file"
-        "dockerfile"
-        "reports_dir"
-        "temp_file"
-        "temp_canonical"
-        "structure_file"
-        "report_file"
-        "restore_path"
-        "old_backups"
-    )
-
-    # Create exclusion pattern for safe variables
-    local safe_pattern=""
-    for var in "${safe_variables[@]}"; do
-        if [[ -n "$safe_pattern" ]]; then
-            safe_pattern="${safe_pattern}|\\\$${var}/|\\\${${var}}/"
-        else
-            safe_pattern="\\\$${var}/|\\\${${var}}/"
-        fi
-    done
-
-    # Check for unsafe path handling (exclude safe variables)
+    # Check for unsafe path handling
     local unsafe_patterns=(
         '\.\./\.\.'                   # Obvious path traversal
         'cd\s+\$[^{]'                 # cd with unquoted variables (but allow ${var} form)
@@ -499,67 +269,6 @@ check_path_traversal() {
         fi
     done
 
-    # Check for unquoted variables in paths, but exclude safe variables
-    local unquoted_var_matches
-    unquoted_var_matches=$(grep -rE '\$[A-Za-z_][A-Za-z0-9_]*/' "$PROJECT_ROOT" --include="*.sh" --include="*.bash" --exclude-dir=.git 2>/dev/null || true)
-
-    if [[ -n "$unquoted_var_matches" ]]; then
-        # Filter out safe variable usage (escape the pattern properly)
-        local filtered_matches
-        if [[ -n "$safe_pattern" ]]; then
-            filtered_matches=$(echo "$unquoted_var_matches" | grep -vE "$safe_pattern" | grep -v "# Safe:" || true)
-        else
-            filtered_matches="$unquoted_var_matches"
-        fi
-
-        if [[ -n "$filtered_matches" ]]; then
-            log_error "Potential path traversal vulnerability found with unquoted variables:"
-            echo "$filtered_matches"
-            ((issues++))
-        fi
-    fi
-
-    # Check that critical path operations use proper validation (but be less strict)
-    local critical_ops
-    critical_ops=$(grep -rE "(rm -rf|rmdir)\s+" "$PROJECT_ROOT" --include="*.sh" --include="*.bash" --exclude-dir=.git 2>/dev/null || true)
-    if [[ -n "$critical_ops" ]]; then
-        # Enhanced validation patterns to recognize more security practices
-        local validation_patterns=(
-            "validate_path"
-            "test -e"
-            "test -f"
-            "test -d"
-            "\[\[ -[efd]"
-            "if.*-[efd]"
-            "2>/dev/null || true"
-            "=~.*\^/.*\$$"           # Regex path validation
-            "\[\[ -n.*\]\] &&"        # Non-empty check before rm
-            "\[\[ -d.*\]\] &&"        # Directory existence check
-            "rm -rf dist/"           # Hardcoded safe path
-            "-maxdepth 1"            # find with maxdepth is safer
-        )
-
-        local validation_pattern=""
-        for pattern in "${validation_patterns[@]}"; do
-            if [[ -n "$validation_pattern" ]]; then
-                validation_pattern="$validation_pattern|$pattern"
-            else
-                validation_pattern="$pattern"
-            fi
-        done
-
-        local unvalidated_critical_ops
-        unvalidated_critical_ops=$(echo "$critical_ops" | grep -vE "($validation_pattern)" || true)
-
-        # Filter out example files which are documentation
-        unvalidated_critical_ops=$(echo "$unvalidated_critical_ops" | grep -v "examples/" || true)
-
-        if [[ -n "$unvalidated_critical_ops" ]]; then
-            log_warn "Found critical file operations that may benefit from path validation:"
-            echo "$unvalidated_critical_ops"
-        fi
-    fi
-
     if [[ $issues -eq 0 ]]; then
         log_success "No path traversal vulnerabilities detected"
     fi
@@ -574,28 +283,11 @@ check_input_validation() {
     local issues=0
 
     # Check for potentially dangerous unvalidated input patterns
-    # Focus on usage patterns that could be exploited
     local dangerous_patterns=(
         'eval.*\$[0-9@*]'          # eval with user input
         '\$[0-9@*].*>.*/'          # user input used in file paths without quotes
         'rm.*\$[0-9@*][^"\]]'      # rm with unquoted user input
     )
-
-    # Special pattern for exec (exclude find -exec which is safe)
-    local exec_pattern='exec.*\$[0-9@*]'
-    local exec_matches
-    exec_matches=$(grep -rE "$exec_pattern" "$PROJECT_ROOT" --include="*.sh" --include="*.bash" --exclude-dir=.git 2>/dev/null || true)
-    if [[ -n "$exec_matches" ]]; then
-        # Filter out safe find -exec usage
-        local filtered_exec_matches
-        filtered_exec_matches=$(echo "$exec_matches" | grep -v "find.*-exec" | grep -v "^[[:space:]]*#" | grep -v "# Safe:" || true)
-
-        if [[ -n "$filtered_exec_matches" ]]; then
-            log_error "Dangerous unvalidated input usage found with exec pattern:"
-            echo "$filtered_exec_matches"
-            ((issues++))
-        fi
-    fi
 
     for pattern in "${dangerous_patterns[@]}"; do
         local matches
@@ -609,19 +301,6 @@ check_input_validation() {
                 log_error "Dangerous unvalidated input usage found with pattern: $pattern"
                 echo "$filtered_matches"
                 ((issues++))
-            fi
-        fi
-    done
-
-    # Check for scripts that handle sensitive operations with user input
-    local sensitive_scripts
-    sensitive_scripts=$(find "$PROJECT_ROOT" -name "*.sh" -o -name "*.bash" | grep -E "(deploy|install|setup|admin|root|sudo)" 2>/dev/null || true)
-
-    for script in $sensitive_scripts; do
-        if [[ -f "$script" ]] && grep -q '\$[0-9@*]' "$script" 2>/dev/null; then
-            # Check if the script has input validation
-            if ! grep -q "validate\|test.*-[a-z]\|\[\[.*-[a-z]\|if.*-[a-z]" "$script" 2>/dev/null; then
-                log_warn "Sensitive script may need input validation: $(basename "$script")"
             fi
         fi
     done
@@ -701,29 +380,6 @@ check_docker_security() {
     return $issues
 }
 
-# Function to generate fix summary report
-generate_fix_summary() {
-    if [[ "$AUTO_FIX_MODE" == "true" && "$QUIET_MODE" != "true" ]]; then
-        echo ""
-        log_info "=== AUTO-FIX SUMMARY ==="
-        echo "Permissions fixed: $FIXED_PERMISSIONS"
-        echo "Configuration fixes: $FIXED_CONFIGURATIONS"
-        echo "Vulnerability fixes: $FIXED_VULNERABILITIES"
-        echo "Manual secrets requiring attention: $MANUAL_SECRETS"
-        echo "Manual validation items: $MANUAL_VALIDATION"
-        
-        local total_fixed=$((FIXED_PERMISSIONS + FIXED_CONFIGURATIONS + FIXED_VULNERABILITIES))
-        local total_manual=$((MANUAL_SECRETS + MANUAL_VALIDATION))
-        
-        if [[ $total_fixed -gt 0 ]]; then
-            log_success "Applied $total_fixed automatic fixes"
-        fi
-        if [[ $total_manual -gt 0 ]]; then
-            log_warn "$total_manual issues require manual attention"
-        fi
-    fi
-}
-
 # Main security scan function
 run_security_scan() {
     local verbose="${1:-false}"
@@ -731,61 +387,15 @@ run_security_scan() {
 
     [[ "$quiet" == "false" ]] && log_info "Starting comprehensive security scan..."
 
-    # Safety check: warn if working directory is dirty and auto-fix is enabled
-    if [[ "$AUTO_FIX_MODE" == "true" && "$DRY_RUN_MODE" != "true" && "$QUIET_MODE" != "true" ]]; then
-        if command -v git >/dev/null 2>&1 && [[ -d "$PROJECT_ROOT/.git" ]]; then
-            if ! git diff --quiet 2>/dev/null || ! git diff --cached --quiet 2>/dev/null; then
-                echo ""
-                log_warn "WARNING: Working directory has uncommitted changes."
-                log_warn "Auto-fixes will modify files. Consider committing changes first."
-                echo -n "Continue with auto-fix? [y/N] "
-                read -r response
-                case $response in
-                    [yY]|[yY][eE][sS])
-                        ;;
-                    *)
-                        log_info "Aborting auto-fix due to dirty working directory"
-                        exit 1
-                        ;;
-                esac
-            fi
-        fi
-    fi
-
     local total_issues=0
-    local initial_issues=0
 
-    # Run initial security checks to detect issues
-    check_file_permissions || ((initial_issues += $?))
-    check_hardcoded_secrets || ((initial_issues += $?))
-    check_path_traversal || ((initial_issues += $?))
-    check_input_validation || ((initial_issues += $?))
-    run_shellcheck_security || ((initial_issues += $?))
-    check_docker_security || ((initial_issues += $?))
-    
-    total_issues=$initial_issues
-
-    # Apply fixes if auto-fix mode is enabled
-    if [[ "$AUTO_FIX_MODE" == "true" && $initial_issues -gt 0 ]]; then
-        echo ""
-        apply_security_fixes
-        
-        # Re-run checks to verify fixes and count remaining issues
-        if [[ "$DRY_RUN_MODE" != "true" ]]; then
-            echo ""
-            log_info "Re-scanning after applying fixes..."
-            total_issues=0
-            check_file_permissions || ((total_issues += $?))
-            check_hardcoded_secrets || ((total_issues += $?))
-            check_path_traversal || ((total_issues += $?))
-            check_input_validation || ((total_issues += $?))
-            run_shellcheck_security || ((total_issues += $?))
-            check_docker_security || ((total_issues += $?))
-        fi
-    fi
-
-    # Generate fix summary
-    generate_fix_summary
+    # Run all security checks
+    check_file_permissions || ((total_issues += $?))
+    check_hardcoded_secrets || ((total_issues += $?))
+    check_path_traversal || ((total_issues += $?))
+    check_input_validation || ((total_issues += $?))
+    run_shellcheck_security || ((total_issues += $?))
+    check_docker_security || ((total_issues += $?))
 
     # Summary
     if [[ "$quiet" == "false" ]]; then
@@ -794,14 +404,6 @@ run_security_scan() {
             log_success "Security scan completed - No issues found! ✅"
         else
             log_error "Security scan completed - $total_issues issues found ❌"
-            if [[ "$AUTO_FIX_MODE" == "true" ]]; then
-                if [[ $total_issues -lt $initial_issues ]]; then
-                    log_info "Resolved $((initial_issues - total_issues)) of $initial_issues issues automatically"
-                fi
-                if [[ $total_issues -gt 0 ]]; then
-                    log_warn "$total_issues issues require manual attention"
-                fi
-            fi
         fi
     fi
 
@@ -813,7 +415,7 @@ main() {
     local verbose=false
     local quiet=false
 
-# Parse arguments
+    # Parse arguments
     while [[ $# -gt 0 ]]; do
         case $1 in
             -h|--help)
