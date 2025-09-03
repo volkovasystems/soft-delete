@@ -3,43 +3,42 @@
     "line_count": 929,
     "function_count": 23,
     "functions": "log_info,log_success,log_warn,log_error,log_fix,auto_fix_file_permissions,auto_fix_remove_world_writable,auto_fix_executable_docs,auto_fix_add_security_gitignore_patterns,confirm_fix,auto_fix_dockerfile_security,apply_security_fixes,usage,check_file_permissions,validate_security_scan_integrity,check_hardcoded_secrets,check_path_traversal,check_input_validation,run_shellcheck_security,check_docker_security,generate_fix_summary,run_security_scan,main",
-    "last_updated": "2025-09-03T12:43:02+08:00"
+    "last_updated": "2025-09-03T12:47:54+08:00"
   },
   "scripts/compliance-check.sh": {
     "line_count": 1426,
     "function_count": 20,
     "functions": "log_info,log_success,log_error,log_warning,log_fix,fix_file_permissions,fix_line_endings,fix_trailing_whitespace,fix_missing_strict_mode,fix_generated_files,fix_essential_directories,generate_fix_report,parse_arguments,show_help,validate_directory_structure,validate_file_references,validate_internal_links,validate_example_consistency,validate_structure_documentation_sync,validate_warp_structure_consistency",
-    "last_updated": "2025-09-03T12:43:02+08:00"
+    "last_updated": "2025-09-03T12:47:54+08:00"
   },
   "scripts/functionality-guard.sh": {
-    "line_count": 536,
+    "line_count": 552,
     "function_count": 13,
     "functions": "log_info,log_success,log_warn,log_error,log_critical,create_functionality_baseline,check_functionality_regression,update_functionality_baseline,generate_regression_report,attempt_auto_rollback,run_pre_commit_check,usage,main",
-    "last_updated": "2025-09-03T12:43:02+08:00"
+    "last_updated": "2025-09-03T12:47:54+08:00"
   },
   "soft-delete.sh": {
     "line_count": 353,
     "function_count": 11,
     "functions": "cleanup,log_info,log_error,log_verbose,usage,show_help,show_version,validate_path,soft_delete,parse_arguments,main",
-    "last_updated": "2025-09-03T12:43:02+08:00"
+    "last_updated": "2025-09-03T12:47:54+08:00"
   },
   "Makefile": {
     "line_count": 452,
-    "function_count": 0
-0,
+    "function_count": 0,
     "functions": "",
-    "last_updated": "2025-09-03T12:43:02+08:00"
+    "last_updated": "2025-09-03T12:47:54+08:00"
   },
   ".warp/protocols/security-protocol.md": {
     "line_count": 1122,
     "function_count": 20,
     "functions": "validate_input,fix_file_permissions,validate_dockerfile_security,security_pre_check,auto_fix_permissions,auto_fix_configurations,confirm_fix_secrets,compliance_security_integration,security_verify,manual_security_review,security_test_procedures,critical_security_remediation,high_security_remediation,remediate_secrets_exposure,remediate_file_permissions,remediate_path_traversal,validate_safe_path,remediate_input_validation,validate_input,automated_security_remediation",
-    "last_updated": "2025-09-03T12:43:02+08:00"
+    "last_updated": "2025-09-03T12:47:54+08:00"
   },
   ".warp/protocols/compliance-protocol.md": {
     "line_count": 1117,
     "function_count": 6,
     "functions": "function_name,create_missing_essentials,pre_fix_validation,post_fix_validation,pre_operation_with_autofix,generate_fix_report",
-    "last_updated": "2025-09-03T12:43:02+08:00"
+    "last_updated": "2025-09-03T12:47:54+08:00"
   }
 }

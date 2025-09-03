@@ -83,7 +83,11 @@ create_functionality_baseline() {
             line_count=$(wc -l < "$full_path" 2>/dev/null || echo "0")
             
             local function_count
-            function_count=$(grep -c "^[a-zA-Z_][a-zA-Z0-9_]*() {" "$full_path" 2>/dev/null || echo "0")
+            if function_count=$(grep -c "^[a-zA-Z_][a-zA-Z0-9_]*() {" "$full_path" 2>/dev/null); then
+                function_count=$(echo "$function_count" | tr -d '\n')
+            else
+                function_count="0"
+            fi
             
             # Get function names
             local functions
@@ -137,7 +141,11 @@ check_functionality_regression() {
         current_lines=$(wc -l < "$full_path" 2>/dev/null || echo "0")
         
         local current_functions
-        current_functions=$(grep -c "^[a-zA-Z_][a-zA-Z0-9_]*() {" "$full_path" 2>/dev/null || echo "0")
+        if current_functions=$(grep -c "^[a-zA-Z_][a-zA-Z0-9_]*() {" "$full_path" 2>/dev/null); then
+            current_functions=$(echo "$current_functions" | tr -d '\n')
+        else
+            current_functions="0"
+        fi
         
         # Get baseline metrics with fallback values
         local baseline_lines
@@ -155,12 +163,20 @@ check_functionality_regression() {
         fi
         
         # Calculate reductions
+        # Ensure we have valid integers for arithmetic
+        baseline_lines=$(echo "$baseline_lines" | tr -d '\n')
+        baseline_functions=$(echo "$baseline_functions" | tr -d '\n')
+        
+        # Default to 0 if empty or non-numeric
+        [[ ! "$baseline_lines" =~ ^[0-9]+$ ]] && baseline_lines=0
+        [[ ! "$baseline_functions" =~ ^[0-9]+$ ]] && baseline_functions=0
+        
         local line_reduction=$((baseline_lines - current_lines))
         local function_reduction=$((baseline_functions - current_functions))
         
         # Check for significant line count reduction (>10% or >50 lines)
         local line_reduction_percent=0
-        if [[ $baseline_lines -gt 0 ]]; then
+        if [[ "$baseline_lines" != "0" ]] && [[ $baseline_lines -gt 0 ]]; then
             line_reduction_percent=$((line_reduction * 100 / baseline_lines))
         fi
         
