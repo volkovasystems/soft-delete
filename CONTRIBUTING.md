@@ -620,11 +620,15 @@ make changelog-add ENTRY="Change default backup location from /tmp to ~/.soft-de
 
 ### Troubleshooting
 
-#### Skip Hooks Temporarily
+#### Emergency Commits
 
 ```bash
-# Skip hooks for emergency commits (use sparingly)
-git commit --no-verify -m "emergency fix"
+# For critical fixes, address issues properly instead of bypassing:
+# 1. Fix the actual problem first
+# 2. Update changelog if time permits, or note it in commit message
+git commit -m "critical: emergency fix - will update changelog separately"
+
+# Security bypass is prohibited - always fix issues instead of bypassing
 ```
 
 #### Manual Hook Setup
