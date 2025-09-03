@@ -132,8 +132,65 @@ validate_changelog_if_modified() {
     fi
 }
 
+# Function to run AI agent protection checks
+run_functionality_preservation_check() {
+    echo -e "${BLUE}🛡️  Running AI Agent Protection Checks...${NC}"
+    
+    # 1. Functionality preservation check
+    if [[ -x "$PROJECT_ROOT/scripts/functionality-guard.sh" ]]; then
+        if ! "$PROJECT_ROOT/scripts/functionality-guard.sh" --pre-commit >/dev/null 2>&1; then
+            echo ""
+            echo -e "${RED}🚫 COMMIT BLOCKED: Functionality regression detected!${NC}"
+            echo ""
+            "$PROJECT_ROOT/scripts/functionality-guard.sh" --pre-commit
+            echo ""
+            echo -e "${RED}This typically happens when AI agents recreate scripts from scratch${NC}"
+            echo -e "${RED}instead of making incremental edits to preserve existing functions.${NC}"
+            echo ""
+            echo -e "${YELLOW}To bypass (NOT recommended): git commit --no-verify${NC}"
+            echo ""
+            exit 1
+        fi
+    fi
+    
+    # 2. Quick security check
+    if [[ -x "$PROJECT_ROOT/scripts/security-scan.sh" ]]; then
+        if ! "$PROJECT_ROOT/scripts/security-scan.sh" --quiet >/dev/null 2>&1; then
+            echo ""
+            echo -e "${RED}🚫 COMMIT BLOCKED: Security issues detected!${NC}"
+            echo ""
+            echo -e "${YELLOW}Run this to see issues: ./scripts/security-scan.sh --quiet${NC}"
+            echo -e "${YELLOW}To fix automatically: ./scripts/security-scan.sh --fix${NC}"
+            echo -e "${YELLOW}To bypass (NOT recommended): git commit --no-verify${NC}"
+            echo ""
+            exit 1
+        fi
+    fi
+    
+    # 3. Check for potential secrets in staged changes
+    staged_secrets=$(git diff --cached | grep -E "(password|api[_-]?key|secret|token)\s*=\s*['\"][^'\"]{3,}" || true)
+    
+    if [[ -n "$staged_secrets" ]]; then
+        echo ""
+        echo -e "${RED}🚫 COMMIT BLOCKED: Potential secrets detected!${NC}"
+        echo ""
+        echo -e "${RED}Found potential secrets in staged changes:${NC}"
+        echo "$staged_secrets"
+        echo ""
+        echo -e "${YELLOW}Remove secrets or add [REDACTED] markers for examples${NC}"
+        echo -e "${YELLOW}To bypass (NOT recommended): git commit --no-verify${NC}"
+        echo ""
+        exit 1
+    fi
+    
+    echo -e "${GREEN}✅ AI Agent Protection checks passed${NC}"
+}
+
 # Main logic
 main() {
+    # Run AI agent protection checks first (most critical)
+    run_functionality_preservation_check
+    
     # Always validate changelog if it's being modified
     validate_changelog_if_modified
     

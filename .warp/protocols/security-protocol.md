@@ -977,6 +977,105 @@ Any attempt to exclude security-critical files will:
 
 **Remember**: Security tools that cannot scan themselves are fundamentally compromised.
 
+## AI Agent Safety Protocol
+
+### Critical Protection Against Functionality Loss
+
+**MANDATORY FOR ALL AI AGENTS (INCLUDING WARP AI)**: The following safeguards prevent accidental removal of core functionality through overly aggressive refactoring or recreation.
+
+#### Forbidden AI Agent Behaviors:
+- **NEVER recreate large scripts from scratch** - Always edit existing files incrementally
+- **NEVER remove functions without explicit verification** - Check function count before/after changes
+- **NEVER ignore line count reductions >10%** - Large reductions indicate functionality loss
+- **NEVER bypass functionality preservation checks** - Always run validation after changes
+- **NEVER exclude security-critical files from scanning** - All files must be scannable
+
+#### Required AI Agent Behaviors:
+1. **Incremental Edits Only**: Make small, targeted changes to preserve existing functionality
+2. **Function Preservation**: Always verify that all existing functions are maintained
+3. **Line Count Awareness**: Be alert to significant line count reductions as regression indicators
+4. **Validation After Changes**: Always run `scripts/functionality-guard.sh` after modifications
+5. **Rollback Capability**: Be prepared to revert changes that cause functionality loss
+
+#### Automated Protection System:
+
+**Functionality Guard Integration**:
+```bash
+# MANDATORY: Run before any major script changes
+scripts/functionality-guard.sh --check
+
+# MANDATORY: After any script modifications
+scripts/functionality-guard.sh --check
+
+# IF CHANGES ARE INTENTIONAL: Update baseline
+scripts/functionality-guard.sh --update-baseline
+```
+
+**Pre-Commit Protection**:
+- All commits automatically checked for functionality regressions
+- Commits blocked if >10% line reduction or function loss detected
+- Manual override available but NOT recommended
+
+**Compliance Integration**:
+- Functionality preservation is part of mandatory compliance checks
+- 100% compliance required - no tolerance for functionality loss
+- Automated detection of AI-induced regressions
+
+#### Warning Signs of AI Agent Regression:
+1. **Sudden line count drops** in critical scripts (>50 lines or >10%)
+2. **Missing functions** that were present in previous versions
+3. **"Recreation from scratch"** rather than incremental edits
+4. **Loss of complex logic** or sophisticated error handling
+5. **Reduced feature set** in scripts without explicit removal intent
+
+#### Emergency Response for Functionality Loss:
+
+**Immediate Actions**:
+```bash
+# 1. Detect the regression
+scripts/functionality-guard.sh --check
+
+# 2. Generate detailed report
+scripts/functionality-guard.sh --generate-report
+
+# 3. Attempt automatic rollback (if enabled)
+AUTO_ROLLBACK=true scripts/functionality-guard.sh --auto-rollback
+
+# 4. Manual rollback if needed
+git log --oneline -10
+git revert <problematic-commit>
+
+# 5. Restore from git history
+git show <previous-good-commit>:path/to/file > path/to/file
+
+# 6. Update baseline after restoration
+scripts/functionality-guard.sh --update-baseline
+```
+
+#### AI Agent Training Points:
+
+**What AI Agents Must Understand**:
+- Large scripts contain carefully crafted functionality that took time to develop
+- Recreation from scratch almost always loses subtle but important features
+- Line count and function count are key indicators of functionality preservation
+- Incremental edits are safer and preserve more functionality than recreation
+- When in doubt, make smaller changes and validate each step
+
+**Red Flag Scenarios for AI Agents**:
+- User says "fix this script" and you consider rewriting it completely
+- You see a large script and think "I can make this cleaner" by starting over
+- You're making changes that reduce line count by more than a few dozen lines
+- You're removing functions without understanding their full purpose
+- You're "simplifying" complex logic without understanding edge cases
+
+### Integration with Existing Security Framework
+
+The AI Agent Safety Protocol integrates with existing security measures:
+- **Security scanning** continues to prevent vulnerabilities
+- **Compliance checking** includes functionality preservation validation
+- **Pre-commit hooks** block functionality-losing commits
+- **Automated monitoring** detects and reports regressions
+
 ## Success Metrics and Validation
 
 ### Security KPIs (All Must Be 100%)

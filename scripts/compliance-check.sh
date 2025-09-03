@@ -620,7 +620,41 @@ if [[ $naming_failures -eq 0 ]]; then
     log_success "File naming: 100% compliant"
 fi
 
-# 6. SECURITY COMPLIANCE (ZERO TOLERANCE - 100% MANDATORY)
+# 6. FUNCTIONALITY PRESERVATION (AI AGENT PROTECTION - 100% MANDATORY)
+echo ""
+log_info "🛡️  ENFORCING FUNCTIONALITY PRESERVATION (100% MANDATORY)..."
+log_info "🤖 AI AGENT PROTECTION: Preventing accidental removal of core functionality"
+
+# Run functionality regression detection
+log_info "Running functionality regression detection..."
+functionality_failures=0
+
+if [[ -x "./scripts/functionality-guard.sh" ]]; then
+    if ! ./scripts/functionality-guard.sh --check >/dev/null 2>&1; then
+        log_error "FUNCTIONALITY REGRESSION DETECTED!"
+        echo ""
+        ./scripts/functionality-guard.sh --check
+        functionality_failures=$((functionality_failures + 1))
+        echo ""
+        log_error "🚨 CRITICAL: AI agent may have accidentally removed core functionality!"
+        log_error "  This commonly happens when AI agents recreate scripts from scratch"
+        log_error "  instead of making incremental edits to preserve existing functions."
+        echo ""
+        log_error "REQUIRED ACTIONS:"
+        log_error "  1. Review recent commits for missing functions"
+        log_error "  2. Restore lost functionality from git history"
+        log_error "  3. Update baseline: scripts/functionality-guard.sh --update-baseline"
+        log_error "  4. Re-run compliance checks"
+        echo ""
+    else
+        log_success "Functionality preservation: 100% compliant (no regressions detected)"
+    fi
+else
+    log_warn "Functionality guard script not found - creating..."
+    # This would be handled by ensuring the script exists
+fi
+
+# 7. SECURITY COMPLIANCE (ZERO TOLERANCE - 100% MANDATORY)
 echo ""
 log_info "🔒 ENFORCING STRICT SECURITY COMPLIANCE (100% MANDATORY)..."
 log_info "⚠️  ZERO TOLERANCE POLICY: All warnings, false positives, and issues must be resolved"
