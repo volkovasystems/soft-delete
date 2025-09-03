@@ -397,7 +397,7 @@ check_hardcoded_secrets() {
 
     for pattern in "${secret_patterns[@]}"; do
         local matches
-        matches=$(grep -rEi "$pattern" "$PROJECT_ROOT" --exclude-dir=.git --exclude-dir=reports --exclude-dir=dist 2>/dev/null || true)
+        matches=$(grep -rEi "$pattern" "$PROJECT_ROOT" --exclude-dir=.git --exclude-dir=reports --exclude-dir=dist --exclude="security-scan.sh" 2>/dev/null || true)
         if [[ -n "$matches" ]]; then
             log_warn "Potential secret found with pattern: $pattern"
             echo "$matches"

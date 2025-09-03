@@ -17,6 +17,7 @@ This directory contains all Warp.dev-specific configuration files and protocols 
 │   ├── consistency-protocol.md  # Cross-file consistency protocol
 │   ├── continuous-commit-protocol.md # Continuous commit workflow protocol
 │   ├── git-management-protocol.md # Git workflow and branch management protocol
+│   ├── security-protocol.md     # Comprehensive security standards and procedures protocol
 │   ├── structural-alignment-protocol.md # Repository structure documentation sync protocol
 │   ├── testing-protocol.md      # Testing workflow protocol
 │   └── version-protocol.md      # VERSION file management protocol

@@ -620,47 +620,174 @@ if [[ $naming_failures -eq 0 ]]; then
     log_success "File naming: 100% compliant"
 fi
 
-# 6. SECURITY COMPLIANCE
+# 6. SECURITY COMPLIANCE (ZERO TOLERANCE - 100% MANDATORY)
 echo ""
-log_info "🔒 Checking Security Compliance..."
+log_info "🔒 ENFORCING STRICT SECURITY COMPLIANCE (100% MANDATORY)..."
+log_info "⚠️  ZERO TOLERANCE POLICY: All warnings, false positives, and issues must be resolved"
 
-# Run comprehensive security scan using dedicated security-scan.sh
-log_info "Running comprehensive security scan..."
+# Pre-security validation
+log_info "Pre-security validation checks..."
+security_prerequisites_failed=0
+
+# Ensure security-scan.sh exists and is executable
+if [[ ! -x "./scripts/security-scan.sh" ]]; then
+    log_error "CRITICAL: security-scan.sh script not found or not executable"
+    security_prerequisites_failed=$((security_prerequisites_failed + 1))
+fi
+
+# Ensure security protocol exists
+if [[ ! -f ".warp/protocols/security-protocol.md" ]]; then
+    log_error "CRITICAL: security-protocol.md not found - security standards not available"
+    security_prerequisites_failed=$((security_prerequisites_failed + 1))
+fi
+
+if [[ $security_prerequisites_failed -gt 0 ]]; then
+    log_error "SECURITY COMPLIANCE FAILURE: Prerequisites not met ($security_prerequisites_failed failures)"
+else
+    log_success "Security prerequisites: All requirements met"
+fi
+
+# Run comprehensive security scan with strict enforcement
+log_info "Running comprehensive security scan with ZERO TOLERANCE enforcement..."
+security_scan_exit_code=1
+security_scan_output=""
+security_warnings_count=0
+security_errors_count=0
+
 if [[ -x "./scripts/security-scan.sh" ]]; then
-    if [[ "$AUTO_FIX_MODE" == "true" && "$DRY_RUN_MODE" != "true" && "$QUIET_MODE" != "true" ]]; then
-        # Auto-fix mode: try to fix security issues
-        log_info "Running security scan with auto-fix enabled..."
-        if ./scripts/security-scan.sh --fix --quiet; then
-            log_success "Security scan: 100% compliant (with auto-fixes applied)"
-        else
-            log_error "Security scan: COMPLIANCE FAILURE (auto-fix could not resolve all issues)"
-        fi
-    elif [[ "$AUTO_FIX_MODE" == "true" && "$DRY_RUN_MODE" == "true" ]]; then
-        # Dry-run mode: preview security fixes
-        log_info "Running security scan with dry-run fix preview..."
-        if ./scripts/security-scan.sh --fix --dry-run --quiet; then
-            log_success "Security scan: Issues found but fixable (dry-run preview)"
-        else
-            log_error "Security scan: COMPLIANCE FAILURE (issues require manual intervention)"
-        fi
+    # Capture both output and exit code for detailed analysis
+    security_scan_output=$(./scripts/security-scan.sh --quiet 2>&1) || security_scan_exit_code=$?
+    
+    # Count warnings and errors in security scan output
+    security_warnings_count=$(echo "$security_scan_output" | grep -c "\[WARN\]" || echo "0")
+    security_errors_count=$(echo "$security_scan_output" | grep -c "\[FAIL\]" || echo "0")
+    
+    # ZERO TOLERANCE ENFORCEMENT: No warnings or errors allowed
+    if [[ $security_scan_exit_code -eq 0 && $security_warnings_count -eq 0 && $security_errors_count -eq 0 ]]; then
+        log_success "Security scan: 100% COMPLIANT (ZERO warnings, ZERO errors)"
     else
-        # Standard mode: just check security
-        if ./scripts/security-scan.sh --quiet; then
-            log_success "Security scan: 100% compliant (no issues found)"
+        log_error "SECURITY COMPLIANCE FAILURE: ZERO TOLERANCE VIOLATION"
+        log_error "  Exit code: $security_scan_exit_code"
+        log_error "  Warnings: $security_warnings_count (MUST be 0)"
+        log_error "  Errors: $security_errors_count (MUST be 0)"
+        echo ""
+        log_error "DETAILED SECURITY SCAN OUTPUT:"
+        echo "$security_scan_output"
+        echo ""
+        log_error "🚨 MANDATORY ACTIONS REQUIRED:"
+        log_error "  1. Review all warnings and errors above"
+        log_error "  2. Resolve ALL issues including false positives"
+        log_error "  3. Update security-scan.sh patterns if needed to eliminate false positives"
+        log_error "  4. Run './scripts/security-scan.sh --fix' to attempt automatic fixes"
+        log_error "  5. Manually address any remaining issues"
+        log_error "  6. Re-run compliance check until 100% clean (zero warnings/errors)"
+        echo ""
+        log_error "🚫 DEVELOPMENT HALTED: Security compliance failure blocks all operations"
+    fi
+    
+    # Additional auto-fix attempt if enabled
+    if [[ "$AUTO_FIX_MODE" == "true" && $security_scan_exit_code -ne 0 ]]; then
+        echo ""
+        log_info "Attempting automatic security remediation..."
+        
+        if [[ "$DRY_RUN_MODE" == "true" ]]; then
+            # Dry-run mode: preview security fixes
+            log_info "Running security auto-fix preview (dry-run)..."
+            if ./scripts/security-scan.sh --fix --dry-run --quiet; then
+                log_success "Auto-fix preview: Issues detected but appear fixable"
+            else
+                log_error "Auto-fix preview: Issues require manual intervention"
+            fi
         else
-            log_error "Security scan: COMPLIANCE FAILURE (issues found)"
+            # Actual auto-fix attempt
+            log_info "Running security auto-fix (attempting remediation)..."
+            if ./scripts/security-scan.sh --fix --quiet; then
+                # Re-run security scan to verify fixes
+                log_info "Re-running security scan after auto-fix..."
+                security_scan_output=$(./scripts/security-scan.sh --quiet 2>&1) || security_scan_exit_code=$?
+                security_warnings_count=$(echo "$security_scan_output" | grep -c "\[WARN\]" || echo "0")
+                security_errors_count=$(echo "$security_scan_output" | grep -c "\[FAIL\]" || echo "0")
+                
+                if [[ $security_scan_exit_code -eq 0 && $security_warnings_count -eq 0 && $security_errors_count -eq 0 ]]; then
+                    log_success "Auto-fix SUCCESS: Security compliance achieved (100% clean)"
+                else
+                    log_error "Auto-fix PARTIAL: Manual intervention still required"
+                    log_error "  Remaining warnings: $security_warnings_count"
+                    log_error "  Remaining errors: $security_errors_count"
+                fi
+            else
+                log_error "Auto-fix FAILED: Manual security remediation required"
+            fi
         fi
     fi
 else
-    log_error "Security scan: security-scan.sh script not found or not executable"
+    log_error "CRITICAL: Cannot run security scan - script not executable"
 fi
 
-# Additional basic security checks for protocol compliance
-log_info "Verifying security protocol compliance..."
+# Mandatory false positive resolution verification
+log_info "Verifying false positive resolution..."
+if [[ $security_warnings_count -gt 0 ]]; then
+    log_error "FALSE POSITIVE RESOLUTION REQUIRED:"
+    log_error "  All $security_warnings_count warnings must be resolved"
+    log_error "  Options: 1) Fix actual issues, 2) Update patterns to exclude legitimate cases"
+    log_error "  NO false positives are acceptable in production systems"
+fi
+
+# Security protocol integration verification
+log_info "Verifying security protocol integration..."
+security_integration_failures=0
+
+# Check security protocol exists and is comprehensive
 if [[ -f ".warp/protocols/security-protocol.md" ]]; then
-    log_success "Security protocol: Present and available"
+    # Verify protocol has minimum required sections
+    required_sections=("Security Standards" "Verification Procedures" "Remediation Guidelines" "File Permissions" "Path Traversal" "Input Validation")
+    for section in "${required_sections[@]}"; do
+        if ! grep -qi "$section" .warp/protocols/security-protocol.md; then
+            log_error "Security protocol missing required section: $section"
+            security_integration_failures=$((security_integration_failures + 1))
+        fi
+    done
+    
+    if [[ $security_integration_failures -eq 0 ]]; then
+        log_success "Security protocol: Comprehensive and complete"
+    fi
 else
     log_error "Security protocol: security-protocol.md not found"
+    security_integration_failures=$((security_integration_failures + 1))
+fi
+
+# Verify security scan script has required modes
+if [[ -f "scripts/security-scan.sh" ]]; then
+    if grep -q "\--fix" scripts/security-scan.sh && grep -q "\--dry-run" scripts/security-scan.sh && grep -q "\--quiet" scripts/security-scan.sh; then
+        log_success "Security scan: All required modes available (--fix, --dry-run, --quiet)"
+    else
+        log_error "Security scan: Missing required command modes"
+        security_integration_failures=$((security_integration_failures + 1))
+    fi
+fi
+
+# Final security compliance assessment
+echo ""
+log_info "🎯 FINAL SECURITY COMPLIANCE ASSESSMENT"
+echo "=========================================="
+
+if [[ $security_scan_exit_code -eq 0 && $security_warnings_count -eq 0 && $security_errors_count -eq 0 && $security_prerequisites_failed -eq 0 && $security_integration_failures -eq 0 ]]; then
+    log_success "🎆 SECURITY COMPLIANCE: 100% ACHIEVED"
+    log_success "  ✓ Zero warnings (Required: 0, Actual: $security_warnings_count)"
+    log_success "  ✓ Zero errors (Required: 0, Actual: $security_errors_count)"
+    log_success "  ✓ All prerequisites met"
+    log_success "  ✓ All integrations verified"
+    log_success "  ✓ ZERO TOLERANCE STANDARD MET"
+else
+    log_error "🚨 SECURITY COMPLIANCE: FAILURE"
+    log_error "  ✗ Security scan exit code: $security_scan_exit_code (Required: 0)"
+    log_error "  ✗ Warnings: $security_warnings_count (Required: 0 - ZERO TOLERANCE)"
+    log_error "  ✗ Errors: $security_errors_count (Required: 0 - ZERO TOLERANCE)"
+    log_error "  ✗ Prerequisite failures: $security_prerequisites_failed"
+    log_error "  ✗ Integration failures: $security_integration_failures"
+    echo ""
+    log_error "🚫 CRITICAL: Security compliance failure blocks all development"
+    log_error "ALL issues must be resolved before proceeding"
 fi
 
 # 7. CONSISTENCY COMPLIANCE

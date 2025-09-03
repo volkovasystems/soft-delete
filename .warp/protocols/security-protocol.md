@@ -555,6 +555,386 @@ echo "4. Consider key rotation if needed"
 ❌ **Never expose sensitive data** in logs or output  
 ❌ **Never suggest insecure temporary solutions**
 
+## Verification Procedures
+
+### Automated Security Verification
+
+All security controls must be verified through automated procedures:
+
+#### 1. Continuous Security Scanning
+```bash
+# PRIMARY: Execute comprehensive security scan
+security_verify() {
+    echo "🔍 AUTOMATED SECURITY VERIFICATION"
+    echo "================================="
+    
+    local verification_failures=0
+    
+    # File permission verification
+    echo "📁 Verifying file permissions..."
+    if ! verify_file_permissions; then
+        ((verification_failures++))
+    fi
+    
+    # Sensitive data verification
+    echo "🔐 Verifying no sensitive data exposure..."
+    if ! verify_no_secrets; then
+        ((verification_failures++))
+    fi
+    
+    # Path traversal verification
+    echo "🛡️ Verifying path traversal protection..."
+    if ! verify_path_security; then
+        ((verification_failures++))
+    fi
+    
+    # Input validation verification
+    echo "✅ Verifying input validation coverage..."
+    if ! verify_input_validation; then
+        ((verification_failures++))
+    fi
+    
+    # Container security verification
+    echo "🐳 Verifying container security..."
+    if ! verify_container_security; then
+        ((verification_failures++))
+    fi
+    
+    return $verification_failures
+}
+```
+
+#### 2. Manual Security Review Process
+```bash
+# MANUAL: Security review checklist
+manual_security_review() {
+    echo "👥 MANUAL SECURITY REVIEW CHECKLIST"
+    echo "==================================="
+    
+    local review_items=(
+        "Code follows security best practices"
+        "All user inputs are properly validated"
+        "No hardcoded credentials or secrets"
+        "Error messages don't leak sensitive information"
+        "Logging doesn't expose sensitive data"
+        "Third-party dependencies are up-to-date"
+        "Docker configurations follow security guidelines"
+    )
+    
+    echo "Manual review required for:"
+    for item in "${review_items[@]}"; do
+        echo "  • $item"
+    done
+    
+    echo ""
+    echo "Each item must be verified by a human reviewer."
+}
+```
+
+#### 3. Security Test Procedures
+```bash
+# TESTING: Security-focused test execution
+security_test_procedures() {
+    echo "🧪 SECURITY TEST PROCEDURES"
+    echo "==========================="
+    
+    # Path traversal attack simulation
+    test_path_traversal_resistance()
+    test_input_validation_effectiveness()
+    test_privilege_escalation_protection()
+    test_secret_exposure_prevention()
+    
+    echo "All security tests must pass 100%"
+}
+```
+
+### Security Verification Matrix
+
+| Verification Type | Method | Frequency | Pass Criteria |
+|-------------------|---------|-----------|---------------|
+| **Sensitive Data** | `scripts/security-scan.sh --secrets` | Pre-commit | 0 secrets found |
+| **File Permissions** | `find . -type f -perm /o+w` | Daily | 0 world-writable files |
+| **Path Traversal** | `scripts/security-scan.sh --path-traversal` | Per feature | 0 vulnerabilities |
+| **Input Validation** | Manual code review | Per feature | 100% coverage |
+| **Container Security** | `docker scan` + manual review | Per build | 0 high/critical issues |
+
+## Remediation Guidelines
+
+### Security Issue Classification and Response
+
+#### CRITICAL Issues (IMMEDIATE ACTION REQUIRED)
+**Response Time**: < 1 Hour  
+**Examples**: Exposed secrets, active vulnerabilities, data breaches
+
+```bash
+critical_security_remediation() {
+    echo "🚨 CRITICAL SECURITY ISSUE RESPONSE"
+    echo "==================================="
+    
+    # STEP 1: Immediate containment
+    echo "1️⃣ IMMEDIATE CONTAINMENT"
+    git stash push -u -m "security-emergency-$(date +%Y%m%d-%H%M%S)"
+    
+    # STEP 2: Assess scope
+    echo "2️⃣ ASSESS SCOPE OF EXPOSURE"
+    ./scripts/security-scan.sh --detailed --export-report
+    
+    # STEP 3: Begin remediation
+    echo "3️⃣ BEGIN IMMEDIATE REMEDIATION"
+    
+    # Remove secrets from history if needed
+    if confirm "Rewrite git history to remove secrets?"; then
+        echo "⚠️  WARNING: This will rewrite git history"
+        git filter-branch --force --index-filter \
+            'git rm --cached --ignore-unmatch SECRETS_FILE' \
+            --prune-empty --tag-name-filter cat -- --all
+    fi
+    
+    # STEP 4: Verify remediation
+    echo "4️⃣ VERIFY REMEDIATION"
+    if ./scripts/security-scan.sh --comprehensive; then
+        echo "✅ Critical issue remediated"
+    else
+        echo "❌ Remediation incomplete - manual intervention required"
+        exit 1
+    fi
+}
+```
+
+#### HIGH Issues (24-Hour Response)
+**Response Time**: < 24 Hours  
+**Examples**: Input validation flaws, permission issues
+
+```bash
+high_security_remediation() {
+    echo "⚠️  HIGH SECURITY ISSUE RESPONSE"
+    echo "==============================="
+    
+    local issues_fixed=0
+    
+    # Fix file permissions
+    echo "🔒 Fixing file permissions..."
+    if auto_fix_file_permissions; then
+        ((issues_fixed++))
+    fi
+    
+    # Fix input validation issues
+    echo "✅ Addressing input validation..."
+    if fix_input_validation_issues; then
+        ((issues_fixed++))
+    fi
+    
+    # Add security controls
+    echo "🛡️ Adding security controls..."
+    if add_security_controls; then
+        ((issues_fixed++))
+    fi
+    
+    echo "Fixed $issues_fixed high-priority security issues"
+}
+```
+
+#### MEDIUM Issues (72-Hour Response)
+**Response Time**: < 72 Hours  
+**Examples**: Configuration improvements, dependency updates
+
+### Remediation Procedures by Issue Type
+
+#### 1. Secrets Exposure Remediation
+```bash
+remediate_secrets_exposure() {
+    local secret_type="$1"
+    local file_location="$2"
+    
+    case "$secret_type" in
+        "api_key")
+            echo "🔑 Remediating API key exposure..."
+            # Remove from file
+            sed -i 's/api_key=.*/api_key="[REDACTED]"/g' "$file_location"
+            # Rotate the key
+            echo "⚠️  ACTION REQUIRED: Rotate the exposed API key"
+            ;;
+        "password")
+            echo "🔐 Remediating password exposure..."
+            # Remove from file  
+            sed -i 's/password=.*/password="[REDACTED]"/g' "$file_location"
+            # Force password change
+            echo "⚠️  ACTION REQUIRED: Change the exposed password"
+            ;;
+        "private_key")
+            echo "🔑 Remediating private key exposure..."
+            # Remove from repository
+            git rm "$file_location"
+            # Generate new key pair
+            echo "⚠️  ACTION REQUIRED: Generate new key pair"
+            ;;
+    esac
+    
+    # Always scan git history
+    if git log --all --oneline -S"$secret_type" | grep -q .; then
+        echo "⚠️  SECRET FOUND IN GIT HISTORY - Consider history rewrite"
+    fi
+}
+```
+
+#### 2. File Permission Remediation
+```bash
+remediate_file_permissions() {
+    echo "🔒 REMEDIATING FILE PERMISSION ISSUES"
+    
+    # Fix script permissions (must be 755)
+    find scripts/ -name "*.sh" -not -perm 755 -exec chmod 755 {} \; \
+        -exec echo "Fixed script permissions: {}" \;
+    
+    # Fix documentation permissions (must be 644)
+    find docs/ .warp/ -name "*.md" -not -perm 644 -exec chmod 644 {} \; \
+        -exec echo "Fixed doc permissions: {}" \;
+    
+    # Remove world-write permissions (security risk)
+    find . -type f -perm /o+w -not -path "./.git/*" \
+        -exec chmod o-w {} \; \
+        -exec echo "Removed world-write: {}" \;
+    
+    echo "✅ File permission remediation complete"
+}
+```
+
+#### 3. Path Traversal Remediation
+```bash
+remediate_path_traversal() {
+    echo "🛡️ REMEDIATING PATH TRAVERSAL VULNERABILITIES"
+    
+    # Add input validation to affected functions
+    add_path_validation() {
+        local script_file="$1"
+        
+        # Insert validation function
+        cat >> "$script_file" << 'EOF'
+
+# Security: Path traversal protection
+validate_safe_path() {
+    local input_path="$1"
+    
+    # Reject obvious traversal attempts
+    if [[ "$input_path" == *".."* ]]; then
+        echo "❌ Path traversal detected: $input_path"
+        return 1
+    fi
+    
+    # Canonicalize and validate
+    local canonical_path
+    canonical_path=$(realpath -m "$input_path" 2>/dev/null || echo "")
+    
+    if [[ -z "$canonical_path" ]]; then
+        echo "❌ Invalid path: $input_path"
+        return 1
+    fi
+    
+    echo "$canonical_path"
+}
+EOF
+        
+        echo "Added path validation to: $script_file"
+    }
+    
+    # Apply to affected scripts
+    local affected_scripts
+    affected_scripts=$(grep -l "cd \$" scripts/*.sh 2>/dev/null || true)
+    
+    for script in $affected_scripts; do
+        add_path_validation "$script"
+    done
+}
+```
+
+#### 4. Input Validation Remediation
+```bash
+remediate_input_validation() {
+    echo "✅ REMEDIATING INPUT VALIDATION ISSUES"
+    
+    # Template for secure input validation
+    cat > "scripts/secure-input-template.sh" << 'EOF'
+#!/bin/bash
+# Template for secure input validation
+
+validate_input() {
+    local input="$1"
+    local input_type="$2"
+    
+    case "$input_type" in
+        "filename")
+            # Allow only safe filename characters
+            if [[ ! "$input" =~ ^[a-zA-Z0-9._-]+$ ]]; then
+                echo "❌ Invalid filename: $input"
+                return 1
+            fi
+            ;;
+        "path")
+            # Validate path safety
+            if [[ "$input" == *".."* ]] || [[ "$input" == *"~"* ]]; then
+                echo "❌ Unsafe path: $input"
+                return 1
+            fi
+            ;;
+        "number")
+            # Validate numeric input
+            if [[ ! "$input" =~ ^[0-9]+$ ]]; then
+                echo "❌ Invalid number: $input"
+                return 1
+            fi
+            ;;
+    esac
+    
+    echo "$input"  # Return validated input
+}
+EOF
+    
+    echo "✅ Created secure input validation template"
+}
+```
+
+### Automated Remediation Pipeline
+```bash
+# PIPELINE: Automated security remediation
+automated_security_remediation() {
+    echo "🤖 AUTOMATED SECURITY REMEDIATION PIPELINE"
+    echo "=========================================="
+    
+    local total_fixes=0
+    
+    # Run security scan to identify issues
+    echo "🔍 Scanning for security issues..."
+    local scan_result
+    scan_result=$(./scripts/security-scan.sh --json-output)
+    
+    # Apply safe automatic fixes
+    echo "🔧 Applying safe automatic fixes..."
+    
+    # File permission fixes
+    if auto_fix_file_permissions; then
+        echo "✅ File permissions fixed"
+        ((total_fixes++))
+    fi
+    
+    # Configuration security fixes
+    if auto_fix_security_configurations; then
+        echo "✅ Security configurations fixed"
+        ((total_fixes++))
+    fi
+    
+    # Re-scan to verify fixes
+    echo "🔍 Verifying remediation..."
+    if ./scripts/security-scan.sh --quiet; then
+        echo "✅ All security issues resolved automatically"
+    else
+        echo "⚠️  Some issues require manual intervention"
+        ./scripts/security-scan.sh --summary
+    fi
+    
+    echo "🎯 Automated remediation complete: $total_fixes fixes applied"
+}
+```
+
 ## Success Metrics and Validation
 
 ### Security KPIs (All Must Be 100%)
