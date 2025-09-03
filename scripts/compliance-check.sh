@@ -692,11 +692,11 @@ if [[ -x "./scripts/security-scan.sh" ]]; then
     # Capture both output and exit code for detailed analysis
     security_scan_output=$(./scripts/security-scan.sh --quiet 2>&1)
     security_scan_exit_code=$?
-    
+
     # Count warnings and errors in security scan output
     security_warnings_count=$(echo "$security_scan_output" | grep -c "\[WARN\]" || true)
     security_errors_count=$(echo "$security_scan_output" | grep -c "\[FAIL\]" || true)
-    
+
     # ZERO TOLERANCE ENFORCEMENT: No warnings or errors allowed
     if [[ $security_scan_exit_code -eq 0 && $security_warnings_count -eq 0 && $security_errors_count -eq 0 ]]; then
         log_success "Security scan: 100% COMPLIANT (ZERO warnings, ZERO errors)"
@@ -719,12 +719,12 @@ if [[ -x "./scripts/security-scan.sh" ]]; then
         echo ""
         log_error "🚫 DEVELOPMENT HALTED: Security compliance failure blocks all operations"
     fi
-    
+
     # Additional auto-fix attempt if enabled
     if [[ "$AUTO_FIX_MODE" == "true" && $security_scan_exit_code -ne 0 ]]; then
         echo ""
         log_info "Attempting automatic security remediation..."
-        
+
         if [[ "$DRY_RUN_MODE" == "true" ]]; then
             # Dry-run mode: preview security fixes
             log_info "Running security auto-fix preview (dry-run)..."
@@ -743,7 +743,7 @@ if [[ -x "./scripts/security-scan.sh" ]]; then
                 security_scan_exit_code=$?
                 security_warnings_count=$(echo "$security_scan_output" | grep -c "\[WARN\]" || true)
                 security_errors_count=$(echo "$security_scan_output" | grep -c "\[FAIL\]" || true)
-                
+
                 if [[ $security_scan_exit_code -eq 0 && $security_warnings_count -eq 0 && $security_errors_count -eq 0 ]]; then
                     log_success "Auto-fix SUCCESS: Security compliance achieved (100% clean)"
                 else
@@ -783,7 +783,7 @@ if [[ -f ".warp/protocols/security-protocol.md" ]]; then
             security_integration_failures=$((security_integration_failures + 1))
         fi
     done
-    
+
     if [[ $security_integration_failures -eq 0 ]]; then
         log_success "Security protocol: Comprehensive and complete"
     fi

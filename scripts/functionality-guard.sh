@@ -3,7 +3,7 @@
 # functionality-guard.sh - AI Agent Functionality Preservation System
 # Copyright (c) 2025 Richeve S. Bebedor <richeve.bebedor@gmail.com>
 #
-# CRITICAL PURPOSE: Prevents AI agents (including Warp AI) from accidentally 
+# CRITICAL PURPOSE: Prevents AI agents (including Warp AI) from accidentally
 # removing core functionality through overly aggressive refactoring or recreation
 
 set -euo pipefail
@@ -19,7 +19,7 @@ readonly PROJECT_ROOT
 # Critical files to monitor for functionality preservation
 readonly CRITICAL_FILES=(
     "scripts/security-scan.sh"
-    "scripts/compliance-check.sh"  
+    "scripts/compliance-check.sh"
     "scripts/functionality-guard.sh"
     "soft-delete.sh"
     "Makefile"
@@ -59,40 +59,40 @@ log_critical() {
 # Create functionality baseline if it doesn't exist
 create_functionality_baseline() {
     local baseline_file="$PROJECT_ROOT/.functionality-baseline.json"
-    
+
     if [[ -f "$baseline_file" ]]; then
         return 0  # Baseline already exists
     fi
-    
+
     log_info "Creating functionality baseline..."
-    
+
     local baseline_data="{"
     local first_entry=true
-    
+
     for file in "${CRITICAL_FILES[@]}"; do
         local full_path="$PROJECT_ROOT/$file"
-        
+
         if [[ -f "$full_path" ]]; then
             if [[ "$first_entry" == "true" ]]; then
                 first_entry=false
             else
                 baseline_data+=","
             fi
-            
+
             local line_count
             line_count=$(wc -l < "$full_path" 2>/dev/null || echo "0")
-            
+
             local function_count
             if function_count=$(grep -c "^[a-zA-Z_][a-zA-Z0-9_]*() {" "$full_path" 2>/dev/null); then
                 function_count=$(echo "$function_count" | tr -d '\n')
             else
                 function_count="0"
             fi
-            
+
             # Get function names
             local functions
             functions=$(grep "^[a-zA-Z_][a-zA-Z0-9_]*() {" "$full_path" 2>/dev/null | sed 's/() {.*//' | tr '\n' ',' | sed 's/,$//' || echo "")
-            
+
             baseline_data+="
   \"$file\": {
     \"line_count\": $line_count,
@@ -102,10 +102,10 @@ create_functionality_baseline() {
   }"
         fi
     done
-    
+
     baseline_data+="
 }"
-    
+
     echo "$baseline_data" > "$baseline_file"
     log_success "Functionality baseline created: $baseline_file"
 }
@@ -113,73 +113,73 @@ create_functionality_baseline() {
 # Check for functionality regressions
 check_functionality_regression() {
     local baseline_file="$PROJECT_ROOT/.functionality-baseline.json"
-    
+
     if [[ ! -f "$baseline_file" ]]; then
         log_warn "No functionality baseline found. Creating one now..."
         create_functionality_baseline
         return 0
     fi
-    
+
     log_info "Checking for functionality regressions..."
-    
+
     local regressions_detected=false
     local total_line_reduction=0
     local total_function_reduction=0
-    
+
     for file in "${CRITICAL_FILES[@]}"; do
         local full_path="$PROJECT_ROOT/$file"
-        
+
         if [[ ! -f "$full_path" ]]; then
             log_critical "CRITICAL FILE MISSING: $file"
             log_error "This file is essential and must not be removed!"
             regressions_detected=true
             continue
         fi
-        
+
         # Get current metrics
         local current_lines
         current_lines=$(wc -l < "$full_path" 2>/dev/null || echo "0")
-        
+
         local current_functions
         if current_functions=$(grep -c "^[a-zA-Z_][a-zA-Z0-9_]*() {" "$full_path" 2>/dev/null); then
             current_functions=$(echo "$current_functions" | tr -d '\n')
         else
             current_functions="0"
         fi
-        
+
         # Get baseline metrics with fallback values
         local baseline_lines
         baseline_lines=$(grep -A 10 "\"$file\":" "$baseline_file" | grep "\"line_count\":" | sed 's/.*: *\([0-9]*\).*/\1/' | head -1)
         [[ -z "$baseline_lines" || "$baseline_lines" == "" ]] && baseline_lines="0"
-        
-        local baseline_functions  
+
+        local baseline_functions
         baseline_functions=$(grep -A 10 "\"$file\":" "$baseline_file" | grep "\"function_count\":" | sed 's/.*: *\([0-9]*\).*/\1/' | head -1)
         [[ -z "$baseline_functions" || "$baseline_functions" == "" ]] && baseline_functions="0"
-        
+
         # Skip if baseline data not found or is zero (indicates missing baseline)
         if [[ "$baseline_lines" == "0" && "$baseline_functions" == "0" ]]; then
             log_warn "No baseline data for $file, skipping..."
             continue
         fi
-        
+
         # Calculate reductions
         # Ensure we have valid integers for arithmetic
         baseline_lines=$(echo "$baseline_lines" | tr -d '\n')
         baseline_functions=$(echo "$baseline_functions" | tr -d '\n')
-        
+
         # Default to 0 if empty or non-numeric
         [[ ! "$baseline_lines" =~ ^[0-9]+$ ]] && baseline_lines=0
         [[ ! "$baseline_functions" =~ ^[0-9]+$ ]] && baseline_functions=0
-        
+
         local line_reduction=$((baseline_lines - current_lines))
         local function_reduction=$((baseline_functions - current_functions))
-        
+
         # Check for significant line count reduction (>10% or >50 lines)
         local line_reduction_percent=0
         if [[ "$baseline_lines" != "0" ]] && [[ $baseline_lines -gt 0 ]]; then
             line_reduction_percent=$((line_reduction * 100 / baseline_lines))
         fi
-        
+
         if [[ $line_reduction -gt 50 || $line_reduction_percent -gt 10 ]]; then
             log_critical "FUNCTIONALITY REGRESSION DETECTED in $file!"
             log_error "  Baseline lines: $baseline_lines"
@@ -189,33 +189,33 @@ check_functionality_regression() {
             regressions_detected=true
             total_line_reduction=$((total_line_reduction + line_reduction))
         fi
-        
+
         # Check for function removal
         if [[ $function_reduction -gt 0 ]]; then
             log_critical "FUNCTION LOSS DETECTED in $file!"
             log_error "  Baseline functions: $baseline_functions"
             log_error "  Current functions:  $current_functions"
             log_error "  Functions lost:     $function_reduction"
-            
+
             # Get specific missing functions
             local baseline_function_list
             baseline_function_list=$(grep -A 10 "\"$file\":" "$baseline_file" | grep "\"functions\":" | sed 's/.*": *"\([^"]*\)".*/\1/')
-            
+
             local current_function_list
             current_function_list=$(grep "^[a-zA-Z_][a-zA-Z0-9_]*() {" "$full_path" 2>/dev/null | sed 's/() {.*//' | tr '\n' ',' | sed 's/,$//' || echo "")
-            
+
             # Find missing functions (simplified check)
             if [[ -n "$baseline_function_list" ]]; then
                 log_error "  Expected functions: $baseline_function_list"
                 log_error "  Current functions:  $current_function_list"
             fi
-            
+
             regressions_detected=true
             total_function_reduction=$((total_function_reduction + function_reduction))
         else
             log_success "$file: Functions preserved (${current_functions} functions)"
         fi
-        
+
         # Log positive changes if no regression
         if [[ $line_reduction -le 0 && $function_reduction -le 0 ]]; then
             if [[ $current_lines -gt $baseline_lines ]]; then
@@ -226,7 +226,7 @@ check_functionality_regression() {
             fi
         fi
     done
-    
+
     # Summary
     if [[ "$regressions_detected" == "true" ]]; then
         echo ""
@@ -257,26 +257,26 @@ check_functionality_regression() {
 # Update functionality baseline with current state
 update_functionality_baseline() {
     local baseline_file="$PROJECT_ROOT/.functionality-baseline.json"
-    
+
     log_info "Updating functionality baseline..."
-    
+
     # Backup existing baseline
     if [[ -f "$baseline_file" ]]; then
         cp "$baseline_file" "${baseline_file}.backup-$(date +%s)"
     fi
-    
+
     # Create new baseline
     create_functionality_baseline
-    
+
     log_success "Functionality baseline updated"
 }
 
 # Generate functionality regression report
 generate_regression_report() {
     local report_file="$PROJECT_ROOT/functionality-regression-report.md"
-    
+
     log_info "Generating functionality regression report..."
-    
+
     cat > "$report_file" << 'EOF'
 # Functionality Regression Analysis Report
 
@@ -286,17 +286,17 @@ generate_regression_report() {
 ## Critical Files Analysis
 
 EOF
-    
+
     for file in "${CRITICAL_FILES[@]}"; do
         local full_path="$PROJECT_ROOT/$file"
-        
+
         if [[ -f "$full_path" ]]; then
             local current_lines
             current_lines=$(wc -l < "$full_path" 2>/dev/null || echo "0")
-            
+
             local current_functions
             current_functions=$(grep -c "^[a-zA-Z_][a-zA-Z0-9_]*() {" "$full_path" 2>/dev/null || echo "0")
-            
+
             cat >> "$report_file" << EOF
 
 ### $file
@@ -316,13 +316,13 @@ EOF
 EOF
         fi
     done
-    
+
     cat >> "$report_file" << 'EOF'
 
 ## AI Agent Safety Guidelines
 
 1. **Never recreate large scripts from scratch** - Always edit existing files
-2. **Preserve all existing functions** - Check function count before/after changes  
+2. **Preserve all existing functions** - Check function count before/after changes
 3. **Validate line count changes** - Large reductions (>10%) require verification
 4. **Use incremental changes** - Make small, targeted modifications
 5. **Always run functionality checks** - Use `scripts/functionality-guard.sh`
@@ -348,7 +348,7 @@ If functionality regression is detected:
    ```
 
 EOF
-    
+
     log_success "Report generated: $report_file"
 }
 
@@ -358,32 +358,32 @@ attempt_auto_rollback() {
         log_warn "Auto-rollback not enabled. Set AUTO_ROLLBACK=true to enable."
         return 0
     fi
-    
+
     log_warn "Attempting automatic rollback due to severe functionality regression..."
-    
+
     # Find the last commit that passed functionality checks
     local commits
     commits=$(git log --oneline -10 --format="%H")
-    
+
     for commit in $commits; do
         log_info "Checking commit $commit..."
-        
+
         # Temporarily checkout commit
         if git checkout "$commit" 2>/dev/null; then
             if check_functionality_regression >/dev/null 2>&1; then
                 log_success "Found good commit: $commit"
-                
+
                 # Create rollback branch
                 local rollback_branch="auto-rollback-$(date +%s)"
                 git checkout -b "$rollback_branch"
-                
+
                 log_success "Created rollback branch: $rollback_branch"
                 log_warn "Manual review required before merging rollback"
                 return 0
             fi
         fi
     done
-    
+
     log_error "Could not find recent good commit for auto-rollback"
     git checkout develop 2>/dev/null || git checkout main 2>/dev/null || true
     return 1
@@ -392,7 +392,7 @@ attempt_auto_rollback() {
 # Pre-commit hook functionality
 run_pre_commit_check() {
     log_info "Running pre-commit functionality preservation check..."
-    
+
     if ! check_functionality_regression; then
         echo ""
         log_critical "🚫 COMMIT BLOCKED: Functionality regression detected!"
@@ -406,7 +406,7 @@ run_pre_commit_check() {
         log_error ""
         return 1
     fi
-    
+
     log_success "✅ Pre-commit check passed - no functionality regressions detected"
     return 0
 }
@@ -440,7 +440,7 @@ core functionality through overly aggressive refactoring or script recreation.
 
 CRITICAL PROTECTION:
 - Detects >10% line count reductions in critical files
-- Monitors function count preservation  
+- Monitors function count preservation
 - Blocks commits that lose significant functionality
 - Provides rollback mechanisms for regression recovery
 
@@ -457,7 +457,7 @@ EOF
 main() {
     local command="check"
     local verbose=false
-    
+
     # Parse arguments
     while [[ $# -gt 0 ]]; do
         case $1 in
@@ -504,9 +504,9 @@ main() {
                 ;;
         esac
     done
-    
+
     cd "$PROJECT_ROOT"
-    
+
     case $command in
         check)
             if check_functionality_regression; then

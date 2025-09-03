@@ -60,12 +60,12 @@ auto_fix_file_permissions() {
     local file="$1"
     local target_perm="$2"
     local description="$3"
-    
+
     if [[ "$DRY_RUN_MODE" == "true" ]]; then
         log_fix "[DRY-RUN] Would fix permissions: $description"
         return 0
     fi
-    
+
     if chmod "$target_perm" "$file" 2>/dev/null; then
         log_fix "Fixed permissions: $description"
         return 0
@@ -77,12 +77,12 @@ auto_fix_file_permissions() {
 
 auto_fix_remove_world_writable() {
     local file="$1"
-    
+
     if [[ "$DRY_RUN_MODE" == "true" ]]; then
         log_fix "[DRY-RUN] Would remove world-writable permissions from: $(basename "$file")"
         return 0
     fi
-    
+
     if chmod o-w "$file" 2>/dev/null; then
         log_fix "Removed world-writable permissions from: $(basename "$file")"
         ((FIXED_PERMISSIONS++))
@@ -95,12 +95,12 @@ auto_fix_remove_world_writable() {
 
 auto_fix_executable_docs() {
     local file="$1"
-    
+
     if [[ "$DRY_RUN_MODE" == "true" ]]; then
         log_fix "[DRY-RUN] Would remove execute permissions from documentation: $(basename "$file")"
         return 0
     fi
-    
+
     if chmod -x "$file" 2>/dev/null; then
         log_fix "Removed execute permissions from documentation: $(basename "$file")"
         ((FIXED_PERMISSIONS++))
@@ -113,7 +113,7 @@ auto_fix_executable_docs() {
 
 auto_fix_add_security_gitignore_patterns() {
     local gitignore_file="$PROJECT_ROOT/.gitignore"
-    
+
     local security_patterns=(
         "# Security patterns"
         "*.key"
@@ -141,9 +141,9 @@ auto_fix_add_security_gitignore_patterns() {
         "core"
         "*.pid"
     )
-    
+
     local patterns_added=0
-    
+
     for pattern in "${security_patterns[@]}"; do
         if ! grep -Fq "$pattern" "$gitignore_file" 2>/dev/null; then
             if [[ "$DRY_RUN_MODE" == "true" ]]; then
@@ -155,7 +155,7 @@ auto_fix_add_security_gitignore_patterns() {
             fi
         fi
     done
-    
+
     if [[ $patterns_added -gt 0 ]]; then
         if [[ "$DRY_RUN_MODE" != "true" ]]; then
             log_fix "Added $patterns_added security patterns to .gitignore"
@@ -163,24 +163,24 @@ auto_fix_add_security_gitignore_patterns() {
         fi
         return 0
     fi
-    
+
     return 0
 }
 
 confirm_fix() {
     local description="$1"
-    
+
     if [[ "$QUIET_MODE" == "true" ]]; then
         # In quiet mode, skip confirmation-required fixes
         log_fix "Skipping confirmation-required fix in quiet mode: $description"
         return 1
     fi
-    
+
     if [[ "$DRY_RUN_MODE" == "true" ]]; then
         log_fix "[DRY-RUN] Would request confirmation for: $description"
         return 0
     fi
-    
+
     echo -n "Apply fix: $description? [y/N] "
     read -r response
     case $response in
@@ -197,7 +197,7 @@ confirm_fix() {
 auto_fix_dockerfile_security() {
     local dockerfile="$1"
     local fixes_applied=0
-    
+
     # Check if we need to add a non-root user
     if ! grep -q "USER.*[^root]" "$dockerfile"; then
         if [[ "$DRY_RUN_MODE" == "true" ]]; then
@@ -207,7 +207,7 @@ auto_fix_dockerfile_security() {
             # Add non-root user before the final instruction
             local temp_file
             temp_file=$(mktemp)
-            
+
             # Insert non-root user configuration before the last line
             head -n -1 "$dockerfile" > "$temp_file"
             cat >> "$temp_file" << 'EOF'
@@ -217,7 +217,7 @@ RUN groupadd -r appuser && useradd -r -g appuser appuser
 USER appuser
 EOF
             tail -n 1 "$dockerfile" >> "$temp_file"
-            
+
             if mv "$temp_file" "$dockerfile"; then
                 log_fix "Added non-root user to Dockerfile"
                 ((FIXED_VULNERABILITIES++))
@@ -228,7 +228,7 @@ EOF
             fi
         fi
     fi
-    
+
     return $fixes_applied
 }
 
@@ -237,9 +237,9 @@ apply_security_fixes() {
     if [[ "$AUTO_FIX_MODE" != "true" ]]; then
         return 0
     fi
-    
+
     log_info "Applying security fixes..."
-    
+
     # Fix file permissions
     local world_writable_files
     world_writable_files=$(find "$PROJECT_ROOT" -type f -perm /o+w 2>/dev/null | grep -v ".git" || true)
@@ -248,7 +248,7 @@ apply_security_fixes() {
             auto_fix_remove_world_writable "$file"
         done <<< "$world_writable_files"
     fi
-    
+
     # Fix executable documentation files
     local suspicious_executables
     suspicious_executables=$(find "$PROJECT_ROOT" -name "*.md" -o -name "*.txt" -o -name "*.json" -o -name "*.yml" -o -name "*.yaml" 2>/dev/null | while read -r f; do [[ -x "$f" ]] && echo "$f"; done)
@@ -257,15 +257,15 @@ apply_security_fixes() {
             auto_fix_executable_docs "$file"
         done <<< "$suspicious_executables"
     fi
-    
+
     # Add security patterns to .gitignore
     auto_fix_add_security_gitignore_patterns
-    
+
     # Fix Docker security issues
     if [[ -f "$PROJECT_ROOT/Dockerfile.test" ]]; then
         auto_fix_dockerfile_security "$PROJECT_ROOT/Dockerfile.test"
     fi
-    
+
     # Handle secrets (confirmation required)
     local secret_files
     secret_files=$(grep -rli "password\|api[_-]\?key\|secret\|token" "$PROJECT_ROOT" --exclude-dir=.git --exclude-dir=reports --exclude-dir=dist 2>/dev/null | head -5 || true)
@@ -275,13 +275,13 @@ apply_security_fixes() {
                 if [[ -f "$file" && "$DRY_RUN_MODE" != "true" ]]; then
                     # Create backup
                     cp "$file" "${file}.backup-$(date +%s)"
-                    
+
                     # Simple redaction (replace common secret patterns with placeholders)
                     sed -i 's/password\s*=\s*["'"'][^"'"']*["'"']/password="[REDACTED]"/gi' "$file"
                     sed -i 's/api[_-]\?key\s*=\s*["'"'][^"'"']*["'"']/api_key="[REDACTED]"/gi' "$file"
                     sed -i 's/secret\s*=\s*["'"'][^"'"']*["'"']/secret="[REDACTED]"/gi' "$file"
                     sed -i 's/token\s*=\s*["'"'][^"'"']*["'"']/token="[REDACTED]"/gi' "$file"
-                    
+
                     log_fix "Redacted potential secrets in: $(basename "$file")"
                     ((FIXED_VULNERABILITIES++))
                 fi
@@ -290,7 +290,7 @@ apply_security_fixes() {
             ((MANUAL_SECRETS++))
         fi
     fi
-    
+
     return 0
 }
 
@@ -386,7 +386,7 @@ validate_security_scan_integrity() {
         "compliance-check.sh"
         ".warp/README.md"
     )
-    
+
     # Check if any critical security files are being excluded from scanning
     for file in "${critical_files[@]}"; do
         # Look for any --exclude patterns targeting these files in this script
@@ -397,7 +397,7 @@ validate_security_scan_integrity() {
             return 1
         fi
     done
-    
+
     log_success "Security scan integrity validated - no dangerous exclusions detected"
     return 0
 }
@@ -405,7 +405,7 @@ validate_security_scan_integrity() {
 # Function to check for hardcoded secrets
 check_hardcoded_secrets() {
     log_info "Scanning for hardcoded secrets..."
-    
+
     # First, validate our security scan integrity
     if ! validate_security_scan_integrity; then
         log_error "Aborting secret scan due to integrity violation"
@@ -428,23 +428,23 @@ check_hardcoded_secrets() {
     for pattern in "${secret_patterns[@]}"; do
         local matches
         matches=$(grep -rEi "$pattern" "$PROJECT_ROOT" --exclude-dir=.git --exclude-dir=reports --exclude-dir=dist 2>/dev/null || true)
-        
+
         if [[ -n "$matches" ]]; then
             # Filter out legitimate documentation contexts
             local filtered_matches=""
             while IFS= read -r line; do
                 local is_documentation_context=false
-                
+
                 # Check if this is within documentation context patterns
                 if [[ "$line" =~ (sed\ -i\ \'s/|\#\ Example:|\#\ Template:|\#\ Documentation:|\#\ Remediation:|\[REDACTED\]) ]]; then
                     is_documentation_context=true
                 fi
-                
+
                 # Check if this is in a security protocol or documentation file with explanatory context
                 if [[ "$line" =~ (security-protocol\.md|README\.md) ]] && [[ "$line" =~ (remediation|example|template|documentation) ]]; then
                     is_documentation_context=true
                 fi
-                
+
                 # Only report if NOT in documentation context
                 if [[ "$is_documentation_context" == "false" ]]; then
                     if [[ -n "$filtered_matches" ]]; then
@@ -454,7 +454,7 @@ check_hardcoded_secrets() {
                     fi
                 fi
             done <<< "$matches"
-            
+
             # Only warn if we have filtered matches that aren't documentation
             if [[ -n "$filtered_matches" ]]; then
                 log_warn "Potential secret found with pattern: $pattern"
@@ -770,10 +770,10 @@ generate_fix_summary() {
         echo "Vulnerability fixes: $FIXED_VULNERABILITIES"
         echo "Manual secrets requiring attention: $MANUAL_SECRETS"
         echo "Manual validation items: $MANUAL_VALIDATION"
-        
+
         local total_fixed=$((FIXED_PERMISSIONS + FIXED_CONFIGURATIONS + FIXED_VULNERABILITIES))
         local total_manual=$((MANUAL_SECRETS + MANUAL_VALIDATION))
-        
+
         if [[ $total_fixed -gt 0 ]]; then
             log_success "Applied $total_fixed automatic fixes"
         fi
@@ -821,14 +821,14 @@ run_security_scan() {
     check_input_validation || ((initial_issues += $?))
     run_shellcheck_security || ((initial_issues += $?))
     check_docker_security || ((initial_issues += $?))
-    
+
     total_issues=$initial_issues
 
     # Apply fixes if auto-fix mode is enabled
     if [[ "$AUTO_FIX_MODE" == "true" && $initial_issues -gt 0 ]]; then
         echo ""
         apply_security_fixes
-        
+
         # Re-run checks to verify fixes and count remaining issues
         if [[ "$DRY_RUN_MODE" != "true" ]]; then
             echo ""

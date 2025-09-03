@@ -1,8 +1,8 @@
 # Warp Terminal AI Safety Rules
 
-**Version**: 1.0.0  
-**Effective Date**: 2025-09-03  
-**Scope**: All AI agents interacting via Warp terminal  
+**Version**: 1.0.0
+**Effective Date**: 2025-09-03
+**Scope**: All AI agents interacting via Warp terminal
 **Enforcement Level**: MANDATORY
 
 ## Overview
@@ -49,10 +49,10 @@ These rules prevent AI agents (including Warp AI, Claude, GPT, and others) from 
    ```bash
    # Before major changes
    scripts/functionality-guard.sh --check
-   
+
    # After any modifications
    scripts/functionality-guard.sh --check
-   
+
    # If intentional changes
    scripts/functionality-guard.sh --update-baseline
    ```
@@ -97,7 +97,7 @@ These rules prevent AI agents (including Warp AI, Claude, GPT, and others) from 
 ### Pre-Commit Protection
 The `.githooks/pre-commit` script automatically:
 - ✅ Checks for functionality regressions
-- ✅ Validates security compliance  
+- ✅ Validates security compliance
 - ✅ Scans for potential secrets
 - ❌ Blocks commits that lose functionality
 
@@ -178,7 +178,7 @@ git commit -m "feat: intentional functionality changes with updated baseline"
 - Test frequently
 - Expand scope gradually
 
-### 2. Preserve First, Optimize Second  
+### 2. Preserve First, Optimize Second
 - Ensure functionality works before improving it
 - Don't sacrifice features for cleanliness
 - Maintain backward compatibility
@@ -209,7 +209,7 @@ git commit -m "feat: intentional functionality changes with updated baseline"
 
 ### ✅ GOOD: Incremental Fix
 ```bash
-# User: "Fix this security scan script"  
+# User: "Fix this security scan script"
 # AI: Identifies specific issue, edits only relevant lines
 # Result: Problem fixed, all existing functionality preserved
 ```
@@ -220,7 +220,7 @@ git commit -m "feat: intentional functionality changes with updated baseline"
 # Result: Edge cases lost, error handling removed, features missing
 ```
 
-### ✅ GOOD: Careful Enhancement  
+### ✅ GOOD: Careful Enhancement
 ```bash
 # AI: "I'll improve this specific function while preserving all others"
 # Result: Targeted improvement, full functionality maintained
@@ -231,7 +231,7 @@ git commit -m "feat: intentional functionality changes with updated baseline"
 This safety system integrates with:
 - **Version Control**: Git hooks and commit validation
 - **Security Framework**: Preserved scanning and compliance
-- **Development Workflow**: Maintained tooling and scripts  
+- **Development Workflow**: Maintained tooling and scripts
 - **Documentation**: Updated protocols and guidelines
 
 ## Enforcement and Monitoring

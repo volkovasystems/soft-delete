@@ -1,8 +1,8 @@
 # Security Protocol
 
-**Version**: 1.0.0  
-**Effective Date**: 2025-09-03  
-**Scope**: All security-related operations and standards  
+**Version**: 1.0.0
+**Effective Date**: 2025-09-03
+**Scope**: All security-related operations and standards
 **Enforcement Level**: MANDATORY 100%
 
 ## Overview
@@ -85,7 +85,7 @@ UNSAFE_PATTERNS=(
 validate_input() {
     local input="$1"
     local type="$2"
-    
+
     case "$type" in
         "path")
             # Reject path traversal attempts
@@ -104,7 +104,7 @@ validate_input() {
             fi
             ;;
     esac
-    
+
     echo "$input"
 }
 ```
@@ -123,22 +123,22 @@ validate_input() {
 # AUTO-FIX: Correct file permissions
 fix_file_permissions() {
     echo "🔒 Fixing file permissions for security..."
-    
+
     # Fix script permissions
     find scripts/ -name "*.sh" -not -perm 755 -exec chmod 755 {} \;
-    
-    # Fix documentation permissions  
+
+    # Fix documentation permissions
     find docs/ .warp/ -name "*.md" -not -perm 644 -exec chmod 644 {} \;
-    
+
     # Fix configuration file permissions
     find . -name "*.yml" -o -name "*.yaml" -o -name "*.json" -not -perm 644 -exec chmod 644 {} \;
-    
+
     # Verify no world-writable files exist
     if find . -type f -perm /o+w -not -path "./.git/*"; then
         echo "❌ World-writable files found - security risk"
         return 1
     fi
-    
+
     echo "✅ File permissions secured"
 }
 ```
@@ -157,30 +157,30 @@ fix_file_permissions() {
 # REQUIRED: Dockerfile security validation
 validate_dockerfile_security() {
     local dockerfile="$1"
-    
+
     if [[ ! -f "$dockerfile" ]]; then
         return 0  # No Dockerfile to validate
     fi
-    
+
     local issues=0
-    
+
     # Check for non-root user
     if ! grep -q "USER.*[^root]" "$dockerfile"; then
         echo "❌ Dockerfile security: No non-root user specified"
         ((issues++))
     fi
-    
+
     # Check for secrets
     if grep -iE "(password|secret|key|token)" "$dockerfile"; then
         echo "❌ Dockerfile security: Potential secrets found"
         ((issues++))
     fi
-    
+
     # Check for proper COPY ownership
     if ! grep -q "COPY.*--chown" "$dockerfile"; then
         echo "⚠️  Dockerfile security: Consider using --chown for proper file ownership"
     fi
-    
+
     return $issues
 }
 ```
@@ -195,39 +195,39 @@ validate_dockerfile_security() {
 security_pre_check() {
     echo "🔒 SECURITY PRE-OPERATION CHECK"
     echo "==============================="
-    
+
     local issues=0
-    
+
     # 1. Sensitive data scan
     echo "🔍 Scanning for sensitive data..."
     if ! scan_sensitive_data; then
         ((issues++))
     fi
-    
+
     # 2. Path traversal vulnerability check
     echo "🔍 Checking for path traversal vulnerabilities..."
     if ! check_path_traversal; then
         ((issues++))
     fi
-    
+
     # 3. Input validation analysis
     echo "🔍 Analyzing input validation..."
     if ! analyze_input_validation; then
         ((issues++))
     fi
-    
+
     # 4. File permission verification
     echo "🔍 Verifying file permissions..."
     if ! verify_file_permissions; then
         ((issues++))
     fi
-    
+
     # 5. Container security check
     echo "🔍 Checking container security..."
     if ! check_container_security; then
         ((issues++))
     fi
-    
+
     if [[ $issues -eq 0 ]]; then
         echo "✅ Security pre-check: PASSED"
         return 0
@@ -248,7 +248,7 @@ These security fixes are non-destructive and safe to apply automatically:
 # AUTO-FIX: Secure file permissions
 auto_fix_permissions() {
     local fixes=0
-    
+
     # Fix overly permissive scripts
     while IFS= read -r -d '' file; do
         if [[ -x "$file" ]] && [[ $(stat -c "%a" "$file") != "755" ]]; then
@@ -257,7 +257,7 @@ auto_fix_permissions() {
             ((fixes++))
         fi
     done < <(find scripts/ -name "*.sh" -type f -print0)
-    
+
     # Fix overly permissive documentation
     while IFS= read -r -d '' file; do
         if [[ $(stat -c "%a" "$file") != "644" ]]; then
@@ -266,14 +266,14 @@ auto_fix_permissions() {
             ((fixes++))
         fi
     done < <(find docs/ .warp/ -name "*.md" -type f -print0)
-    
+
     # Remove world-write permissions
     while IFS= read -r -d '' file; do
         chmod o-w "$file"
         echo "🔒 Removed world-write: $file"
         ((fixes++))
     done < <(find . -type f -perm /o+w -not -path "./.git/*" -print0)
-    
+
     echo "✅ File permission fixes applied: $fixes files"
     return $fixes
 }
@@ -284,7 +284,7 @@ auto_fix_permissions() {
 # AUTO-FIX: Apply secure configuration defaults
 auto_fix_configurations() {
     local fixes=0
-    
+
     # Ensure .gitignore contains security patterns
     local security_patterns=(
         "*.key"
@@ -296,7 +296,7 @@ auto_fix_configurations() {
         "config/secrets.*"
         "*.credential*"
     )
-    
+
     for pattern in "${security_patterns[@]}"; do
         if ! grep -q "^$pattern$" .gitignore 2>/dev/null; then
             echo "$pattern" >> .gitignore
@@ -304,7 +304,7 @@ auto_fix_configurations() {
             ((fixes++))
         fi
     done
-    
+
     echo "✅ Security configuration fixes applied: $fixes items"
     return $fixes
 }
@@ -319,7 +319,7 @@ These fixes require confirmation as they may impact functionality:
 confirm_fix_secrets() {
     local potential_secrets
     potential_secrets=$(scan_for_secrets)
-    
+
     if [[ -n "$potential_secrets" ]]; then
         echo "⚠️  Potential secrets found:"
         echo "$potential_secrets"
@@ -331,7 +331,7 @@ confirm_fix_secrets() {
         echo ""
         echo "Remove potential secrets? (y/N)"
         read -r response
-        
+
         if [[ "$response" == "y" ]]; then
             # Implementation would sanitize the identified content
             echo "🔒 Removing potential secrets..."
@@ -341,7 +341,7 @@ confirm_fix_secrets() {
             return 1
         fi
     fi
-    
+
     return 0
 }
 ```
@@ -350,7 +350,7 @@ confirm_fix_secrets() {
 These security issues require manual developer intervention:
 
 - **Code injection vulnerabilities** - Need code review
-- **Logic flaws in security controls** - Need architectural review  
+- **Logic flaws in security controls** - Need architectural review
 - **Third-party dependency vulnerabilities** - Need dependency updates
 - **Complex input validation issues** - Need domain expertise
 
@@ -373,7 +373,7 @@ These security issues require manual developer intervention:
 ```
 
 #### Mode 3: Silent Security Fix (--fix --quiet)
-```bash  
+```bash
 ./scripts/security-scan.sh --fix --quiet
 # Applies only safe security fixes
 # No prompts or confirmations
@@ -387,13 +387,13 @@ These security issues require manual developer intervention:
 # Security validation integrated into compliance checks
 compliance_security_integration() {
     echo "🔒 Security compliance verification..."
-    
+
     # Run security scan as part of compliance
     if ! ./scripts/security-scan.sh --quiet; then
         echo "❌ Security compliance failure"
         return 1
     fi
-    
+
     echo "✅ Security compliance: PASSED"
 }
 ```
@@ -406,13 +406,13 @@ compliance_security_integration() {
     if ! ./scripts/security-scan.sh --quiet; then
       echo "Attempting security auto-fix..."
       ./scripts/security-scan.sh --fix --quiet
-      
+
       # Re-check after auto-fix
       if ! ./scripts/security-scan.sh --quiet; then
         echo "❌ Security issues require manual intervention"
         exit 1
       fi
-      
+
       # Commit security fixes if any were made
       if [[ -n "$(git status --porcelain)" ]]; then
         git add -A
@@ -549,10 +549,10 @@ echo "4. Consider key rotation if needed"
 6. **Prioritize security** over convenience or speed
 
 ### Prohibited Agent Behaviors
-❌ **Never ignore security warnings** for any reason  
-❌ **Never suggest "quick fixes"** that bypass security  
-❌ **Never recommend disabling security controls**  
-❌ **Never expose sensitive data** in logs or output  
+❌ **Never ignore security warnings** for any reason
+❌ **Never suggest "quick fixes"** that bypass security
+❌ **Never recommend disabling security controls**
+❌ **Never expose sensitive data** in logs or output
 ❌ **Never suggest insecure temporary solutions**
 
 ## Verification Procedures
@@ -567,39 +567,39 @@ All security controls must be verified through automated procedures:
 security_verify() {
     echo "🔍 AUTOMATED SECURITY VERIFICATION"
     echo "================================="
-    
+
     local verification_failures=0
-    
+
     # File permission verification
     echo "📁 Verifying file permissions..."
     if ! verify_file_permissions; then
         ((verification_failures++))
     fi
-    
+
     # Sensitive data verification
     echo "🔐 Verifying no sensitive data exposure..."
     if ! verify_no_secrets; then
         ((verification_failures++))
     fi
-    
+
     # Path traversal verification
     echo "🛡️ Verifying path traversal protection..."
     if ! verify_path_security; then
         ((verification_failures++))
     fi
-    
+
     # Input validation verification
     echo "✅ Verifying input validation coverage..."
     if ! verify_input_validation; then
         ((verification_failures++))
     fi
-    
+
     # Container security verification
     echo "🐳 Verifying container security..."
     if ! verify_container_security; then
         ((verification_failures++))
     fi
-    
+
     return $verification_failures
 }
 ```
@@ -610,7 +610,7 @@ security_verify() {
 manual_security_review() {
     echo "👥 MANUAL SECURITY REVIEW CHECKLIST"
     echo "==================================="
-    
+
     local review_items=(
         "Code follows security best practices"
         "All user inputs are properly validated"
@@ -620,12 +620,12 @@ manual_security_review() {
         "Third-party dependencies are up-to-date"
         "Docker configurations follow security guidelines"
     )
-    
+
     echo "Manual review required for:"
     for item in "${review_items[@]}"; do
         echo "  • $item"
     done
-    
+
     echo ""
     echo "Each item must be verified by a human reviewer."
 }
@@ -637,13 +637,13 @@ manual_security_review() {
 security_test_procedures() {
     echo "🧪 SECURITY TEST PROCEDURES"
     echo "==========================="
-    
+
     # Path traversal attack simulation
     test_path_traversal_resistance()
     test_input_validation_effectiveness()
     test_privilege_escalation_protection()
     test_secret_exposure_prevention()
-    
+
     echo "All security tests must pass 100%"
 }
 ```
@@ -663,25 +663,25 @@ security_test_procedures() {
 ### Security Issue Classification and Response
 
 #### CRITICAL Issues (IMMEDIATE ACTION REQUIRED)
-**Response Time**: < 1 Hour  
+**Response Time**: < 1 Hour
 **Examples**: Exposed secrets, active vulnerabilities, data breaches
 
 ```bash
 critical_security_remediation() {
     echo "🚨 CRITICAL SECURITY ISSUE RESPONSE"
     echo "==================================="
-    
+
     # STEP 1: Immediate containment
     echo "1️⃣ IMMEDIATE CONTAINMENT"
     git stash push -u -m "security-emergency-$(date +%Y%m%d-%H%M%S)"
-    
+
     # STEP 2: Assess scope
     echo "2️⃣ ASSESS SCOPE OF EXPOSURE"
     ./scripts/security-scan.sh --detailed --export-report
-    
+
     # STEP 3: Begin remediation
     echo "3️⃣ BEGIN IMMEDIATE REMEDIATION"
-    
+
     # Remove secrets from history if needed
     if confirm "Rewrite git history to remove secrets?"; then
         echo "⚠️  WARNING: This will rewrite git history"
@@ -689,7 +689,7 @@ critical_security_remediation() {
             'git rm --cached --ignore-unmatch SECRETS_FILE' \
             --prune-empty --tag-name-filter cat -- --all
     fi
-    
+
     # STEP 4: Verify remediation
     echo "4️⃣ VERIFY REMEDIATION"
     if ./scripts/security-scan.sh --comprehensive; then
@@ -702,40 +702,40 @@ critical_security_remediation() {
 ```
 
 #### HIGH Issues (24-Hour Response)
-**Response Time**: < 24 Hours  
+**Response Time**: < 24 Hours
 **Examples**: Input validation flaws, permission issues
 
 ```bash
 high_security_remediation() {
     echo "⚠️  HIGH SECURITY ISSUE RESPONSE"
     echo "==============================="
-    
+
     local issues_fixed=0
-    
+
     # Fix file permissions
     echo "🔒 Fixing file permissions..."
     if auto_fix_file_permissions; then
         ((issues_fixed++))
     fi
-    
+
     # Fix input validation issues
     echo "✅ Addressing input validation..."
     if fix_input_validation_issues; then
         ((issues_fixed++))
     fi
-    
+
     # Add security controls
     echo "🛡️ Adding security controls..."
     if add_security_controls; then
         ((issues_fixed++))
     fi
-    
+
     echo "Fixed $issues_fixed high-priority security issues"
 }
 ```
 
 #### MEDIUM Issues (72-Hour Response)
-**Response Time**: < 72 Hours  
+**Response Time**: < 72 Hours
 **Examples**: Configuration improvements, dependency updates
 
 ### Remediation Procedures by Issue Type
@@ -745,7 +745,7 @@ high_security_remediation() {
 remediate_secrets_exposure() {
     local secret_type="$1"
     local file_location="$2"
-    
+
     case "$secret_type" in
         "api_key")
             echo "🔑 Remediating API key exposure..."
@@ -756,7 +756,7 @@ remediate_secrets_exposure() {
             ;;
         "password")
             echo "🔐 Remediating password exposure..."
-            # Remove from file  
+            # Remove from file
             sed -i 's/password=.*/password="[REDACTED]"/g' "$file_location"
             # Force password change
             echo "⚠️  ACTION REQUIRED: Change the exposed password"
@@ -769,7 +769,7 @@ remediate_secrets_exposure() {
             echo "⚠️  ACTION REQUIRED: Generate new key pair"
             ;;
     esac
-    
+
     # Always scan git history
     if git log --all --oneline -S"$secret_type" | grep -q .; then
         echo "⚠️  SECRET FOUND IN GIT HISTORY - Consider history rewrite"
@@ -781,20 +781,20 @@ remediate_secrets_exposure() {
 ```bash
 remediate_file_permissions() {
     echo "🔒 REMEDIATING FILE PERMISSION ISSUES"
-    
+
     # Fix script permissions (must be 755)
     find scripts/ -name "*.sh" -not -perm 755 -exec chmod 755 {} \; \
         -exec echo "Fixed script permissions: {}" \;
-    
+
     # Fix documentation permissions (must be 644)
     find docs/ .warp/ -name "*.md" -not -perm 644 -exec chmod 644 {} \; \
         -exec echo "Fixed doc permissions: {}" \;
-    
+
     # Remove world-write permissions (security risk)
     find . -type f -perm /o+w -not -path "./.git/*" \
         -exec chmod o-w {} \; \
         -exec echo "Removed world-write: {}" \;
-    
+
     echo "✅ File permission remediation complete"
 }
 ```
@@ -803,44 +803,44 @@ remediate_file_permissions() {
 ```bash
 remediate_path_traversal() {
     echo "🛡️ REMEDIATING PATH TRAVERSAL VULNERABILITIES"
-    
+
     # Add input validation to affected functions
     add_path_validation() {
         local script_file="$1"
-        
+
         # Insert validation function
         cat >> "$script_file" << 'EOF'
 
 # Security: Path traversal protection
 validate_safe_path() {
     local input_path="$1"
-    
+
     # Reject obvious traversal attempts
     if [[ "$input_path" == *".."* ]]; then
         echo "❌ Path traversal detected: $input_path"
         return 1
     fi
-    
+
     # Canonicalize and validate
     local canonical_path
     canonical_path=$(realpath -m "$input_path" 2>/dev/null || echo "")
-    
+
     if [[ -z "$canonical_path" ]]; then
         echo "❌ Invalid path: $input_path"
         return 1
     fi
-    
+
     echo "$canonical_path"
 }
 EOF
-        
+
         echo "Added path validation to: $script_file"
     }
-    
+
     # Apply to affected scripts
     local affected_scripts
     affected_scripts=$(grep -l "cd \$" scripts/*.sh 2>/dev/null || true)
-    
+
     for script in $affected_scripts; do
         add_path_validation "$script"
     done
@@ -851,7 +851,7 @@ EOF
 ```bash
 remediate_input_validation() {
     echo "✅ REMEDIATING INPUT VALIDATION ISSUES"
-    
+
     # Template for secure input validation
     cat > "scripts/secure-input-template.sh" << 'EOF'
 #!/bin/bash
@@ -860,7 +860,7 @@ remediate_input_validation() {
 validate_input() {
     local input="$1"
     local input_type="$2"
-    
+
     case "$input_type" in
         "filename")
             # Allow only safe filename characters
@@ -884,11 +884,11 @@ validate_input() {
             fi
             ;;
     esac
-    
+
     echo "$input"  # Return validated input
 }
 EOF
-    
+
     echo "✅ Created secure input validation template"
 }
 ```
@@ -899,29 +899,29 @@ EOF
 automated_security_remediation() {
     echo "🤖 AUTOMATED SECURITY REMEDIATION PIPELINE"
     echo "=========================================="
-    
+
     local total_fixes=0
-    
+
     # Run security scan to identify issues
     echo "🔍 Scanning for security issues..."
     local scan_result
     scan_result=$(./scripts/security-scan.sh --json-output)
-    
+
     # Apply safe automatic fixes
     echo "🔧 Applying safe automatic fixes..."
-    
+
     # File permission fixes
     if auto_fix_file_permissions; then
         echo "✅ File permissions fixed"
         ((total_fixes++))
     fi
-    
+
     # Configuration security fixes
     if auto_fix_security_configurations; then
         echo "✅ Security configurations fixed"
         ((total_fixes++))
     fi
-    
+
     # Re-scan to verify fixes
     echo "🔍 Verifying remediation..."
     if ./scripts/security-scan.sh --quiet; then
@@ -930,7 +930,7 @@ automated_security_remediation() {
         echo "⚠️  Some issues require manual intervention"
         ./scripts/security-scan.sh --summary
     fi
-    
+
     echo "🎯 Automated remediation complete: $total_fixes fixes applied"
 }
 ```
@@ -943,7 +943,7 @@ automated_security_remediation() {
 
 #### Forbidden Actions:
 - **NEVER** exclude security-scan.sh from security scans
-- **NEVER** exclude security-protocol.md from security scans  
+- **NEVER** exclude security-protocol.md from security scans
 - **NEVER** exclude compliance-check.sh from security scans
 - **NEVER** exclude documentation files (.warp/README.md) from security scans
 - **NEVER** use `--exclude` flags to bypass scanning of critical files
@@ -1114,9 +1114,9 @@ echo "✅ SECURITY VALIDATION: 100% PASSED"
 
 ---
 
-**ENFORCEMENT LEVEL**: MANDATORY AND IMMEDIATE  
-**PROTOCOL VERSION**: 1.0.0  
-**NEXT REVIEW**: 2025-12-01  
+**ENFORCEMENT LEVEL**: MANDATORY AND IMMEDIATE
+**PROTOCOL VERSION**: 1.0.0
+**NEXT REVIEW**: 2025-12-01
 **SCOPE**: ALL SECURITY OPERATIONS
 
 This protocol ensures that security is never compromised and remains the highest priority throughout the development lifecycle.
