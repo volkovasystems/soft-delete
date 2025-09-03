@@ -15,15 +15,15 @@ These rules prevent AI agents (including Warp AI, Claude, GPT, and others) from 
 
 #### 🔴 CRITICAL SECURITY VIOLATIONS (ZERO TOLERANCE - IMMEDIATE HALT)
 
-**NEVER BYPASS SECURITY CHECKS - THIS IS A CRITICAL SECURITY VIOLATION:**
+**NEVER BYPASS SECURITY CHECKS IN CODE - THIS IS A CRITICAL SECURITY VIOLATION:**
 
-0. **NEVER use `git commit --no-verify`** ❌ # Safe: legitimate security warning documentation
+0. **NEVER use `git commit --no-verify` in actual commands** ❌ # Safe: legitimate security warning documentation
    - This bypasses ALL security checks and pre-commit hooks
    - Creates immediate security vulnerabilities
    - Violates zero-tolerance security policy
    - **ALWAYS fix security issues properly instead of bypassing**
 
-0. **NEVER use `git push --no-verify`** ❌ # Safe: legitimate security warning documentation
+0. **NEVER use `git push --no-verify` in actual commands** ❌ # Safe: legitimate security warning documentation
    - Bypasses push-time security validation
    - Allows vulnerable code to reach remote repositories
    - Undermines security framework integrity
@@ -34,9 +34,17 @@ These rules prevent AI agents (including Warp AI, Claude, GPT, and others) from 
    - Security warnings exist to protect against real threats
 
 0. **NEVER disable security scans** ❌ # Safe: legitimate security warning documentation
-   - No `--skip-security`, `--no-scan`, or similar bypass flags # Safe: legitimate security warning documentation
+   - No `--skip-security`, `--no-scan`, or similar bypass flags in actual code # Safe: legitimate security warning documentation
    - No commenting out security validation code
    - No modifying security tools to be less effective
+
+**COMMUNICATION SECURITY POLICY:**
+- ✅ **Commit messages may freely discuss security topics** including bypass techniques
+- ✅ **Documentation may reference bypass commands** for educational purposes
+- ✅ **Security discussions are encouraged** - knowledge sharing improves security
+- ✅ **Technical terms like "bypass" have legitimate uses** in many contexts
+- 🎯 **Security enforcement focuses on executable code**, not language policing
+- 📝 **Real security comes from preventing dangerous commands**, not restricting vocabulary
 
 **PROPER RESPONSE TO SECURITY ISSUES:**
 - ✅ Analyze why the security tool flagged the issue
