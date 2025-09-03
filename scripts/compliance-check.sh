@@ -656,7 +656,8 @@ security_errors_count=0
 
 if [[ -x "./scripts/security-scan.sh" ]]; then
     # Capture both output and exit code for detailed analysis
-    security_scan_output=$(./scripts/security-scan.sh --quiet 2>&1) || security_scan_exit_code=$?
+    security_scan_output=$(./scripts/security-scan.sh --quiet 2>&1)
+    security_scan_exit_code=$?
     
     # Count warnings and errors in security scan output
     security_warnings_count=$(echo "$security_scan_output" | grep -c "\[WARN\]" || echo "0")
@@ -704,7 +705,8 @@ if [[ -x "./scripts/security-scan.sh" ]]; then
             if ./scripts/security-scan.sh --fix --quiet; then
                 # Re-run security scan to verify fixes
                 log_info "Re-running security scan after auto-fix..."
-                security_scan_output=$(./scripts/security-scan.sh --quiet 2>&1) || security_scan_exit_code=$?
+                security_scan_output=$(./scripts/security-scan.sh --quiet 2>&1)
+                security_scan_exit_code=$?
                 security_warnings_count=$(echo "$security_scan_output" | grep -c "\[WARN\]" || echo "0")
                 security_errors_count=$(echo "$security_scan_output" | grep -c "\[FAIL\]" || echo "0")
                 
