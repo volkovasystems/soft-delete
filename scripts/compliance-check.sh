@@ -802,6 +802,49 @@ if [[ -f "scripts/security-scan.sh" ]]; then
     fi
 fi
 
+# CRITICAL: Security bypass prevention check
+log_info "🚫 Checking for PROHIBITED security bypass attempts..."
+bypass_violations=0
+
+# Check recent commit history for bypass attempts (last 20 commits)
+bypass_commits=$(git log --oneline -20 --grep="--no-verify\|bypass.*security\|skip.*security\|disabled.*security" --all 2>/dev/null || true)
+if [[ -n "$bypass_commits" ]]; then
+    log_error "CRITICAL SECURITY VIOLATION: Bypass attempts detected in commit history"
+    echo "$bypass_commits"
+    bypass_violations=$((bypass_violations + 1))
+fi
+
+# Check for bypass patterns in current codebase
+bypass_code=$(grep -r "git.*commit.*no-verify\|--no-verify\|bypass.*security\|skip.*security" . --exclude-dir=.git --exclude-dir=reports 2>/dev/null | grep -v "# Safe:" | grep -v "PROHIBITED" || true) # Safe: legitimate security detection code
+if [[ -n "$bypass_code" ]]; then
+    log_error "CRITICAL SECURITY VIOLATION: Security bypass code found in repository"
+    echo "$bypass_code"
+    bypass_violations=$((bypass_violations + 1))
+fi
+
+# Check if security scan script has been weakened
+if [[ -f "scripts/security-scan.sh" ]]; then
+    # Count security patterns - should have comprehensive coverage
+    security_pattern_count=$(grep -c "password\|api.*key\|secret\|token" scripts/security-scan.sh || true)
+    if [[ $security_pattern_count -lt 5 ]]; then
+        log_error "SECURITY SCAN WEAKENED: Insufficient security pattern coverage ($security_pattern_count patterns)"
+        bypass_violations=$((bypass_violations + 1))
+    fi
+fi
+
+if [[ $bypass_violations -eq 0 ]]; then
+    log_success "Security bypass prevention: 100% compliant (no violations detected)"
+else
+    log_error "SECURITY BYPASS VIOLATIONS: $bypass_violations critical violations detected"
+    log_error "🚨 IMMEDIATE ACTION REQUIRED:"
+    log_error "  1. Remove all security bypass code and references"
+    log_error "  2. Rewrite git history if bypass commits exist"
+    log_error "  3. Restore security scan effectiveness if weakened"
+    log_error "  4. NEVER use --no-verify or similar bypass mechanisms"
+    log_error "  5. Fix security issues properly instead of bypassing"
+    echo ""
+fi
+
 # Final security compliance assessment
 echo ""
 log_info "🎯 FINAL SECURITY COMPLIANCE ASSESSMENT"

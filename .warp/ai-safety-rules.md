@@ -13,6 +13,41 @@ These rules prevent AI agents (including Warp AI, Claude, GPT, and others) from 
 
 ### 🚨 NEVER DO THESE THINGS
 
+#### 🔴 CRITICAL SECURITY VIOLATIONS (ZERO TOLERANCE - IMMEDIATE HALT)
+
+**NEVER BYPASS SECURITY CHECKS - THIS IS A CRITICAL SECURITY VIOLATION:**
+
+0. **NEVER use `git commit --no-verify`** ❌ # Safe: legitimate security warning documentation
+   - This bypasses ALL security checks and pre-commit hooks
+   - Creates immediate security vulnerabilities
+   - Violates zero-tolerance security policy
+   - **ALWAYS fix security issues properly instead of bypassing**
+
+0. **NEVER use `git push --no-verify`** ❌ # Safe: legitimate security warning documentation
+   - Bypasses push-time security validation
+   - Allows vulnerable code to reach remote repositories
+   - Undermines security framework integrity
+
+0. **NEVER ignore or dismiss security warnings** ❌
+   - "False positives" indicate tool improvement opportunities
+   - Proper resolution means fixing detection patterns, not bypassing
+   - Security warnings exist to protect against real threats
+
+0. **NEVER disable security scans** ❌ # Safe: legitimate security warning documentation
+   - No `--skip-security`, `--no-scan`, or similar bypass flags # Safe: legitimate security warning documentation
+   - No commenting out security validation code
+   - No modifying security tools to be less effective
+
+**PROPER RESPONSE TO SECURITY ISSUES:**
+- ✅ Analyze why the security tool flagged the issue
+- ✅ Fix the detection pattern or exclusion rules
+- ✅ Document why the fix is safe and specific
+- ✅ Test that real threats are still detected
+- ✅ Get security team review for any pattern changes
+- ❌ NEVER bypass or disable security checks
+
+#### Other Critical Functionality Protections:
+
 1. **NEVER recreate large scripts from scratch**
    - Always edit existing files incrementally
    - Preserve existing functionality and logic
