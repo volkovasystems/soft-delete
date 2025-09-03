@@ -436,12 +436,15 @@ check_hardcoded_secrets() {
                 local is_comment_or_documentation=false
 
                 # Check if this line is a comment (various formats)
-                if [[ "$line" =~ ^[[:space:]]*# ]] || [[ "$line" =~ .*#[[:space:]]*Safe: ]] || [[ "$line" =~ ^[[:space:]]*// ]] || [[ "$line" =~ ^[[:space:]]*\* ]] || [[ "$line" =~ ^[[:space:]]*\<!-- ]]; then
+                # Handle grep output format: file:content where content starts with #
+                if [[ "$line" =~ ^[^:]+:#[[:space:]]+ ]] || [[ "$line" =~ :[[:space:]]*#[[:space:]]+ ]]; then
+                    # This is a comment line from grep output
                     is_comment_or_documentation=true
                 fi
-
-                # Check for inline comments (# after code)
-                if [[ "$line" =~ .*[[:space:]]+#[[:space:]]+ ]]; then
+                
+                # Also check for lines where the actual content (after file:) is a comment
+                local line_content="$(echo "$line" | sed 's/^[^:]*://')" 
+                if [[ "$line_content" =~ ^[[:space:]]*# ]] || [[ "$line_content" =~ .*#[[:space:]]*Safe: ]] || [[ "$line_content" =~ ^[[:space:]]*// ]] || [[ "$line_content" =~ ^[[:space:]]*\* ]] || [[ "$line_content" =~ ^[[:space:]]*\<!-- ]]; then
                     is_comment_or_documentation=true
                 fi
 
