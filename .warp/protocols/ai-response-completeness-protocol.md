@@ -102,7 +102,7 @@ git commit -m "appropriate conventional message with details"
 # Edit CHANGELOG.md to add [Unreleased] section with changes
 
 # 4. Commit changelog
-git add CHANGELOG.md  
+git add CHANGELOG.md
 git commit -m "docs: update changelog for [work description]"
 
 # 5. Final verification
@@ -210,7 +210,7 @@ Update agent instructions to include:
 ### 3. Pre-Response Checks
 Implement checks that verify:
 - Starting from clean working directory
-- Proper branch (develop) 
+- Proper branch (develop)
 - All protocols accessible and valid
 
 ### 4. Post-Response Verification

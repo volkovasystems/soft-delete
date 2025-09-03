@@ -133,7 +133,7 @@ git rebase -i HEAD~5
 
 # In the editor:
 # pick abc123 feat: implement feature X - add basic structure
-# squash def456 feat: implement feature X - add validation logic  
+# squash def456 feat: implement feature X - add validation logic
 # squash ghi789 test: implement feature X - add tests
 # squash jkl012 fix: resolve test failures in feature code
 # pick mno345 checkpoint: feature complete with all tests passing
@@ -229,7 +229,7 @@ checkpoint: integration tests added and passing
 ```
 test: [result] [additional context]
 
-Examples:  
+Examples:
 test: all tests passing (45/45)
 test: failures detected in validation module (3 failed)
 test: lint compliance achieved (100% clean)
@@ -346,7 +346,7 @@ git commit -m "checkpoint: $MILESTONE"
 
 ### Advantages
 1. **Never lose work** - everything always committed
-2. **Complete history** - detailed tracking of development process  
+2. **Complete history** - detailed tracking of development process
 3. **Easy rollback** - can revert any change while preserving work
 4. **Safe experimentation** - always have commits to fall back to
 5. **Collaborative safety** - other agents can see all progress

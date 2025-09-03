@@ -68,16 +68,16 @@ EOF
 # Function to check file permissions
 check_file_permissions() {
     log_info "Checking file permissions..."
-    
+
     local issues=0
-    
+
     # Check for overly permissive files
     if find "$PROJECT_ROOT" -type f -perm /o+w 2>/dev/null | grep -v ".git" | grep -q .; then
         log_error "Found world-writable files:"
         find "$PROJECT_ROOT" -type f -perm /o+w 2>/dev/null | grep -v ".git"
         ((issues++))
     fi
-    
+
     # Check for executable files that shouldn't be
     local suspicious_executables
     suspicious_executables=$(find "$PROJECT_ROOT" -name "*.md" -o -name "*.txt" -o -name "*.json" -o -name "*.yml" -o -name "*.yaml" 2>/dev/null | xargs -I {} test -x {} \; -print 2>/dev/null || true)
@@ -86,18 +86,18 @@ check_file_permissions() {
         echo "$suspicious_executables"
         ((issues++))
     fi
-    
+
     if [[ $issues -eq 0 ]]; then
         log_success "File permissions are secure"
     fi
-    
+
     return $issues
 }
 
 # Function to check for hardcoded secrets
 check_hardcoded_secrets() {
     log_info "Scanning for hardcoded secrets..."
-    
+
     local issues=0
     local secret_patterns=(
         "password\s*=\s*['\"][^'\"]{3,}"
@@ -107,10 +107,10 @@ check_hardcoded_secrets() {
         "-----BEGIN\s+(RSA\s+)?PRIVATE\s+KEY-----"
         "ssh-rsa\s+[A-Za-z0-9+/]{200,}"
     )
-    
+
     # Special pattern for hashes/tokens with exclusions
     local hash_pattern="[0-9a-f]{32,64}"
-    
+
     for pattern in "${secret_patterns[@]}"; do
         local matches
         matches=$(grep -rEi "$pattern" "$PROJECT_ROOT" --exclude-dir=.git --exclude-dir=reports --exclude-dir=dist 2>/dev/null || true)
@@ -120,7 +120,7 @@ check_hardcoded_secrets() {
             ((issues++))
         fi
     done
-    
+
     # Check for potential hashes/tokens but exclude legitimate checksums
     local hash_matches
     hash_matches=$(grep -rEi "$hash_pattern" "$PROJECT_ROOT" --exclude-dir=.git --exclude-dir=reports --exclude-dir=dist 2>/dev/null || true)
@@ -128,27 +128,27 @@ check_hardcoded_secrets() {
         # Filter out known legitimate checksums and version guard files
         local filtered_matches
         filtered_matches=$(echo "$hash_matches" | grep -v "# Checksum:" | grep -v ".version-guard" | grep -v "sha256sum" | grep -v "checksum" | grep -vi "hash" || true)
-        
+
         if [[ -n "$filtered_matches" ]]; then
             log_warn "Potential secret found with hash pattern (excluding legitimate checksums):"
             echo "$filtered_matches"
             ((issues++))
         fi
     fi
-    
+
     if [[ $issues -eq 0 ]]; then
         log_success "No hardcoded secrets detected"
     fi
-    
+
     return $issues
 }
 
 # Function to check for path traversal vulnerabilities
 check_path_traversal() {
     log_info "Checking for path traversal vulnerabilities..."
-    
+
     local issues=0
-    
+
     # Safe variable patterns that should be excluded from path traversal checks
     local safe_variables=(
         "PROJECT_ROOT"
@@ -188,7 +188,7 @@ check_path_traversal() {
         "restore_path"
         "old_backups"
     )
-    
+
     # Create exclusion pattern for safe variables
     local safe_pattern=""
     for var in "${safe_variables[@]}"; do
@@ -198,13 +198,13 @@ check_path_traversal() {
             safe_pattern="\\\$${var}/|\\\${${var}}/"
         fi
     done
-    
+
     # Check for unsafe path handling (exclude safe variables)
     local unsafe_patterns=(
         '\.\./\.\.'                   # Obvious path traversal
         'cd\s+\$[^{]'                 # cd with unquoted variables (but allow ${var} form)
     )
-    
+
     for pattern in "${unsafe_patterns[@]}"; do
         local matches
         matches=$(grep -rE "$pattern" "$PROJECT_ROOT" --include="*.sh" --include="*.bash" --exclude-dir=.git 2>/dev/null | grep -v "# Safe:" || true)
@@ -214,11 +214,11 @@ check_path_traversal() {
             ((issues++))
         fi
     done
-    
+
     # Check for unquoted variables in paths, but exclude safe variables
     local unquoted_var_matches
     unquoted_var_matches=$(grep -rE '\$[A-Za-z_][A-Za-z0-9_]*/' "$PROJECT_ROOT" --include="*.sh" --include="*.bash" --exclude-dir=.git 2>/dev/null || true)
-    
+
     if [[ -n "$unquoted_var_matches" ]]; then
         # Filter out safe variable usage (escape the pattern properly)
         local filtered_matches
@@ -227,14 +227,14 @@ check_path_traversal() {
         else
             filtered_matches="$unquoted_var_matches"
         fi
-        
+
         if [[ -n "$filtered_matches" ]]; then
             log_error "Potential path traversal vulnerability found with unquoted variables:"
             echo "$filtered_matches"
             ((issues++))
         fi
     fi
-    
+
     # Check that critical path operations use proper validation (but be less strict)
     local critical_ops
     critical_ops=$(grep -rE "(rm -rf|rmdir)\s+" "$PROJECT_ROOT" --include="*.sh" --include="*.bash" --exclude-dir=.git 2>/dev/null || true)
@@ -254,7 +254,7 @@ check_path_traversal() {
             "rm -rf dist/"           # Hardcoded safe path
             "-maxdepth 1"            # find with maxdepth is safer
         )
-        
+
         local validation_pattern=""
         for pattern in "${validation_patterns[@]}"; do
             if [[ -n "$validation_pattern" ]]; then
@@ -263,32 +263,32 @@ check_path_traversal() {
                 validation_pattern="$pattern"
             fi
         done
-        
+
         local unvalidated_critical_ops
         unvalidated_critical_ops=$(echo "$critical_ops" | grep -vE "($validation_pattern)" || true)
-        
+
         # Filter out example files which are documentation
         unvalidated_critical_ops=$(echo "$unvalidated_critical_ops" | grep -v "examples/" || true)
-        
+
         if [[ -n "$unvalidated_critical_ops" ]]; then
             log_warn "Found critical file operations that may benefit from path validation:"
             echo "$unvalidated_critical_ops"
         fi
     fi
-    
+
     if [[ $issues -eq 0 ]]; then
         log_success "No path traversal vulnerabilities detected"
     fi
-    
+
     return $issues
 }
 
 # Function to check input validation
 check_input_validation() {
     log_info "Analyzing input validation..."
-    
+
     local issues=0
-    
+
     # Check for potentially dangerous unvalidated input patterns
     # Focus on usage patterns that could be exploited
     local dangerous_patterns=(
@@ -296,7 +296,7 @@ check_input_validation() {
         '\$[0-9@*].*>.*/'          # user input used in file paths without quotes
         'rm.*\$[0-9@*][^"\]]'      # rm with unquoted user input
     )
-    
+
     # Special pattern for exec (exclude find -exec which is safe)
     local exec_pattern='exec.*\$[0-9@*]'
     local exec_matches
@@ -305,14 +305,14 @@ check_input_validation() {
         # Filter out safe find -exec usage
         local filtered_exec_matches
         filtered_exec_matches=$(echo "$exec_matches" | grep -v "find.*-exec" | grep -v "^[[:space:]]*#" | grep -v "# Safe:" || true)
-        
+
         if [[ -n "$filtered_exec_matches" ]]; then
             log_error "Dangerous unvalidated input usage found with exec pattern:"
             echo "$filtered_exec_matches"
             ((issues++))
         fi
     fi
-    
+
     for pattern in "${dangerous_patterns[@]}"; do
         local matches
         matches=$(grep -rE "$pattern" "$PROJECT_ROOT" --include="*.sh" --include="*.bash" --exclude-dir=.git 2>/dev/null || true)
@@ -320,7 +320,7 @@ check_input_validation() {
             # Filter out comments and safe usage patterns
             local filtered_matches
             filtered_matches=$(echo "$matches" | grep -v "^[[:space:]]*#" | grep -v "# Safe:" || true)
-            
+
             if [[ -n "$filtered_matches" ]]; then
                 log_error "Dangerous unvalidated input usage found with pattern: $pattern"
                 echo "$filtered_matches"
@@ -328,11 +328,11 @@ check_input_validation() {
             fi
         fi
     done
-    
+
     # Check for scripts that handle sensitive operations with user input
     local sensitive_scripts
     sensitive_scripts=$(find "$PROJECT_ROOT" -name "*.sh" -o -name "*.bash" | grep -E "(deploy|install|setup|admin|root|sudo)" 2>/dev/null || true)
-    
+
     for script in $sensitive_scripts; do
         if [[ -f "$script" ]] && grep -q '\$[0-9@*]' "$script" 2>/dev/null; then
             # Check if the script has input validation
@@ -341,25 +341,25 @@ check_input_validation() {
             fi
         fi
     done
-    
+
     if [[ $issues -eq 0 ]]; then
         log_success "No dangerous input validation issues detected"
     fi
-    
+
     return $issues
 }
 
 # Function to run shellcheck security analysis
 run_shellcheck_security() {
     log_info "Running shellcheck security analysis..."
-    
+
     local issues=0
-    
+
     if ! command -v shellcheck >/dev/null 2>&1; then
         log_warn "shellcheck not found, skipping shell security analysis"
         return 0
     fi
-    
+
     local security_relevant_codes=(
         "SC2086"  # Double quote to prevent globbing and word splitting
         "SC2046"  # Quote this to prevent word splitting
@@ -369,31 +369,31 @@ run_shellcheck_security() {
         "SC2090"  # Quotes/backslashes will be treated literally
         "SC2294"  # eval can break out of its parent context
     )
-    
+
     for code in "${security_relevant_codes[@]}"; do
         if shellcheck -f tty --include="$code" "$PROJECT_ROOT"/*.sh "$PROJECT_ROOT"/scripts/*.sh 2>/dev/null | grep -q "$code"; then
             log_error "Security-relevant shellcheck issue found: $code"
             ((issues++))
         fi
     done
-    
+
     if [[ $issues -eq 0 ]]; then
         log_success "No security-relevant shellcheck issues found"
     fi
-    
+
     return $issues
 }
 
 # Function to check Docker security
 check_docker_security() {
     log_info "Checking Docker security configuration..."
-    
+
     local issues=0
-    
+
     # Check Dockerfile security best practices
     if [[ -f "$PROJECT_ROOT/Dockerfile.test" ]]; then
         local dockerfile="$PROJECT_ROOT/Dockerfile.test"
-        
+
         # Check for non-root user
         if ! grep -q "USER.*[^root]" "$dockerfile"; then
             log_warn "Dockerfile does not explicitly set a non-root user for final stage"
@@ -401,19 +401,19 @@ check_docker_security() {
         else
             log_success "Dockerfile uses non-root user"
         fi
-        
+
         # Check for COPY with proper ownership
         if grep -q "COPY.*--chown" "$dockerfile"; then
             log_success "Dockerfile uses --chown for proper file ownership"
         fi
-        
+
         # Check for secrets in Dockerfile
         if grep -iE "(password|secret|key|token)" "$dockerfile"; then
             log_error "Potential secrets found in Dockerfile"
             ((issues++))
         fi
     fi
-    
+
     return $issues
 }
 
@@ -421,11 +421,11 @@ check_docker_security() {
 run_security_scan() {
     local verbose="${1:-false}"
     local quiet="${2:-false}"
-    
+
     [[ "$quiet" == "false" ]] && log_info "Starting comprehensive security scan..."
-    
+
     local total_issues=0
-    
+
     # Run all security checks
     check_file_permissions || ((total_issues += $?))
     check_hardcoded_secrets || ((total_issues += $?))
@@ -433,7 +433,7 @@ run_security_scan() {
     check_input_validation || ((total_issues += $?))
     run_shellcheck_security || ((total_issues += $?))
     check_docker_security || ((total_issues += $?))
-    
+
     # Summary
     if [[ "$quiet" == "false" ]]; then
         echo ""
@@ -443,7 +443,7 @@ run_security_scan() {
             log_error "Security scan completed - $total_issues issues found ❌"
         fi
     fi
-    
+
     return $total_issues
 }
 
@@ -451,7 +451,7 @@ run_security_scan() {
 main() {
     local verbose=false
     local quiet=false
-    
+
     # Parse arguments
     while [[ $# -gt 0 ]]; do
         case $1 in
@@ -474,9 +474,9 @@ main() {
                 ;;
         esac
     done
-    
+
     cd "$PROJECT_ROOT"
-    
+
     if run_security_scan "$verbose" "$quiet"; then
         exit 0
     else

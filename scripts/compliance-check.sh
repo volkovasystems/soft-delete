@@ -1,6 +1,7 @@
 #!/bin/bash
-# 100% Compliance Verification Script
+# 100% Compliance Verification Script with Auto-Fix Capabilities
 # This script ensures zero tolerance for non-compliance
+# Synchronized with .warp/protocols/compliance-protocol.md
 
 set -euo pipefail
 
@@ -11,6 +12,20 @@ cd "$REPO_ROOT"
 
 # Compliance tracking
 COMPLIANCE_FAILED=0
+
+# Auto-fix options
+AUTO_FIX_MODE=false
+DRY_RUN_MODE=false
+QUIET_MODE=false
+
+# Fix tracking
+FIXED_PERMISSIONS=0
+FIXED_LINE_ENDINGS=0
+FIXED_WHITESPACE=0
+FIXED_STRICT_MODE=0
+MANUAL_TESTS=0
+MANUAL_SHELLCHECK=0
+MANUAL_LINKS=0
 
 # Utility functions
 log_info() {
@@ -30,21 +45,343 @@ log_warning() {
     echo "⚠️  $*" >&2
 }
 
+log_fix() {
+    if [[ "$QUIET_MODE" != "true" ]]; then
+        echo "🔧 $*"
+    fi
+}
 
-echo "🔍 RUNNING 100% COMPLIANCE VERIFICATION"
+# Auto-fix utility functions
+fix_file_permissions() {
+    local fixes=0
+
+    # Fix script permissions (should be 755)
+    while IFS= read -r -d '' script; do
+        if [[ "$DRY_RUN_MODE" == "true" ]]; then
+            log_fix "Would fix permissions for: $script (current: $(stat -c "%a" "$script"), target: 755)"
+        else
+            chmod 755 "$script"
+            log_fix "Fixed permissions for: $script"
+        fi
+        fixes=$((fixes + 1))
+    done < <(find scripts/ -name "*.sh" -type f -not -perm 755 -print0 2>/dev/null || true)
+
+    # Fix documentation permissions (should be 644)
+    while IFS= read -r -d '' doc; do
+        if [[ "$DRY_RUN_MODE" == "true" ]]; then
+            log_fix "Would fix permissions for: $doc (current: $(stat -c "%a" "$doc"), target: 644)"
+        else
+            chmod 644 "$doc"
+            log_fix "Fixed permissions for: $doc"
+        fi
+        fixes=$((fixes + 1))
+    done < <(find docs/ .warp/ -name "*.md" -type f -not -perm 644 -print0 2>/dev/null || true)
+
+    FIXED_PERMISSIONS=$fixes
+    return $fixes
+}
+
+fix_line_endings() {
+    local fixes=0
+
+    # Fix Windows line endings (CRLF -> LF)
+    while IFS= read -r file; do
+        if [[ "$DRY_RUN_MODE" == "true" ]]; then
+            log_fix "Would fix line endings in: $file"
+        else
+            sed -i 's/\r$//' "$file"
+            log_fix "Fixed line endings in: $file"
+        fi
+        fixes=$((fixes + 1))
+    done < <(find . \( -name "*.sh" -o -name "*.md" \) -exec grep -l $'\r$' {} \; 2>/dev/null || true)
+
+    FIXED_LINE_ENDINGS=$fixes
+    return $fixes
+}
+
+fix_trailing_whitespace() {
+    local fixes=0
+
+    # Remove trailing whitespace from code files
+    while IFS= read -r file; do
+        if grep -q '[[:space:]]$' "$file" 2>/dev/null; then
+            if [[ "$DRY_RUN_MODE" == "true" ]]; then
+                log_fix "Would remove trailing whitespace in: $file"
+            else
+                sed -i 's/[[:space:]]*$//' "$file"
+                log_fix "Removed trailing whitespace in: $file"
+            fi
+            fixes=$((fixes + 1))
+        fi
+    done < <(find . -name "*.sh" -o -name "*.md" -type f 2>/dev/null || true)
+
+    FIXED_WHITESPACE=$fixes
+    return $fixes
+}
+
+fix_missing_strict_mode() {
+    local fixes=0
+
+    # Add strict mode to bash scripts missing it
+    while IFS= read -r -d '' script; do
+        if ! grep -q "set -euo pipefail" "$script"; then
+            if [[ "$DRY_RUN_MODE" == "true" ]]; then
+                log_fix "Would add strict mode to: $script"
+            else
+                sed -i '2i\set -euo pipefail' "$script"
+                log_fix "Added strict mode to: $script"
+            fi
+            fixes=$((fixes + 1))
+        fi
+    done < <(find . -name "*.sh" -type f -print0 2>/dev/null || true)
+
+    FIXED_STRICT_MODE=$fixes
+    return $fixes
+}
+
+fix_generated_files() {
+    local fixes=0
+
+    # Remove tracked generated files (with confirmation unless quiet)
+    local generated_files
+    generated_files=$(git ls-files | grep -E '\.(tap|log)$' || true)
+
+    if [[ -n "$generated_files" ]]; then
+        if [[ "$QUIET_MODE" == "true" ]] || [[ "$DRY_RUN_MODE" == "true" ]]; then
+            if [[ "$DRY_RUN_MODE" == "true" ]]; then
+                log_fix "Would remove tracked generated files:"
+                echo "$generated_files" | sed 's/^/  - /'
+            else
+                git rm --cached $generated_files 2>/dev/null || true
+                log_fix "Removed tracked generated files"
+            fi
+            fixes=1
+        else
+            echo "Remove tracked generated files? (y/N)"
+            read -r response
+            if [[ "$response" == "y" ]]; then
+                git rm --cached $generated_files 2>/dev/null || true
+                log_fix "Removed tracked generated files"
+                fixes=1
+            fi
+        fi
+    fi
+
+    return $fixes
+}
+
+fix_essential_directories() {
+    local fixes=0
+
+    # Create missing essential directories
+    local missing_dirs=("reports/tap" "reports/junit" "reports/coverage" "reports/artifacts")
+
+    for dir in "${missing_dirs[@]}"; do
+        if [[ ! -d "$dir" ]]; then
+            if [[ "$DRY_RUN_MODE" == "true" ]]; then
+                log_fix "Would create directory: $dir"
+            else
+                mkdir -p "$dir"
+                touch "$dir/.gitkeep"
+                log_fix "Created directory: $dir"
+            fi
+            fixes=$((fixes + 1))
+        fi
+    done
+
+    return $fixes
+}
+
+generate_fix_report() {
+    if [[ "$QUIET_MODE" == "true" ]]; then
+        return
+    fi
+
+    echo ""
+    echo "🔧 COMPLIANCE AUTO-FIX REPORT"
+    echo "============================="
+    echo "Fixed automatically:"
+    echo "  - File permissions: $FIXED_PERMISSIONS files"
+    echo "  - Line endings: $FIXED_LINE_ENDINGS files"
+    echo "  - Trailing whitespace: $FIXED_WHITESPACE files"
+    echo "  - Missing strict mode: $FIXED_STRICT_MODE files"
+    echo ""
+
+    if [[ $((MANUAL_TESTS + MANUAL_SHELLCHECK + MANUAL_LINKS)) -gt 0 ]]; then
+        echo "Issues requiring manual fix:"
+        [[ $MANUAL_TESTS -gt 0 ]] && echo "  - Test failures: $MANUAL_TESTS"
+        [[ $MANUAL_SHELLCHECK -gt 0 ]] && echo "  - ShellCheck errors: $MANUAL_SHELLCHECK"
+        [[ $MANUAL_LINKS -gt 0 ]] && echo "  - Broken links: $MANUAL_LINKS"
+    fi
+    echo ""
+}
+
+# Argument parsing
+parse_arguments() {
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            --fix)
+                AUTO_FIX_MODE=true
+                shift
+                ;;
+            --dry-run)
+                DRY_RUN_MODE=true
+                shift
+                ;;
+            --quiet)
+                QUIET_MODE=true
+                shift
+                ;;
+            --help|-h)
+                show_help
+                exit 0
+                ;;
+            *)
+                echo "Unknown option: $1" >&2
+                show_help
+                exit 1
+                ;;
+        esac
+    done
+
+    # Validate argument combinations
+    if [[ "$DRY_RUN_MODE" == "true" && "$AUTO_FIX_MODE" != "true" ]]; then
+        echo "Error: --dry-run requires --fix" >&2
+        exit 1
+    fi
+}
+
+show_help() {
+    cat << 'EOF'
+Compliance Check Script with Auto-Fix Capabilities
+
+USAGE:
+    ./scripts/compliance-check.sh [OPTIONS]
+
+OPTIONS:
+    --fix         Enable automatic fixing of compliance issues
+    --dry-run     Show what would be fixed without making changes (requires --fix)
+    --quiet       Run in quiet mode with minimal output
+    --help, -h    Show this help message
+
+MODES:
+    Default       Check compliance only, report issues
+    --fix         Check + automatically fix safe issues
+    --fix --quiet Apply only safe fixes, no prompts
+    --fix --dry-run Preview what would be fixed
+
+EXAMPLES:
+    ./scripts/compliance-check.sh                    # Check only
+    ./scripts/compliance-check.sh --fix              # Check and fix
+    ./scripts/compliance-check.sh --fix --dry-run    # Preview fixes
+    ./scripts/compliance-check.sh --fix --quiet      # Silent fixes
+
+SAFE AUTO-FIXES (no confirmation required):
+    - File permissions (scripts to 755, docs to 644)
+    - Line endings (Windows CRLF to Unix LF)
+    - Trailing whitespace removal
+    - Missing bash strict mode
+
+CONFIRMATION-REQUIRED FIXES:
+    - Tracked generated files removal
+    - Missing essential directories creation
+
+MANUAL-ONLY FIXES:
+    - Test failures
+    - ShellCheck errors
+    - Broken links
+    - Security vulnerabilities
+EOF
+}
+
+# Parse command line arguments
+parse_arguments "$@"
+
+# Show mode information
+if [[ "$AUTO_FIX_MODE" == "true" ]]; then
+    if [[ "$DRY_RUN_MODE" == "true" ]]; then
+        echo "🔍 COMPLIANCE CHECK WITH AUTO-FIX (DRY RUN MODE)"
+    elif [[ "$QUIET_MODE" == "true" ]]; then
+        echo "🔍 COMPLIANCE CHECK WITH SILENT AUTO-FIX"
+    else
+        echo "🔍 COMPLIANCE CHECK WITH AUTO-FIX ENABLED"
+    fi
+else
+    echo "🔍 RUNNING 100% COMPLIANCE VERIFICATION"
+fi
 echo "======================================="
+
+# PRE-OPERATION UNIVERSAL CHECKLIST (from compliance protocol lines 19-24)
+echo ""
+log_info "🔴 PRE-OPERATION UNIVERSAL CHECKLIST"
+
+# System Status Checks (MANDATORY)
+log_info "Checking system status..."
+
+# Quick pre-operation validation
+working_dir_clean=$(git status --porcelain | wc -l)  # MUST be 0
+if [[ $working_dir_clean -eq 0 ]]; then
+    log_success "Working Directory: Clean (no uncommitted changes)"
+else
+    log_error "Working Directory: $working_dir_clean uncommitted changes"
+fi
+
+current_branch=$(git branch --show-current)       # MUST be "develop"
+if [[ "$current_branch" == "develop" ]]; then
+    log_success "Branch: On develop branch"
+else
+    log_error "Branch: Not on develop (currently on: $current_branch)"
+fi
+
+# VERSION file validation
+if [[ -f "VERSION" ]]; then
+    version_content=$(cat VERSION)                     # MUST return valid semver
+    if [[ "$version_content" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+        log_success "Version File: Present and valid ($version_content)"
+    else
+        log_error "Version File: Invalid format ($version_content)"
+    fi
+else
+    log_error "Version File: Missing VERSION file"
+fi
 
 # 1. CODE QUALITY COMPLIANCE
 echo ""
 log_info "📋 Checking Code Quality Compliance..."
 
-# ShellCheck compliance
+# ShellCheck compliance (from compliance protocol lines 111-120)
 log_info "Running ShellCheck validation..."
-if make lint >/dev/null 2>&1; then
+
+# REQUIRED: Zero warnings allowed - make docker-lint
+if make docker-lint >/dev/null 2>&1; then
     log_success "ShellCheck: 100% compliant (zero warnings)"
 else
-    log_error "ShellCheck: COMPLIANCE FAILURE - warnings detected"
-    make lint
+    log_error "ShellCheck: COMPLIANCE FAILURE - make docker-lint failed"
+    make docker-lint
+fi
+
+# Verify specific compliance - shellcheck soft-delete.sh
+log_info "Verifying specific ShellCheck compliance..."
+if command -v shellcheck >/dev/null 2>&1; then
+    if shellcheck --version >/dev/null 2>&1; then
+        log_success "ShellCheck version verified"
+    else
+        log_error "ShellCheck version check failed"
+    fi
+
+    # Check main script specifically
+    if [[ -f "soft-delete.sh" ]]; then
+        if shellcheck -f gcc soft-delete.sh 2>/dev/null | grep -q .; then
+            log_error "ShellCheck issues found in soft-delete.sh"
+            shellcheck -f gcc soft-delete.sh
+        else
+            log_success "ShellCheck: soft-delete.sh shows no issues"
+        fi
+    else
+        log_warning "ShellCheck: soft-delete.sh not found for specific validation"
+    fi
+else
+    log_warning "ShellCheck: command not available for specific file validation"
 fi
 
 # Bash strict mode verification
@@ -91,13 +428,37 @@ fi
 echo ""
 log_info "🧪 Checking Testing Compliance..."
 
-# Test execution compliance
+# Test execution compliance (from compliance protocol lines 161-165)
 log_info "Running comprehensive test suite..."
-if make test >/dev/null 2>&1; then
-    log_success "Testing: 100% compliant (all tests passed)"
+
+# REQUIRED: All tests must pass - make docker-test
+log_info "Running make docker-test (must show 'All tests passed (X/X)')..."
+test_output=$(make docker-test 2>&1)
+test_exit_code=$?
+
+if [[ $test_exit_code -eq 0 ]]; then
+    # Check if output contains expected format
+    if echo "$test_output" | grep -q "All tests passed\|tests passed"; then
+        log_success "Testing: 100% compliant (all tests passed)"
+    else
+        log_warning "Testing: Tests passed but output format unexpected"
+        log_success "Testing: 100% compliant (exit code 0)"
+    fi
 else
-    log_error "Testing: COMPLIANCE FAILURE - tests failed"
-    make test
+    log_error "Testing: COMPLIANCE FAILURE - make docker-test failed"
+    # Show the actual output for debugging
+    echo "$test_output"
+fi
+
+# Fallback test if docker-test not available
+if ! command -v docker >/dev/null 2>&1 || ! make -n docker-test >/dev/null 2>&1; then
+    log_info "Docker not available, running fallback test suite..."
+    if make test >/dev/null 2>&1; then
+        log_success "Testing (fallback): 100% compliant (all tests passed)"
+    else
+        log_error "Testing (fallback): COMPLIANCE FAILURE - tests failed"
+        make test
+    fi
 fi
 
 # Build verification
@@ -190,6 +551,32 @@ fi
 # 5. FILE SYSTEM COMPLIANCE
 echo ""
 log_info "📁 Checking File System Compliance..."
+
+# Gitignore compliance validation (from compliance protocol lines 96-103)
+log_info "Checking gitignore compliance..."
+
+# Check for ignored critical files
+ignored_critical_files=$(git status --ignored 2>/dev/null | grep -E "\.(sh|md|bats|yml|yaml)$" || true)
+if [[ -n "$ignored_critical_files" ]]; then
+    log_error "Critical files ignored by gitignore:"
+    echo "$ignored_critical_files"
+else
+    log_success "No critical files ignored"
+fi
+
+# Verify essential directories are tracked
+log_info "Verifying essential directories are tracked..."
+essential_missing_count=0
+while IFS= read -r -d '' file; do
+    if ! git ls-files --error-unmatch "$file" >/dev/null 2>&1; then
+        log_error "Missing essential file: $file"
+        essential_missing_count=$((essential_missing_count + 1))
+    fi
+done < <(find .githooks/ .warp/ scripts/ tests/ -name "*" -type f -print0 2>/dev/null || true)
+
+if [[ $essential_missing_count -eq 0 ]]; then
+    log_success "All essential directories properly tracked"
+fi
 
 # File permission verification
 permission_failures=0
@@ -336,8 +723,27 @@ if [[ $protocol_ref_failures -eq 0 ]]; then
     log_success "Protocol references: 100% compliant"
 fi
 
-# Changelog compliance check
+# Changelog compliance check (from compliance protocol lines 57-60)
 log_info "Verifying changelog compliance..."
+
+# Changelog validation script check (MUST pass)
+if [[ -x "./scripts/changelog.sh" ]]; then
+    if ./scripts/changelog.sh validate >/dev/null 2>&1; then
+        log_success "Changelog format: Valid format"
+    else
+        log_error "Changelog format: ./scripts/changelog.sh validate failed"
+    fi
+else
+    log_warning "Changelog format: changelog.sh script not executable or missing"
+fi
+
+# Check for [Unreleased] sections (MUST NOT exist)
+if grep -q "\[Unreleased\]" CHANGELOG.md 2>/dev/null; then
+    log_error "Changelog: [Unreleased] section found - forbidden by protocol"
+else
+    log_success "Changelog: No forbidden [Unreleased] sections"
+fi
+
 # Look specifically for version pattern [x.y.z] in first 15 lines
 changelog_version=$(head -15 CHANGELOG.md | grep -o "\[[0-9]\+\.[0-9]\+\.[0-9]\+\]" | head -1 | tr -d '[]')
 current_version=$(tr -d '\n\r' < VERSION | tr -d ' ')
@@ -356,7 +762,7 @@ validate_directory_structure() {
     # Extract documented directories from all documentation with context
     local documented_dirs=()
     local missing_dirs=0
-    
+
     # Check for directories mentioned in directory tree structures
     while IFS= read -r line; do
         if [[ "$line" =~ ├──[[:space:]]+([a-zA-Z0-9_.-]+/) ]]; then
@@ -366,7 +772,7 @@ validate_directory_structure() {
             documented_dirs+=("$dir_name")
         fi
     done < <(grep -h "├──" docs/*.md .warp/*.md README.md 2>/dev/null || true)
-    
+
     # Check each documented directory
     for doc_dir in "${documented_dirs[@]}"; do
         if [[ -n "$doc_dir" ]]; then
@@ -374,48 +780,48 @@ validate_directory_structure() {
             if [[ -d "$doc_dir" ]]; then
                 continue  # Directory exists at root level
             fi
-            
+
             # Check if it's a subdirectory of reports/
             if [[ -d "reports/$doc_dir" ]]; then
                 continue  # Directory exists as reports subdirectory
             fi
-            
+
             # Check if it's documented as part of .warp structure
             if [[ "$doc_dir" == "protocols" || "$doc_dir" == "rules" || "$doc_dir" == "templates" ]]; then
                 if [[ -d ".warp/$doc_dir" ]]; then
                     continue  # Directory exists as .warp subdirectory
                 fi
             fi
-            
+
             # Check if it's a reports/ subdirectory (e.g., tap, junit, coverage, artifacts)
             if [[ "$doc_dir" =~ ^(tap|junit|coverage|artifacts)$ ]]; then
                 if [[ -d "reports/$doc_dir" ]]; then
                     continue  # Directory exists as reports subdirectory
                 fi
             fi
-            
+
             # If we get here, the directory is missing
             log_error "Documented directory missing: $doc_dir (checked root, reports/, and .warp/)"
             missing_dirs=$((missing_dirs + 1))
         fi
     done
-    
+
     return $missing_dirs
 }
 
 validate_file_references() {
     local missing_files=0
-    
+
     # Check file references in documentation
     while IFS= read -r file_ref; do
         # Clean up the file reference
         file_ref=$(echo "$file_ref" | sed 's/[`"'\'']//g' | sed 's/.*://g')
-        
+
         # Skip URLs and generic patterns
         if [[ "$file_ref" =~ ^https?:// || "$file_ref" =~ \* || "$file_ref" == *"example"* ]]; then
             continue
         fi
-        
+
         # Check if referenced file exists
         if [[ -n "$file_ref" && ! -e "$file_ref" && ! "$file_ref" =~ ^/ ]]; then
             # Only count as missing if it looks like a real file path
@@ -425,13 +831,13 @@ validate_file_references() {
             fi
         fi
     done < <(grep -r -o "[a-zA-Z0-9_./-]*\.(sh\|md\|bats\|yml\|yaml\|rb\|js\|json)" docs/ .warp/ README.md CONTRIBUTING.md 2>/dev/null | head -20)
-    
+
     return $missing_files
 }
 
 validate_internal_links() {
     local broken_links=0
-    
+
     # Check markdown links in documentation
     while IFS= read -r file; do
         if [[ -f "$file" ]]; then
@@ -448,17 +854,17 @@ validate_internal_links() {
                 }
                 !in_code_block { print }
             ' "$file")
-            
+
             while IFS= read -r link; do
                 # Extract the link target
                 local target
                 target=$(echo "$link" | sed -n 's/.*](\([^)#]*\)).*/\1/p')
-                
+
                 # Skip external links, anchors, and regex patterns
                 if [[ "$target" =~ ^https?:// || "$target" =~ ^# || -z "$target" || "$target" =~ \*|\.\* ]]; then
                     continue
                 fi
-                
+
                 # Check if internal link target exists
                 if [[ ! -e "$target" ]]; then
                     log_error "Broken internal link in $file: $target"
@@ -467,13 +873,13 @@ validate_internal_links() {
             done < <(echo "$content_without_code_blocks" | grep -o '\[.*\]([^)]*\.md[^)]*)' 2>/dev/null || true)
         fi
     done < <(find docs/ .warp/ -name "*.md" 2>/dev/null; echo "README.md"; echo "CONTRIBUTING.md")
-    
+
     return $broken_links
 }
 
 validate_example_consistency() {
     local inconsistent_examples=0
-    
+
     # Check if examples reference correct executable name
     while IFS= read -r file; do
         if [[ -f "$file" ]]; then
@@ -489,30 +895,30 @@ validate_example_consistency() {
             fi
         fi
     done < <(find docs/ examples/ -name "*.md" -o -name "*.sh" 2>/dev/null; echo "README.md")
-    
+
     return $inconsistent_examples
 }
 
 # Additional structure synchronization validation
 validate_structure_documentation_sync() {
     local sync_issues=0
-    
+
     log_info "Checking if project structure documentation is synchronized..."
-    
+
     # Check if sync-structure script exists and is executable
     if [[ ! -x "scripts/sync-structure.sh" ]]; then
         log_error "Structure synchronization script missing or not executable"
         return 1
     fi
-    
+
     # Generate current structure and extract just the tree part
     local temp_structure temp_readme_structure
     temp_structure=$(mktemp)
     temp_readme_structure=$(mktemp)
-    
+
     # Extract the actual tree structure (skip header lines)
     ./scripts/sync-structure.sh --generate-tree | sed '1,3d' > "$temp_structure" 2>/dev/null
-    
+
     # Check README.md structure section
     if [[ -f "README.md" ]]; then
         # Extract the structure from README.md, finding the first occurrence and extracting just the tree
@@ -524,13 +930,13 @@ validate_structure_documentation_sync() {
                 found && in_tree && /^```$/ { exit }
                 found && in_tree { print }
             ' README.md > "$temp_readme_structure"
-            
+
             if ! diff -q "$temp_structure" "$temp_readme_structure" >/dev/null 2>&1; then
                 # Only warn if there are significant differences
                 local gen_lines readme_lines
                 gen_lines=$(wc -l < "$temp_structure")
                 readme_lines=$(wc -l < "$temp_readme_structure")
-                
+
                 # Allow small differences in line count (within 5 lines)
                 if (( (gen_lines - readme_lines) > 5 || (readme_lines - gen_lines) > 5 )); then
                     log_warning "Project structure in README.md may be outdated"
@@ -539,14 +945,14 @@ validate_structure_documentation_sync() {
             fi
         fi
     fi
-    
+
     # Check CONTRIBUTING.md structure section (if it exists)
     if [[ -f "CONTRIBUTING.md" ]]; then
         if grep -q "### Project Structure" CONTRIBUTING.md; then
             # Use same improved extraction for CONTRIBUTING.md
             local temp_contrib_structure
             temp_contrib_structure=$(mktemp)
-            
+
             # Extract from first occurrence of the structure in CONTRIBUTING.md
             awk '
                 /### Project Structure/ { found=1; next }
@@ -554,13 +960,13 @@ validate_structure_documentation_sync() {
                 found && in_tree && /^```$/ { exit }
                 found && in_tree { print }
             ' CONTRIBUTING.md > "$temp_contrib_structure"
-            
+
             if ! diff -q "$temp_structure" "$temp_contrib_structure" >/dev/null 2>&1; then
                 # Apply same tolerance logic as README.md
                 local gen_lines contrib_lines
                 gen_lines=$(wc -l < "$temp_structure")
                 contrib_lines=$(wc -l < "$temp_contrib_structure")
-                
+
                 # Allow small differences in line count (within 5 lines)
                 if (( (gen_lines - contrib_lines) > 5 || (contrib_lines - gen_lines) > 5 )); then
                     log_warning "Project structure in CONTRIBUTING.md may be outdated"
@@ -570,16 +976,16 @@ validate_structure_documentation_sync() {
             rm -f "$temp_contrib_structure"
         fi
     fi
-    
+
     # Clean up
     rm -f "$temp_structure" "$temp_readme_structure"
-    
+
     return $sync_issues
 }
 
 validate_warp_structure_consistency() {
     local warp_issues=0
-    
+
     # Check if .warp directory documentation is consistent
     if [[ -d ".warp" ]]; then
         # Count actual files in .warp subdirectories
@@ -587,7 +993,7 @@ validate_warp_structure_consistency() {
         local actual_rules
         actual_protocols=$(find .warp/protocols -name "*.md" -type f 2>/dev/null | wc -l)
         actual_rules=$(find .warp/rules -name "*.md" -type f 2>/dev/null | wc -l)
-        
+
         # Check documentation mentions correct counts (handle multiple occurrences)
         if grep -q "protocol files" README.md; then
             local documented_protocols
@@ -597,7 +1003,7 @@ validate_warp_structure_consistency() {
                 warp_issues=$((warp_issues + 1))
             fi
         fi
-        
+
         if grep -q "rule files" README.md; then
             local documented_rules
             documented_rules=$(grep -o "[0-9]\+ rule files" README.md | grep -o "[0-9]\+" | head -1)
@@ -607,7 +1013,7 @@ validate_warp_structure_consistency() {
             fi
         fi
     fi
-    
+
     return $warp_issues
 }
 
@@ -661,6 +1067,151 @@ else
     COMPLIANCE_FAILED=1
 fi
 
+# AUTO-FIX EXECUTION
+if [[ "$AUTO_FIX_MODE" == "true" ]]; then
+    echo ""
+    echo "🔧 EXECUTING AUTO-FIX OPERATIONS"
+    echo "================================"
+
+    # Pre-fix validation
+    if [[ "$DRY_RUN_MODE" != "true" ]]; then
+        if [[ $(git status --porcelain | wc -l) -gt 0 ]] && [[ "$QUIET_MODE" != "true" ]]; then
+            echo "⚠️  WARNING: Working directory has uncommitted changes."
+            echo "Auto-fix will modify files. Continue? (y/N)"
+            read -r response
+            if [[ "$response" != "y" ]]; then
+                echo "Auto-fix cancelled by user"
+                exit 1
+            fi
+        fi
+    fi
+
+    # Execute safe auto-fixes
+    echo ""
+    log_info "Applying safe auto-fixes..."
+
+    # Fix file permissions
+    if fix_file_permissions; then
+        log_success "File permissions auto-fixed"
+    fi
+
+    # Fix line endings
+    if fix_line_endings; then
+        log_success "Line endings auto-fixed"
+    fi
+
+    # Fix trailing whitespace
+    if fix_trailing_whitespace; then
+        log_success "Trailing whitespace auto-fixed"
+    fi
+
+    # Fix missing strict mode
+    if fix_missing_strict_mode; then
+        log_success "Bash strict mode auto-fixed"
+    fi
+
+    # Execute confirmation-required fixes
+    echo ""
+    log_info "Applying confirmation-required fixes..."
+
+    # Fix generated files (with confirmation unless quiet)
+    fix_generated_files
+
+    # Fix essential directories
+    if fix_essential_directories; then
+        log_success "Essential directories created"
+    fi
+
+    # Count manual fixes needed
+    if [[ $COMPLIANCE_FAILED -gt 0 ]]; then
+        # Count types of manual fixes needed
+        if grep -q "Testing: COMPLIANCE FAILURE" <<< "$(echo "$test_output")"; then
+            MANUAL_TESTS=1
+        fi
+        if grep -q "ShellCheck: COMPLIANCE FAILURE" <<< "$(make docker-lint 2>&1)"; then
+            MANUAL_SHELLCHECK=1
+        fi
+        if grep -q "Broken internal link" <<< "$(validate_internal_links 2>&1)"; then
+            MANUAL_LINKS=1
+        fi
+    fi
+
+    # Generate fix report
+    generate_fix_report
+
+    # Post-fix validation (only if not dry-run)
+    if [[ "$DRY_RUN_MODE" != "true" ]]; then
+        echo ""
+        log_info "Post-fix validation..."
+
+        # Quick re-check of fixed items
+        post_fix_failures=0
+
+        # Re-check permissions
+        if [[ $FIXED_PERMISSIONS -gt 0 ]]; then
+            remaining_perm_issues=0
+            while IFS= read -r -d '' script; do
+                permissions=$(stat -c "%a" "$script")
+                if [[ "$permissions" != "755" ]]; then
+                    remaining_perm_issues=$((remaining_perm_issues + 1))
+                fi
+            done < <(find scripts/ -name "*.sh" -type f -print0 2>/dev/null || true)
+
+            if [[ $remaining_perm_issues -eq 0 ]]; then
+                log_success "Post-fix: File permissions verified"
+            else
+                log_error "Post-fix: $remaining_perm_issues permission issues remain"
+                post_fix_failures=$((post_fix_failures + 1))
+            fi
+        fi
+
+        # Re-check line endings
+        if [[ $FIXED_LINE_ENDINGS -gt 0 ]]; then
+            if ! find . \( -name "*.sh" -o -name "*.md" \) -exec grep -l $'\r$' {} \; | grep -q .; then
+                log_success "Post-fix: Line endings verified"
+            else
+                log_error "Post-fix: Line ending issues remain"
+                post_fix_failures=$((post_fix_failures + 1))
+            fi
+        fi
+
+        # Re-check strict mode
+        if [[ $FIXED_STRICT_MODE -gt 0 ]]; then
+            remaining_strict_issues=0
+            while IFS= read -r -d '' script; do
+                if ! grep -q "set -euo pipefail" "$script"; then
+                    remaining_strict_issues=$((remaining_strict_issues + 1))
+                fi
+            done < <(find . -name "*.sh" -type f -print0)
+
+            if [[ $remaining_strict_issues -eq 0 ]]; then
+                log_success "Post-fix: Strict mode verified"
+            else
+                log_error "Post-fix: $remaining_strict_issues strict mode issues remain"
+                post_fix_failures=$((post_fix_failures + 1))
+            fi
+        fi
+
+        if [[ $post_fix_failures -eq 0 ]]; then
+            log_success "Post-fix validation: All fixes verified successfully"
+        else
+            log_error "Post-fix validation: $post_fix_failures fixes failed verification"
+        fi
+
+        # Show git status after fixes
+        changes_after_fix=$(git status --porcelain | wc -l)
+        if [[ $changes_after_fix -gt 0 ]]; then
+            echo ""
+            log_info "Files modified by auto-fix:"
+            git status --short
+            echo ""
+            log_info "Consider committing these auto-fixes:"
+            echo "  git add -A"
+            echo "  git commit -m 'fix: auto-fix compliance issues'"
+        fi
+    fi
+fi
+
 # FINAL COMPLIANCE REPORT
 echo ""
 echo "🎯 FINAL COMPLIANCE REPORT"
@@ -679,6 +1230,17 @@ if [[ $COMPLIANCE_FAILED -eq 0 ]]; then
     echo "  ✅ Security: 100%"
     echo "  ✅ Consistency: 100%"
     echo "  ✅ Structural Alignment: 100%"
+
+    if [[ "$AUTO_FIX_MODE" == "true" ]]; then
+        echo ""
+        echo "🔧 Auto-fix Summary:"
+        echo "  - Safe fixes applied automatically"
+        echo "  - All compliance issues resolved"
+        if [[ "$DRY_RUN_MODE" == "true" ]]; then
+            echo "  - (Dry run mode - no files were modified)"
+        fi
+    fi
+
     echo ""
     echo "🟢 READY FOR DEVELOPMENT/DEPLOYMENT"
     exit 0
@@ -686,11 +1248,22 @@ else
     echo ""
     log_error "❌ COMPLIANCE FAILURES DETECTED"
     echo ""
+
+    if [[ "$AUTO_FIX_MODE" == "true" ]]; then
+        echo "🔧 Auto-fix applied where possible, but manual intervention required."
+        echo ""
+    fi
+
     echo "🔴 DEVELOPMENT MUST BE HALTED UNTIL 100% COMPLIANCE ACHIEVED"
     echo ""
     echo "To fix:"
     echo "1. Address all ❌ failures listed above"
-    echo "2. Re-run: ./scripts/compliance-check.sh"
-    echo "3. Achieve 100% compliance before proceeding"
+    if [[ "$AUTO_FIX_MODE" != "true" ]]; then
+        echo "2. Consider using: ./scripts/compliance-check.sh --fix"
+        echo "3. Re-run: ./scripts/compliance-check.sh"
+    else
+        echo "2. Re-run: ./scripts/compliance-check.sh --fix"
+    fi
+    echo "4. Achieve 100% compliance before proceeding"
     exit 1
 fi

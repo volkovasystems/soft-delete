@@ -85,7 +85,7 @@ for file in "$INPUT_DIR"/*.txt; do
     if [[ -f "$file" ]]; then
         filename=$(basename "$file")
         echo "Processing $filename..."
-        
+
         # Process file (example: convert to uppercase)
         if tr '[:lower:]' '[:upper:]' < "$file" > "$OUTPUT_DIR/$filename"; then
             echo "Processed successfully, removing original..."
@@ -230,7 +230,7 @@ if [[ -n "$old_backups" ]]; then
     echo "Found old backup directories:"
     echo "$old_backups"
     echo
-    
+
     read -p "Remove these directories? [y/N]: " confirm
     if [[ "$confirm" =~ ^[yY]$ ]]; then
         echo "$old_backups" | xargs rm -rf

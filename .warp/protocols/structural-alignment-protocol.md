@@ -73,7 +73,7 @@ This protocol ensures 100% structural uniformity and alignment across all reposi
 
 ### Rule SA-001: Directory Structure Documentation
 **Requirement**: All documentation containing directory listings must match actual structure
-**Files Affected**: 
+**Files Affected**:
 - `README.md`
 - `.warp/project-context.md`
 - `docs/API.md`
@@ -149,7 +149,7 @@ Makefile targets and dependencies
 validate_directory_structure() {
     local doc_dirs=$(grep -r "├── " docs/ .warp/ | grep -o "[a-zA-Z0-9_-]*/" | sort -u)
     local actual_dirs=$(find . -maxdepth 2 -type d -name "*" -printf "%P/\n" | sort)
-    
+
     comm -23 <(echo "$doc_dirs") <(echo "$actual_dirs") > /tmp/missing_dirs
     if [[ -s /tmp/missing_dirs ]]; then
         echo "ERROR: Documented directories don't exist:"
@@ -164,14 +164,14 @@ validate_directory_structure() {
 # Check if all referenced files exist
 validate_file_references() {
     local missing_files=()
-    
+
     # Extract file paths from documentation
     while IFS= read -r file_ref; do
         if [[ ! -e "$file_ref" ]]; then
             missing_files+=("$file_ref")
         fi
     done < <(grep -r -o "[a-zA-Z0-9_/-]*\.\(sh\|md\|bats\|yml\|yaml\|rb\)" docs/ .warp/ README.md | cut -d: -f2 | sort -u)
-    
+
     if [[ ${#missing_files[@]} -gt 0 ]]; then
         echo "ERROR: Referenced files don't exist:"
         printf '%s\n' "${missing_files[@]}"
@@ -185,7 +185,7 @@ validate_file_references() {
 # Validate internal markdown links
 validate_internal_links() {
     local broken_links=()
-    
+
     # Check markdown links
     while IFS= read -r link; do
         local target=$(echo "$link" | sed -n 's/.*](\([^)]*\)).*/\1/p')
@@ -193,7 +193,7 @@ validate_internal_links() {
             broken_links+=("$link")
         fi
     done < <(grep -r "\[.*\](.*)" docs/ .warp/ README.md)
-    
+
     if [[ ${#broken_links[@]} -gt 0 ]]; then
         echo "ERROR: Broken internal links found:"
         printf '%s\n' "${broken_links[@]}"
@@ -295,7 +295,6 @@ soft-delete/
     │   ├── git-management-protocol.md            # Development protocol specification
     │   ├── structural-alignment-protocol.md      # Development protocol specification
     │   ├── testing-protocol.md                   # Development protocol specification
-    │   ├── universal-compliance-checklist.md     # Development protocol specification
     │   └── version-protocol.md                   # Development protocol specification
     ├── README.md                                 # Project overview and main documentation
     ├── rules/                                    # AI agent behavioral rules
@@ -311,7 +310,7 @@ soft-delete/
 \
 '"$(generate_project_tree)" README.md > "$temp_file"
     mv "$temp_file" README.md
-    
+
     # Update other documentation files with structure references
     for doc in docs/*.md .warp/*.md; do
         if grep -q "Project Structure\|Directory Structure" "$doc"; then
@@ -329,24 +328,24 @@ soft-delete/
 
 validate_all_paths() {
     local exit_code=0
-    
+
     echo "🔍 Validating file path references..."
-    
+
     # Check shell script references
     if ! validate_script_paths; then
         exit_code=1
     fi
-    
+
     # Check documentation references
     if ! validate_doc_paths; then
         exit_code=1
     fi
-    
+
     # Check makefile targets
     if ! validate_makefile_paths; then
         exit_code=1
     fi
-    
+
     return $exit_code
 }
 ```
@@ -358,9 +357,9 @@ validate_all_paths() {
 
 check_all_links() {
     local broken_count=0
-    
+
     echo "🔗 Checking internal link integrity..."
-    
+
     # Check markdown links
     while IFS= read -r file; do
         while IFS= read -r link; do
@@ -373,7 +372,7 @@ check_all_links() {
             fi
         done < <(grep -o '\[.*\](.*[^)])' "$file")
     done < <(find . -name "*.md" -not -path "./.git/*")
-    
+
     if [[ $broken_count -eq 0 ]]; then
         echo "✅ All internal links are valid"
         return 0
@@ -402,7 +401,7 @@ else
     log_error "Directory structure: ALIGNMENT FAILURE"
 fi
 
-# File reference integrity  
+# File reference integrity
 log_info "Validating file path references..."
 if validate_file_references; then
     log_success "File references: 100% valid"
@@ -447,7 +446,7 @@ echo "🔍 Running structural alignment checks..."
 # Check for structural changes
 if git diff --cached --name-only | grep -qE '\.(sh|md|bats)$|Makefile|VERSION'; then
     echo "📁 Detected structural changes, validating alignment..."
-    
+
     if ! ./scripts/sync-structure.sh --validate-comprehensive; then
         echo "❌ Structural alignment check failed!"
         echo "Run: ./scripts/sync-structure.sh to fix issues"
@@ -466,21 +465,21 @@ echo "✅ Structural alignment validated"
 # Triggered when files are added/removed/renamed
 sync_on_structural_change() {
     echo "🔄 Synchronizing documentation with structure changes..."
-    
+
     # Update directory trees in documentation
     ./scripts/sync-structure.sh
-    
+
     # Validate all references
     ./scripts/validate-paths.sh
-    
+
     # Check link integrity
     ./scripts/check-links.sh
-    
+
     # Update version references if VERSION changed
     if git diff --name-only HEAD~1 HEAD | grep -q "VERSION"; then
         ./scripts/sync-version.sh
     fi
-    
+
     echo "✅ Structural synchronization complete"
 }
 ```
@@ -493,19 +492,19 @@ sync_on_structural_change() {
 # Automatically generate/update structural documentation
 generate_structural_docs() {
     echo "📚 Generating structural documentation..."
-    
+
     # Generate API documentation based on actual scripts
     ./scripts/generate-api-docs.sh
-    
+
     # Update file listing sections
     ./scripts/update-file-listings.sh
-    
+
     # Regenerate table of contents for large documents
     ./scripts/update-toc.sh
-    
+
     # Validate generated documentation
     ./scripts/validate-generated-docs.sh
-    
+
     echo "✅ Documentation generation complete"
 }
 ```
@@ -524,12 +523,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Run structural alignment validation
         run: |
           chmod +x scripts/sync-structure.sh
           ./scripts/sync-structure.sh --validate-comprehensive
-          
+
       - name: Check link integrity
         run: |
           chmod +x scripts/check-links.sh

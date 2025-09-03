@@ -113,7 +113,7 @@ All shell scripts in `scripts/` directory must:
 # Read version from VERSION file
 - name: Get version
   run: echo "VERSION=$(cat VERSION)" >> $GITHUB_ENV
-  
+
 # Use ${{ env.VERSION }} instead of hardcoded versions
 ```
 
@@ -150,7 +150,7 @@ git tag v1.2.3
 ```bash
 # PROHIBITED
 VERSION_MAJOR=1
-VERSION_MINOR=2  
+VERSION_MINOR=2
 VERSION_PATCH=3
 ```
 
@@ -270,7 +270,7 @@ make check-version-consistency  # If implemented
 
 ### Current Repository Status
 - ✅ **soft-delete.sh**: Fully compliant
-- ✅ **Makefile**: Fully compliant  
+- ✅ **Makefile**: Fully compliant
 - ✅ **Formula/soft-delete.rb**: Updated to be compliant
 - ⚠️ **Documentation files**: Need review and updates
 - ⚠️ **Other scripts**: Need verification and updates

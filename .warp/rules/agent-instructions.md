@@ -209,6 +209,6 @@ This creates a traceable history of rule evolution and agent learning.
 
 ---
 
-**Purpose**: Enable intelligent rule suggestion while preventing repetition  
-**Maintenance**: Update when new rule categories or processes are added  
+**Purpose**: Enable intelligent rule suggestion while preventing repetition
+**Maintenance**: Update when new rule categories or processes are added
 **Version**: 1.0

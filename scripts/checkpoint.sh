@@ -122,7 +122,7 @@ if [[ "$RUN_TESTS" == true ]]; then
         exit 1
     fi
     echo "✅ All tests passed"
-    
+
     # Commit test results if there are any new reports
     if [[ -n "$(git status --porcelain reports/)" ]]; then
         git add reports/

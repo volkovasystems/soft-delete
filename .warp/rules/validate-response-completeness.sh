@@ -119,10 +119,10 @@ check_git_repository() {
 # Check working directory cleanliness
 check_working_directory() {
     log_verbose "Checking working directory cleanliness..."
-    
+
     local status_output
     status_output="$(git status --porcelain)"
-    
+
     if [[ -n "$status_output" ]]; then
         log_error "Working directory has uncommitted changes"
         echo "Uncommitted files:"
@@ -139,10 +139,10 @@ check_working_directory() {
 # Check recent commit format
 check_commit_format() {
     log_verbose "Checking recent commit message format..."
-    
+
     local latest_commit
     latest_commit="$(git log -1 --pretty=format:'%s')"
-    
+
     # Check for conventional commit format
     if [[ "$latest_commit" =~ ^(feat|fix|docs|style|refactor|perf|test|chore|ci|build|revert)(\(.+\))?!?:\ .+ ]]; then
         log_success "Latest commit follows conventional format: '$latest_commit'"
@@ -157,26 +157,26 @@ check_commit_format() {
 # Check if changelog was updated for meaningful changes
 check_changelog_update() {
     log_verbose "Checking changelog updates..."
-    
+
     # Note: According to our changelog protocol, changes should NOT be documented
     # until they are part of a tagged release. Development changes on develop branch
     # should remain undocumented until the next version is ready.
-    
+
     # Get current branch
     local current_branch
     current_branch="$(git branch --show-current)"
-    
+
     # If we're on develop branch, changelog updates are not required during development
     if [[ "$current_branch" == "develop" ]]; then
         log_info "On develop branch: Changelog updates not required until release"
         log_info "Changes will be documented when next version is tagged"
         return 0
     fi
-    
+
     # For other branches (staging, release, etc.), check for changelog updates
     local recent_commits
     recent_commits="$(git log --oneline -5 --pretty=format:'%s')"
-    
+
     # Check if any meaningful changes were made (not just docs)
     local has_meaningful_changes=false
     while IFS= read -r commit; do
@@ -185,12 +185,12 @@ check_changelog_update() {
             break
         fi
     done <<< "$recent_commits"
-    
+
     if [[ "$has_meaningful_changes" == false ]]; then
         log_info "No meaningful changes detected, changelog update not required"
         return 0
     fi
-    
+
     # Check if changelog has been updated recently
     local changelog_updated=false
     while IFS= read -r commit; do
@@ -199,7 +199,7 @@ check_changelog_update() {
             break
         fi
     done <<< "$recent_commits"
-    
+
     if [[ "$changelog_updated" == true ]]; then
         log_success "Changelog updated for meaningful changes"
         return 0
@@ -213,10 +213,10 @@ check_changelog_update() {
 # Check if on correct branch
 check_branch() {
     log_verbose "Checking current branch..."
-    
+
     local current_branch
     current_branch="$(git branch --show-current)"
-    
+
     if [[ "$current_branch" == "develop" ]]; then
         log_success "On correct branch: develop"
         return 0
@@ -230,34 +230,34 @@ check_branch() {
 # Attempt to fix violations
 fix_violations() {
     log_info "Attempting to fix protocol violations..."
-    
+
     local status_output
     status_output="$(git status --porcelain)"
-    
+
     if [[ -n "$status_output" ]]; then
         log_info "Found uncommitted changes, attempting to commit..."
-        
+
         echo "Uncommitted changes found:"
         echo "$status_output"
         echo
-        
+
         read -p "Commit these changes? (y/N): " -n 1 -r
         echo
-        
+
         if [[ $REPLY =~ ^[Yy]$ ]]; then
             git add .
-            
+
             echo "Enter commit message (conventional format):"
             read -r commit_message
-            
+
             git commit -m "$commit_message"
             log_success "Changes committed"
-            
+
             # Check if changelog needs updating
             echo "Does this change require a changelog update? (y/N): "
             read -p "" -n 1 -r
             echo
-            
+
             if [[ $REPLY =~ ^[Yy]$ ]]; then
                 log_info "Please update CHANGELOG.md manually, then run:"
                 log_info "git add CHANGELOG.md"
@@ -268,7 +268,7 @@ fix_violations() {
             return 1
         fi
     fi
-    
+
     return 0
 }
 
@@ -287,39 +287,39 @@ generate_summary() {
 # Main validation function
 main() {
     local exit_code=0
-    
+
     if [[ "$SUMMARY_ONLY" == false ]]; then
         echo "🔍 AI Response Completeness Protocol Validation"
         echo "==============================================="
         echo
     fi
-    
+
     # Check if in git repository
     if ! check_git_repository; then
         exit_code=2
     fi
-    
+
     # Run validation checks
     if [[ $exit_code -eq 0 ]]; then
         # Check 1: Working directory cleanliness
         if ! check_working_directory; then
             exit_code=1
         fi
-        
+
         # Check 2: Commit format
         if ! check_commit_format; then
             exit_code=1
         fi
-        
+
         # Check 3: Changelog updates
         if ! check_changelog_update; then
             exit_code=1
         fi
-        
+
         # Check 4: Branch validation (warning only)
         check_branch
     fi
-    
+
     # Attempt fixes if requested
     if [[ "$FIX_VIOLATIONS" == true && $exit_code -ne 0 ]]; then
         if fix_violations; then
@@ -330,12 +330,12 @@ main() {
             fi
         fi
     fi
-    
+
     # Generate summary if requested or if there are issues
     if [[ "$SUMMARY_ONLY" == true || $exit_code -ne 0 ]]; then
         generate_summary
     fi
-    
+
     # Final results
     echo
     if [[ $exit_code -eq 0 ]]; then
@@ -352,7 +352,7 @@ main() {
         echo
         echo "Or use automatic fix: $0 --fix"
     fi
-    
+
     exit $exit_code
 }
 

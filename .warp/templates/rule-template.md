@@ -22,7 +22,7 @@ Use this template when adding new rules suggested by Warp.dev to ensure consiste
 
 **Location**: [Where this rule is documented in the repository]
 
-**Related Files**: 
+**Related Files**:
 - [List any files affected by this rule]
 - [Include protocol files that reference this rule]
 
@@ -56,6 +56,6 @@ Use this template when adding new rules suggested by Warp.dev to ensure consiste
 
 ---
 
-**Template Version**: 1.0  
-**Created**: 2025-08-31  
+**Template Version**: 1.0
+**Created**: 2025-08-31
 **Last Updated**: 2025-08-31

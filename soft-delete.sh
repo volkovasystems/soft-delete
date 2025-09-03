@@ -272,7 +272,7 @@ parse_arguments() {
     # Second pass: handle short options with getopts if we have any
     if [[ ${#args[@]} -gt 0 ]]; then
         set -- "${args[@]}"
-        
+
         # Only process short options if we haven't hit end of options marker
         if [[ "$end_of_options" == false ]]; then
             while getopts "hvp:" opt; do
@@ -300,17 +300,17 @@ parse_arguments() {
                         ;;
                 esac
             done
-            
+
             # Shift processed options
             shift $((OPTIND - 1))
         fi
-        
+
         # If no path was specified via -p/--path, use the first remaining argument
         if [[ -z "$TARGET_PATH" && -n "${1:-}" ]]; then
             TARGET_PATH="$1"
             shift
         fi
-        
+
         # Check for extra arguments
         if [[ $# -gt 0 ]]; then
             log_error "Too many arguments: $*"

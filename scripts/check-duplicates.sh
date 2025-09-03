@@ -29,35 +29,35 @@ log_warning() {
 # Check for duplicates in README.md
 check_readme_duplicates() {
     local file="README.md"
-    
+
     if [[ ! -f "$file" ]]; then
         log_error "README.md not found"
         return 1
     fi
-    
+
     log_info "Checking $file for duplicate structure sections..."
-    
+
     # Count structure tree occurrences (should be exactly 1)
     local structure_count
     structure_count=$(grep -c "soft-delete/$" "$file" 2>/dev/null || echo 0)
-    
+
     # Count legitimate GitHub URLs (expected)
-    local github_count  
+    local github_count
     github_count=$(grep -c "github.com/.*soft-delete" "$file" 2>/dev/null || echo 0)
-    
+
     # Count total soft-delete/ occurrences
     local total_count
     total_count=$(grep -c "soft-delete/" "$file" 2>/dev/null || echo 0)
-    
+
     # Calculate expected vs actual
     local expected_total=$((structure_count + github_count))
-    
+
     log_info "Structure analysis:"
     echo "  • Project structure trees: $structure_count"
-    echo "  • GitHub URL references: $github_count" 
+    echo "  • GitHub URL references: $github_count"
     echo "  • Total 'soft-delete/' occurrences: $total_count"
     echo "  • Expected total: $expected_total"
-    
+
     # Check for issues
     if [[ $structure_count -eq 0 ]]; then
         log_error "No project structure found - this is unusual"
@@ -77,39 +77,39 @@ check_readme_duplicates() {
     fi
 }
 
-# Clean duplicates from README.md  
+# Clean duplicates from README.md
 clean_readme_duplicates() {
     local file="README.md"
-    
+
     if [[ ! -f "$file" ]]; then
         log_error "README.md not found"
         return 1
     fi
-    
+
     log_info "Creating backup..."
     cp "$file" "${file}.backup.$(date +%Y%m%d-%H%M%S)"
-    
+
     log_info "Cleaning duplicates from $file..."
-    
+
     # Find the line numbers for Project Structure sections
     local structure_lines
     mapfile -t structure_lines < <(grep -n "### Project Structure" "$file" | cut -d: -f1)
-    
+
     if [[ ${#structure_lines[@]} -le 1 ]]; then
         log_info "Only one or zero Project Structure sections found - nothing to clean"
         return 0
     fi
-    
+
     log_warning "Found ${#structure_lines[@]} Project Structure sections at lines: ${structure_lines[*]}"
-    
+
     # Keep only the first section, remove the rest
     local temp_file
     temp_file=$(mktemp)
-    
+
     local current_line=1
     local in_duplicate=false
     local structure_index=0
-    
+
     while IFS= read -r line; do
         if [[ "$line" =~ ^###[[:space:]]+Project[[:space:]]+Structure[[:space:]]*$ ]]; then
             structure_index=$((structure_index + 1))
@@ -131,7 +131,7 @@ clean_readme_duplicates() {
         fi
         # Skip lines that are part of duplicate sections
     done < "$file"
-    
+
     mv "$temp_file" "$file"
     log_success "Cleaned duplicates from $file"
 }

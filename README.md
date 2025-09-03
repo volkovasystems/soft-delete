@@ -353,7 +353,6 @@ soft-delete/
     │   ├── git-management-protocol.md            # Development protocol specification
     │   ├── structural-alignment-protocol.md      # Development protocol specification
     │   ├── testing-protocol.md                   # Development protocol specification
-    │   ├── universal-compliance-checklist.md     # Development protocol specification
     │   └── version-protocol.md                   # Development protocol specification
     ├── README.md                                 # Project overview and main documentation
     ├── rules/                                    # AI agent behavioral rules

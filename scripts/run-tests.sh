@@ -74,15 +74,15 @@ EOF
 # Function to check dependencies
 check_dependencies() {
     local missing=()
-    
+
     if ! command -v docker >/dev/null 2>&1; then
         missing+=("docker")
     fi
-    
+
     if ! command -v docker-compose >/dev/null 2>&1; then
         missing+=("docker-compose")
     fi
-    
+
     if [[ ${#missing[@]} -gt 0 ]]; then
         log_error "Missing required dependencies: ${missing[*]}"
         log_error "Please install Docker and Docker Compose to continue."
@@ -104,12 +104,12 @@ clean_docker_environment() {
     log_info "Cleaning Docker test environment..."
     cd "$PROJECT_ROOT"
     docker-compose -f "$DOCKER_COMPOSE_FILE" down --volumes --remove-orphans 2>/dev/null || true
-    
+
     # Remove test images
     if docker images | grep -q "soft-delete"; then
         docker rmi "$(docker images -q "*soft-delete*")" 2>/dev/null || true
     fi
-    
+
     log_success "Docker environment cleaned"
 }
 
@@ -117,10 +117,10 @@ clean_docker_environment() {
 run_test_type() {
     local test_type="$1"
     local keep_containers="${2:-false}"
-    
+
     log_info "Running test type: $test_type"
     cd "$PROJECT_ROOT"
-    
+
     # Build and run tests
     if [[ "$keep_containers" == "true" ]]; then
         docker-compose -f "$DOCKER_COMPOSE_FILE" up --build "$test_type"
@@ -133,10 +133,10 @@ run_test_type() {
 # Function to show test reports
 show_test_reports() {
     local reports_dir="$PROJECT_ROOT/$REPORTS_DIR"
-    
+
     log_info "Test Reports Summary:"
     echo "===================="
-    
+
     if [[ -d "$reports_dir" && "$(ls -A "$reports_dir" 2>/dev/null)" ]]; then
         find "$reports_dir" -type f -name "*.tap" -o -name "*.xml" -o -name "*.txt" | while read -r file; do
             echo "📄 $(basename "$file")"
@@ -145,7 +145,7 @@ show_test_reports() {
             echo "   Modified: $(stat -c %y "$file" 2>/dev/null || stat -f %Sm "$file" 2>/dev/null)"
             echo ""
         done
-        
+
         # Show TAP summary if available
         if find "$reports_dir" -name "*.tap" | head -1 | xargs test -f; then
             log_info "TAP Test Results:"
@@ -160,13 +160,13 @@ show_test_reports() {
 # Function to validate TAP output
 validate_tap_output() {
     local reports_dir="$PROJECT_ROOT/$REPORTS_DIR"
-    
+
     log_info "Validating TAP output..."
-    
+
     if find "$reports_dir" -name "*.tap" | head -1 | xargs test -f; then
         local tap_file
         tap_file=$(find "$reports_dir" -name "*.tap" | head -1)
-        
+
         # Basic TAP validation
         if grep -q "^TAP version" "$tap_file" && grep -q "^[0-9]*\.\.[0-9]*" "$tap_file"; then
             log_success "TAP output is valid"
@@ -188,7 +188,7 @@ main() {
     local show_reports=false
     local keep_containers=false
     local verbose=false
-    
+
     # Parse arguments
     while [[ $# -gt 0 ]]; do
         case $1 in
@@ -223,26 +223,26 @@ main() {
                 ;;
         esac
     done
-    
+
     # Enable verbose mode if requested
     if [[ "$verbose" == "true" ]]; then
         set -x
     fi
-    
+
     log_info "Starting Docker-based test execution..."
     log_info "Test type: $test_type"
-    
+
     # Check dependencies
     check_dependencies
-    
+
     # Setup directories
     setup_directories
-    
+
     # Clean if requested
     if [[ "$clean_first" == "true" ]]; then
         clean_docker_environment
     fi
-    
+
     # Run tests based on type
     case "$test_type" in
         all)
@@ -255,15 +255,15 @@ main() {
             run_test_type "$test_type" "$keep_containers"
             ;;
     esac
-    
+
     # Validate TAP output
     validate_tap_output
-    
+
     # Show reports if requested
     if [[ "$show_reports" == "true" ]]; then
         show_test_reports
     fi
-    
+
     log_success "Test execution completed!"
     log_info "Reports available in: $PROJECT_ROOT/$REPORTS_DIR"
 }

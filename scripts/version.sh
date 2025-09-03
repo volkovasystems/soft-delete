@@ -2,7 +2,7 @@
 
 # version.sh - Version Management Script
 # Copyright (c) 2025 Richeve S. Bebedor <richeve.bebedor@gmail.com>
-# 
+#
 # This script manages version numbers following Semantic Versioning 2.0.0
 # https://semver.org/spec/v2.0.0.html
 
@@ -90,7 +90,7 @@ EOF
 validate_semver() {
     local version="$1"
     local semver_regex='^([0-9]+)\.([0-9]+)\.([0-9]+)$'
-    
+
     if [[ $version =~ $semver_regex ]]; then
         return 0
     else
@@ -104,21 +104,21 @@ read_version() {
         log_error "VERSION file not found: $VERSION_FILE"
         return 1
     fi
-    
+
     local version
     version=$(tr -d '\n\r' < "$VERSION_FILE" | tr -d ' ')
-    
+
     if [[ -z "$version" ]]; then
         log_error "VERSION file is empty"
         return 1
     fi
-    
+
     if ! validate_semver "$version"; then
         log_error "Invalid version format in VERSION file: $version"
         log_error "Expected format: MAJOR.MINOR.PATCH (e.g., 1.2.3)"
         return 1
     fi
-    
+
     echo "$version"
 }
 
@@ -126,18 +126,18 @@ read_version() {
 write_version() {
     local new_version="$1"
     local dry_run="${2:-false}"
-    
+
     if ! validate_semver "$new_version"; then
         log_error "Invalid version format: $new_version"
         log_error "Expected format: MAJOR.MINOR.PATCH (e.g., 1.2.3)"
         return 1
     fi
-    
+
     if [[ "$dry_run" == "true" ]]; then
         log_info "DRY RUN: Would write '$new_version' to $VERSION_FILE"
         return 0
     fi
-    
+
     echo "$new_version" > "$VERSION_FILE"
     log_success "Version updated to $new_version"
 }
@@ -146,7 +146,7 @@ write_version() {
 parse_version() {
     local version="$1"
     local semver_regex='^([0-9]+)\.([0-9]+)\.([0-9]+)$'
-    
+
     if [[ $version =~ $semver_regex ]]; then
         export VERSION_MAJOR="${BASH_REMATCH[1]}"
         export VERSION_MINOR="${BASH_REMATCH[2]}"
@@ -163,15 +163,15 @@ increment_major() {
     local current_version="$1"
     local dry_run="${2:-false}"
     local quiet="${3:-false}"
-    
+
     parse_version "$current_version"
     local new_major=$((VERSION_MAJOR + 1))
     local new_version="${new_major}.0.0"
-    
+
     if [[ "$quiet" != "true" ]]; then
         log_info "Incrementing major version: $current_version -> $new_version"
     fi
-    
+
     write_version "$new_version" "$dry_run"
 }
 
@@ -180,15 +180,15 @@ increment_minor() {
     local current_version="$1"
     local dry_run="${2:-false}"
     local quiet="${3:-false}"
-    
+
     parse_version "$current_version"
     local new_minor=$((VERSION_MINOR + 1))
     local new_version="${VERSION_MAJOR}.${new_minor}.0"
-    
+
     if [[ "$quiet" != "true" ]]; then
         log_info "Incrementing minor version: $current_version -> $new_version"
     fi
-    
+
     write_version "$new_version" "$dry_run"
 }
 
@@ -197,15 +197,15 @@ increment_patch() {
     local current_version="$1"
     local dry_run="${2:-false}"
     local quiet="${3:-false}"
-    
+
     parse_version "$current_version"
     local new_patch=$((VERSION_PATCH + 1))
     local new_version="${VERSION_MAJOR}.${VERSION_MINOR}.${new_patch}"
-    
+
     if [[ "$quiet" != "true" ]]; then
         log_info "Incrementing patch version: $current_version -> $new_version"
     fi
-    
+
     write_version "$new_version" "$dry_run"
 }
 
@@ -215,18 +215,18 @@ set_version() {
     local current_version="$2"
     local dry_run="${3:-false}"
     local quiet="${4:-false}"
-    
+
     if [[ "$current_version" == "$new_version" ]]; then
         if [[ "$quiet" != "true" ]]; then
             log_warn "Version is already $new_version"
         fi
         return 0
     fi
-    
+
     if [[ "$quiet" != "true" ]]; then
         log_info "Setting version: $current_version -> $new_version"
     fi
-    
+
     write_version "$new_version" "$dry_run"
 }
 
@@ -234,12 +234,12 @@ set_version() {
 show_version() {
     local current_version="$1"
     local quiet="${2:-false}"
-    
+
     if [[ "$quiet" == "true" ]]; then
         echo "$current_version"
     else
         echo "Current version: $current_version"
-        
+
         parse_version "$current_version"
         echo "  Major: $VERSION_MAJOR"
         echo "  Minor: $VERSION_MINOR"
@@ -253,7 +253,7 @@ show_version() {
 validate_version_cmd() {
     local version="$1"
     local quiet="${2:-false}"
-    
+
     if validate_semver "$version"; then
         if [[ "$quiet" != "true" ]]; then
             log_success "Valid semantic version: $version"
@@ -276,7 +276,7 @@ main() {
     local dry_run=false
     local quiet=false
     local verbose=false
-    
+
     # Parse options
     while [[ $# -gt 0 ]]; do
         case $1 in
@@ -308,18 +308,18 @@ main() {
                 ;;
         esac
     done
-    
+
     # Default command is show
     if [[ -z "$command" ]]; then
         command="show"
     fi
-    
+
     # Read current version
     local current_version
     if ! current_version=$(read_version); then
         exit 1
     fi
-    
+
     # Execute command
     case "$command" in
         show)

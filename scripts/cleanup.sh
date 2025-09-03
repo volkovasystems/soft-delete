@@ -77,17 +77,17 @@ get_cleanup_stats() {
     local description="$2"
     local count=0
     local size=0
-    
+
     if [[ -n "$pattern" ]]; then
         # Count files
         count=$(find . -name "$pattern" -type f 2>/dev/null | wc -l | tr -d ' \n' || echo 0)
-        
+
         # Calculate total size if files exist
         if [[ $count -gt 0 ]]; then
             size=$(find . -name "$pattern" -type f -exec du -b {} + 2>/dev/null | awk '{sum+=$1} END {print sum+0}')
         fi
     fi
-    
+
     if [[ $count -gt 0 ]]; then
         local size_human
         size_human=$(numfmt --to=iec --suffix=B "$size" 2>/dev/null || echo "${size}B")
@@ -98,10 +98,10 @@ get_cleanup_stats() {
 # Function to show cleanup preview
 show_cleanup_preview() {
     local cleanup_type="$1"
-    
+
     log_info "Cleanup Preview for: $cleanup_type"
     echo "=========================="
-    
+
     case "$cleanup_type" in
         build|all)
             get_cleanup_stats "bin/soft-delete" "Build executables"
@@ -116,7 +116,7 @@ show_cleanup_preview() {
             fi
             ;;
     esac
-    
+
     case "$cleanup_type" in
         temp|all)
             get_cleanup_stats "*.tmp" "Temporary files (.tmp)"
@@ -130,7 +130,7 @@ show_cleanup_preview() {
             get_cleanup_stats "*.rej" "Rejected patch files"
             ;;
     esac
-    
+
     case "$cleanup_type" in
         docker|all)
             if command -v docker >/dev/null 2>&1; then
@@ -139,7 +139,7 @@ show_cleanup_preview() {
                 if [[ $docker_images -gt 0 ]]; then
                     echo "  Docker images: $docker_images images"
                 fi
-                
+
                 local docker_containers
                 docker_containers=$(docker ps -a --filter "name=soft-delete" --format "table {{.Names}}" 2>/dev/null | tail -n +2 | wc -l || echo 0)
                 if [[ $docker_containers -gt 0 ]]; then
@@ -148,7 +148,7 @@ show_cleanup_preview() {
             fi
             ;;
     esac
-    
+
     case "$cleanup_type" in
         reports|all)
             if [[ -d "reports" ]]; then
@@ -162,7 +162,7 @@ show_cleanup_preview() {
             fi
             ;;
     esac
-    
+
     case "$cleanup_type" in
         deployment|all)
             get_cleanup_stats "*.pid" "Process ID files"
@@ -177,7 +177,7 @@ show_cleanup_preview() {
             fi
             ;;
     esac
-    
+
     echo ""
 }
 
@@ -185,9 +185,9 @@ show_cleanup_preview() {
 clean_build() {
     local dry_run="${1:-false}"
     local verbose="${2:-false}"
-    
+
     log_info "Cleaning build artifacts..."
-    
+
     if [[ "$dry_run" == "true" ]]; then
         if [[ -f "bin/soft-delete" ]] && ! git ls-files --error-unmatch bin/soft-delete >/dev/null 2>&1; then
             echo "[DRY RUN] Would remove: bin/soft-delete (untracked)"
@@ -203,10 +203,10 @@ clean_build() {
         elif [[ -f "bin/soft-delete" ]] && [[ "$verbose" == "true" ]]; then
             log_info "Skipping bin/soft-delete (committed file)"
         fi
-        
+
         [[ "$verbose" == "true" ]] && log_info "Removing distribution directory..."
         rm -rf dist/
-        
+
         log_success "Build artifacts cleaned"
     fi
 }
@@ -215,9 +215,9 @@ clean_build() {
 clean_temp() {
     local dry_run="${1:-false}"
     local verbose="${2:-false}"
-    
+
     log_info "Cleaning temporary files..."
-    
+
     local temp_patterns=(
         "*.tmp"
         "*.log"
@@ -229,7 +229,7 @@ clean_temp() {
         "*.orig"
         "*.rej"
     )
-    
+
     for pattern in "${temp_patterns[@]}"; do
         if [[ "$dry_run" == "true" ]]; then
             local count
@@ -242,7 +242,7 @@ clean_temp() {
             find . -name "$pattern" -type f -delete 2>/dev/null || true
         fi
     done
-    
+
     [[ "$dry_run" == "false" ]] && log_success "Temporary files cleaned"
 }
 
@@ -250,14 +250,14 @@ clean_temp() {
 clean_docker() {
     local dry_run="${1:-false}"
     local verbose="${2:-false}"
-    
+
     if ! command -v docker >/dev/null 2>&1; then
         log_warn "Docker not found, skipping Docker cleanup"
         return 0
     fi
-    
+
     log_info "Cleaning Docker environment..."
-    
+
     if [[ "$dry_run" == "true" ]]; then
         echo "[DRY RUN] Would run: docker-compose -f docker-compose.test.yml down --volumes --remove-orphans"
         local image_count
@@ -267,15 +267,15 @@ clean_docker() {
         fi
     else
         cd "$PROJECT_ROOT"
-        
+
         [[ "$verbose" == "true" ]] && log_info "Stopping and removing containers..."
         docker-compose -f docker-compose.test.yml down --volumes --remove-orphans 2>/dev/null || true
-        
+
         [[ "$verbose" == "true" ]] && log_info "Removing Docker images..."
         if docker images -q "soft-delete*" 2>/dev/null | head -1 | grep -q .; then
             docker rmi "$(docker images -q "soft-delete*")" 2>/dev/null || true
         fi
-        
+
         log_success "Docker environment cleaned"
     fi
 }
@@ -284,9 +284,9 @@ clean_docker() {
 clean_reports() {
     local dry_run="${1:-false}"
     local verbose="${2:-false}"
-    
+
     log_info "Cleaning test reports..."
-    
+
     if [[ "$dry_run" == "true" ]]; then
         if [[ -d "reports" ]]; then
             local count
@@ -300,7 +300,7 @@ clean_reports() {
         if [[ -d "reports" ]]; then
             find reports/ -type f ! -name ".gitkeep" -delete 2>/dev/null || true
         fi
-        
+
         log_success "Test reports cleaned"
     fi
 }
@@ -309,13 +309,13 @@ clean_reports() {
 clean_auto() {
     local dry_run="${1:-false}"
     local verbose="${2:-false}"
-    
+
     # Auto-cleanup is always quiet and comprehensive
     # Clean test artifacts (separate commands for reliable deletion)
     find reports/ -name "*.tap" -delete 2>/dev/null || true
     find reports/ -name "*.txt" -delete 2>/dev/null || true
     find reports/ -name "*.xml" -delete 2>/dev/null || true
-    
+
     # Clean temporary files
     find . -name "*.tmp" -type f -delete 2>/dev/null || true
     find . -name "*.temp" -type f -delete 2>/dev/null || true
@@ -323,21 +323,21 @@ clean_auto() {
     find . -name "*~" -type f -delete 2>/dev/null || true
     find . -name "*.orig" -type f -delete 2>/dev/null || true
     find . -name "*.rej" -type f -delete 2>/dev/null || true
-    
+
     # Clean system files
     find . -name ".DS_Store" -delete 2>/dev/null || true
     find . -name "Thumbs.db" -delete 2>/dev/null || true
-    
+
     # Clean old backup directories from /tmp (current day only for safety)
     find /tmp -name "backup-*" -type d -mtime +0 -exec rm -rf {} + 2>/dev/null || true
-    
+
     # Clean deployment directories and state files
     rm -rf .deploy/ 2>/dev/null || true
-    
+
     # Clean editor files (separate commands for reliable deletion)
     find . -name "*.swp" -delete 2>/dev/null || true
     find . -name "*.swo" -delete 2>/dev/null || true
-    
+
     # Clean build artifacts (conditionally) - but never delete committed files
     if [[ "${KEEP_BINARY:-}" != "true" ]]; then
         # Only remove if file is not tracked by git
@@ -345,7 +345,7 @@ clean_auto() {
             rm -f bin/soft-delete 2>/dev/null || true
         fi
     fi
-    
+
     # Don't log success in auto mode to keep it truly silent
 }
 
@@ -353,15 +353,15 @@ clean_auto() {
 clean_deployment() {
     local dry_run="${1:-false}"
     local verbose="${2:-false}"
-    
+
     log_info "Cleaning deployment artifacts..."
-    
+
     local deployment_patterns=(
         "*.pid"
         "*.lock"
         "nohup.out"
     )
-    
+
     for pattern in "${deployment_patterns[@]}"; do
         if [[ "$dry_run" == "true" ]]; then
             local count
@@ -374,7 +374,7 @@ clean_deployment() {
             find . -name "$pattern" -type f -delete 2>/dev/null || true
         fi
     done
-    
+
     # Clean soft-delete backups in /tmp (with caution)
     if [[ -d "/tmp" ]]; then
         if [[ "$dry_run" == "true" ]]; then
@@ -388,7 +388,7 @@ clean_deployment() {
             find /tmp -name "backup-*" -type d -mtime +1 -exec rm -rf {} + 2>/dev/null || true
         fi
     fi
-    
+
     [[ "$dry_run" == "false" ]] && log_success "Deployment artifacts cleaned"
 }
 
@@ -398,13 +398,13 @@ perform_cleanup() {
     local dry_run="${2:-false}"
     local verbose="${3:-false}"
     local quiet="${4:-false}"
-    
+
     cd "$PROJECT_ROOT"
-    
+
     if [[ "$quiet" == "false" ]]; then
         show_cleanup_preview "$cleanup_type"
     fi
-    
+
     case "$cleanup_type" in
         build)
             clean_build "$dry_run" "$verbose"
@@ -449,7 +449,7 @@ main() {
     local verbose=false
     local quiet=false
     local force=false
-    
+
     # Parse arguments
     while [[ $# -gt 0 ]]; do
         case $1 in
@@ -490,7 +490,7 @@ main() {
                 ;;
         esac
     done
-    
+
     # Confirmation prompt (unless force or dry-run)
     if [[ "$force" == "false" && "$dry_run" == "false" && "$quiet" == "false" ]]; then
         echo -n "Are you sure you want to perform '$cleanup_type' cleanup? (y/N) "
@@ -500,16 +500,16 @@ main() {
             exit 0
         fi
     fi
-    
+
     if [[ "$quiet" == "false" ]]; then
         log_info "Starting cleanup process..."
         log_info "Cleanup type: $cleanup_type"
         [[ "$dry_run" == "true" ]] && log_info "Mode: DRY RUN"
         [[ "$verbose" == "true" ]] && log_info "Verbose mode enabled"
     fi
-    
+
     perform_cleanup "$cleanup_type" "$dry_run" "$verbose" "$quiet"
-    
+
     if [[ "$quiet" == "false" ]]; then
         if [[ "$dry_run" == "true" ]]; then
             log_info "Dry run completed. Use without -n/--dry-run to perform actual cleanup."

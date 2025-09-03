@@ -155,7 +155,7 @@ vim soft-delete.sh
 
 # 2. Update related documentation immediately
 vim README.md              # Usage examples
-vim docs/API.md            # API documentation  
+vim docs/API.md            # API documentation
 vim .warp/project-context.md  # Architecture description
 
 # 3. Update tests
@@ -186,7 +186,7 @@ vim docs/TESTING.md               # Align procedures
 grep -r "example pattern" README.md docs/ .warp/
 # Ensure all examples match
 
-# 4. Commit consistently  
+# 4. Commit consistently
 git add README.md docs/ .warp/
 git commit -m "docs: update README with aligned cross-references"
 ```
@@ -301,7 +301,7 @@ git add --all
 git commit -m "fix: batch update for cross-file consistency
 
 - Align all examples with current functionality
-- Update version references throughout repository  
+- Update version references throughout repository
 - Synchronize command formats across documentation
 - Verify test descriptions match actual test coverage"
 ```
@@ -337,7 +337,7 @@ git commit -m "fix: batch update for cross-file consistency
 ### Forbidden Patterns
 
 ❌ **Never change single file** without checking related files
-❌ **Never commit partial updates** that leave inconsistencies  
+❌ **Never commit partial updates** that leave inconsistencies
 ❌ **Never assume no cross-references** exist
 ❌ **Never skip consistency verification**
 

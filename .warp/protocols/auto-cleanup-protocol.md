@@ -29,7 +29,7 @@ node_modules/          # Package dependencies
 
 ### 2. **Test Artifacts** (AUTO-CLEANUP REQUIRED)
 ```
-reports/*.tap          # TAP test output files  
+reports/*.tap          # TAP test output files
 reports/*.txt          # Test report files
 reports/junit/         # JUnit XML reports
 reports/coverage/      # Coverage reports
@@ -79,16 +79,16 @@ cleanup_generated_files() {
     find reports/ -name "*.tap" -mtime +0 -delete 2>/dev/null || true
     find reports/ -name "*.txt" -mtime +0 -delete 2>/dev/null || true
     find reports/ -name "*.xml" -mtime +0 -delete 2>/dev/null || true
-    
+
     # Remove temporary files
     find . -name "*.tmp" -type f -delete 2>/dev/null || true
     find . -name "*.temp" -type f -delete 2>/dev/null || true
     find . -name "*~" -type f -delete 2>/dev/null || true
-    
+
     # Remove system files
     find . -name ".DS_Store" -delete 2>/dev/null || true
     find . -name "Thumbs.db" -delete 2>/dev/null || true
-    
+
     # Remove old backup directories from /tmp
     find /tmp -name "backup-*" -type d -mtime +0 -exec rm -rf {} + 2>/dev/null || true
 }
@@ -103,12 +103,12 @@ cleanup_build_artifacts() {
     if [[ -f "bin/soft-delete" && "$KEEP_BINARY" != "true" ]]; then
         rm -f bin/soft-delete
     fi
-    
+
     # Clean distribution files
     if [[ -d "dist/" ]]; then
         rm -rf dist/
     fi
-    
+
     # Clean compiled objects
     find . -name "*.o" -o -name "*.so" -o -name "*.dylib" -delete 2>/dev/null || true
 }
@@ -121,10 +121,10 @@ cleanup_build_artifacts() {
 cleanup_doc_artifacts() {
     # Remove generated HTML/PDF docs
     find docs/ -name "*.html" -o -name "*.pdf" -delete 2>/dev/null || true
-    
+
     # Remove doc build directories
     rm -rf docs/build/ site/ 2>/dev/null || true
-    
+
     # Remove temporary markdown files
     find . -name "*.tmp.md" -delete 2>/dev/null || true
 }
@@ -137,10 +137,10 @@ cleanup_doc_artifacts() {
 cleanup_dev_artifacts() {
     # Remove cache directories
     rm -rf .cache/ .pytest_cache/ __pycache__/ 2>/dev/null || true
-    
+
     # Remove coverage files
     rm -f .coverage 2>/dev/null || true
-    
+
     # Remove Python compiled files
     find . -name "*.pyc" -delete 2>/dev/null || true
 }
@@ -171,7 +171,7 @@ fi
 
 # Check for system files
 if find . -name ".DS_Store" -o -name "Thumbs.db" | grep -q .; then
-    echo "❌ System files found - running cleanup" 
+    echo "❌ System files found - running cleanup"
     find . -name ".DS_Store" -o -name "Thumbs.db" -delete 2>/dev/null || true
 fi
 
@@ -209,19 +209,19 @@ Add cleanup step to commit workflow:
 git_commit_with_cleanup() {
     # 1. Pre-commit cleanup
     ./scripts/cleanup.sh --quiet --type temporary || true
-    
+
     # 2. Stage intentional changes only
     git add .
-    
+
     # 3. Verify no unintended files are staged
     if git diff --cached --name-only | grep -E '\.(tmp|temp|log|tap)$'; then
         echo "❌ Temporary files staged - aborting commit"
         exit 1
     fi
-    
+
     # 4. Commit with conventional format
     git commit -m "type: description"
-    
+
     # 5. Post-commit cleanup
     cleanup_generated_files
 }
@@ -240,7 +240,7 @@ The existing `scripts/cleanup.sh` should be extended with auto-cleanup capabilit
 
 # Specific cleanup types
 ./scripts/cleanup.sh --type reports     # Clean test artifacts
-./scripts/cleanup.sh --type temporary  # Clean temp files  
+./scripts/cleanup.sh --type temporary  # Clean temp files
 ./scripts/cleanup.sh --type build      # Clean build artifacts
 ./scripts/cleanup.sh --type all        # Clean everything
 ```
@@ -252,34 +252,34 @@ Add cleanup validation to `.githooks/pre-commit`:
 # Auto-cleanup validation in pre-commit hook
 validate_auto_cleanup() {
     echo "🧹 Validating auto-cleanup compliance..."
-    
+
     # Check for common dangling files
     local dangling_files=0
-    
+
     # Test artifacts
     if find reports/ -name "*.tap" -o -name "*.txt" 2>/dev/null | grep -q .; then
         echo "❌ Test artifacts found in reports/"
         dangling_files=$((dangling_files + 1))
     fi
-    
+
     # Temporary files
     if find . -name "*.tmp" -o -name "*.temp" 2>/dev/null | grep -q .; then
         echo "❌ Temporary files found"
         dangling_files=$((dangling_files + 1))
     fi
-    
+
     # System files
     if find . -name ".DS_Store" -o -name "Thumbs.db" 2>/dev/null | grep -q .; then
         echo "❌ System files found"
         dangling_files=$((dangling_files + 1))
     fi
-    
+
     if [[ $dangling_files -gt 0 ]]; then
         echo "❌ Auto-cleanup validation failed"
         echo "Run: ./scripts/cleanup.sh --auto --quiet"
         return 1
     fi
-    
+
     echo "✅ Auto-cleanup validation passed"
     return 0
 }
@@ -303,7 +303,7 @@ reports/**/*.tap
 reports/**/*.txt
 reports/**/*.xml
 
-# Build artifacts  
+# Build artifacts
 bin/soft-delete
 dist/
 *.o
@@ -351,13 +351,13 @@ temp.state
 # Safe cleanup implementation
 safe_cleanup() {
     local cleanup_type="$1"
-    
+
     # Check if any automation is running
     if pgrep -f "make docker-test|make docker-lint|scripts/" >/dev/null; then
         echo "⚠️  Automation running - deferring cleanup"
         return 0
     fi
-    
+
     # Proceed with cleanup
     case "$cleanup_type" in
         "reports")
@@ -369,7 +369,7 @@ safe_cleanup() {
         "all")
             cleanup_generated_files
             cleanup_build_artifacts
-            cleanup_doc_artifacts  
+            cleanup_doc_artifacts
             cleanup_dev_artifacts
             ;;
     esac
@@ -405,21 +405,21 @@ PROTECTED_PATTERNS=(
 
 validate_protection() {
     local file="$1"
-    
+
     # Check against protected files
     for protected in "${PROTECTED_FILES[@]}"; do
         if [[ "$file" == "$protected"* ]]; then
             return 1  # Protected - do not clean
         fi
     done
-    
+
     # Check against protected patterns
     for pattern in "${PROTECTED_PATTERNS[@]}"; do
         if [[ "$file" == $pattern ]]; then
             return 1  # Protected - do not clean
         fi
     done
-    
+
     return 0  # Safe to clean
 }
 ```
@@ -458,12 +458,12 @@ echo "------------------------"
 TEST_ARTIFACTS=$(find reports/ -name "*.tap" -o -name "*.txt" 2>/dev/null | wc -l)
 echo "Test artifacts: $TEST_ARTIFACTS files"
 
-# Temporary files  
+# Temporary files
 TEMP_FILES=$(find . -name "*.tmp" -o -name "*.temp" 2>/dev/null | wc -l)
 echo "Temporary files: $TEMP_FILES files"
 
 # System files
-SYSTEM_FILES=$(find . -name ".DS_Store" -o -name "Thumbs.db" 2>/dev/null | wc -l) 
+SYSTEM_FILES=$(find . -name ".DS_Store" -o -name "Thumbs.db" 2>/dev/null | wc -l)
 echo "System files: $SYSTEM_FILES files"
 
 # Build artifacts
@@ -502,7 +502,7 @@ fi
 ## Integration with Universal Compliance Checklist
 
 ### Additional Compliance Check
-Add to `.warp/protocols/universal-compliance-checklist.md`:
+Add to `.warp/protocols/compliance-protocol.md` universal checklist section:
 
 ```bash
 # 12. AUTO-CLEANUP COMPLIANCE VALIDATION
@@ -541,22 +541,22 @@ echo "✅ Auto-cleanup compliance verified"
 emergency_cleanup() {
     echo "🚨 EMERGENCY CLEANUP PROCEDURE"
     echo "==============================="
-    
+
     # Force remove known dangling patterns
     rm -rf reports/*.tap reports/*.txt 2>/dev/null || true
     find . -name "*.tmp" -delete 2>/dev/null || true
     find . -name "*.temp" -delete 2>/dev/null || true
     find . -name ".DS_Store" -delete 2>/dev/null || true
     find . -name "Thumbs.db" -delete 2>/dev/null || true
-    
+
     # Clean old backup directories
     find /tmp -name "backup-*" -type d -mtime +0 -exec rm -rf {} + 2>/dev/null || true
-    
+
     # Reset git to clean state (only if safe)
     if [[ -z "$(git status --porcelain | grep -v '^?? ')" ]]; then
         git clean -fdx --exclude=.deploy/ --exclude=VERSION --exclude=.warp/
     fi
-    
+
     echo "✅ Emergency cleanup completed"
 }
 ```
@@ -567,16 +567,16 @@ emergency_cleanup() {
 recover_automation() {
     echo "🔧 AUTOMATION RECOVERY PROCEDURE"
     echo "================================"
-    
+
     # Wait for running processes to complete
     while pgrep -f "make docker|scripts/" >/dev/null; do
         echo "⏳ Waiting for automation to complete..."
         sleep 5
     done
-    
+
     # Run safe cleanup
     safe_cleanup "all"
-    
+
     # Verify automation files are intact
     for script in scripts/*.sh; do
         if [[ ! -x "$script" ]]; then
@@ -584,7 +584,7 @@ recover_automation() {
             chmod +x "$script"
         fi
     done
-    
+
     echo "✅ Automation recovery completed"
 }
 ```
@@ -613,9 +613,9 @@ echo "Repository size (excluding .git): $(du -sh --exclude=.git . | cut -f1)"
 
 ---
 
-**ENFORCEMENT LEVEL**: ABSOLUTE AND IMMEDIATE  
-**EFFECTIVE DATE**: 2025-09-01  
-**PROTOCOL VERSION**: 1.0.0  
+**ENFORCEMENT LEVEL**: ABSOLUTE AND IMMEDIATE
+**EFFECTIVE DATE**: 2025-09-01
+**PROTOCOL VERSION**: 1.0.0
 **SCOPE**: ALL AI OPERATIONS GENERATING FILES
 
 This protocol ensures zero tolerance for dangling files while maintaining automation safety and repository cleanliness.

@@ -103,7 +103,7 @@ These rules define how AI agents should behave when working with the `soft-delet
 1. **Use conventional commit messages**:
    ```
    type(scope): description
-   
+
    - Detailed explanation of changes
    - Include breaking changes if any
    ```

@@ -2,7 +2,7 @@
 
 # deploy.sh - Deployment Automation Script
 # Copyright (c) 2025 Richeve S. Bebedor <richeve.bebedor@gmail.com>
-# 
+#
 # This script automates the deployment process across develop -> staging -> release
 # branches with proper version management, tagging, and revert capabilities
 
@@ -138,9 +138,9 @@ save_state() {
     local deployment_type="$1"
     local original_branch="$2"
     local timestamp="$3"
-    
+
     create_state_dir
-    
+
     cat > "$DEPLOY_STATE_DIR/${deployment_type}.state" << EOF
 DEPLOYMENT_TYPE="$deployment_type"
 ORIGINAL_BRANCH="$original_branch"
@@ -148,7 +148,7 @@ TIMESTAMP="$timestamp"
 ORIGINAL_VERSION="$(get_current_version)"
 CURRENT_COMMIT="$(git rev-parse HEAD)"
 EOF
-    
+
     log_debug "Saved deployment state for $deployment_type"
 }
 
@@ -156,7 +156,7 @@ EOF
 load_state() {
     local deployment_type="$1"
     local state_file="$DEPLOY_STATE_DIR/${deployment_type}.state"
-    
+
     if [[ -f "$state_file" ]]; then
         # shellcheck source=/dev/null
         source "$state_file"
@@ -170,7 +170,7 @@ load_state() {
 remove_state() {
     local deployment_type="$1"
     local state_file="$DEPLOY_STATE_DIR/${deployment_type}.state"
-    
+
     if [[ -f "$state_file" ]]; then
         rm "$state_file"
         log_debug "Removed deployment state for $deployment_type"
@@ -190,17 +190,17 @@ check_working_directory() {
 # Function to check if we're on develop branch
 check_on_develop_branch() {
     log_step "Verifying current branch is develop..."
-    
+
     local current_branch
     current_branch="$(git branch --show-current)"
-    
+
     if [[ "$current_branch" != "develop" ]]; then
         log_error "Deployment must be initiated from develop branch."
         log_error "Current branch: $current_branch"
         log_error "Please switch to develop: git checkout develop"
         return 1
     fi
-    
+
     log_success "On develop branch"
     return 0
 }
@@ -208,55 +208,55 @@ check_on_develop_branch() {
 # Function to ensure develop branch is pushed to remote
 check_develop_pushed() {
     log_step "Ensuring develop branch is pushed to remote..."
-    
+
     # Fetch latest from remote
     git fetch origin develop --quiet 2>/dev/null || true
-    
+
     local local_develop_commit
     local_develop_commit="$(git rev-parse develop)"
     local remote_develop_commit
     remote_develop_commit="$(git rev-parse origin/develop 2>/dev/null || echo "none")"
-    
+
     if [[ "$local_develop_commit" != "$remote_develop_commit" ]]; then
         log_warn "Local develop branch is not synchronized with remote."
         log_info "Local:  $local_develop_commit"
         log_info "Remote: $remote_develop_commit"
         log_info "Pushing develop branch to remote..."
-        
+
         if ! git push origin develop; then
             log_error "Failed to push develop branch to remote"
             return 1
         fi
-        
+
         log_success "Develop branch pushed to remote"
     else
         log_success "Develop branch is up to date with remote"
     fi
-    
+
     return 0
 }
 
 # Function to check remote connectivity and push access
 check_remote_access() {
     local remote="origin"
-    
+
     log_step "Checking remote access to $remote..."
-    
+
     if ! git remote get-url "$remote" &>/dev/null; then
         log_error "Remote '$remote' is not configured"
         return 1
     fi
-    
+
     # Test if we can fetch from remote
     if ! git fetch "$remote" --dry-run &>/dev/null; then
         log_error "Cannot fetch from remote '$remote'. Check your network and credentials."
         return 1
     fi
-    
+
     # Test if current branch exists on remote and can be pushed
     local current_branch
     current_branch="$(git branch --show-current)"
-    
+
     if git rev-parse --verify "$remote/$current_branch" &>/dev/null; then
         # Branch exists on remote, check if we can push
         if ! git push "$remote" "$current_branch" --dry-run &>/dev/null; then
@@ -264,7 +264,7 @@ check_remote_access() {
             return 1
         fi
     fi
-    
+
     log_success "Remote access verified"
     return 0
 }
@@ -274,21 +274,21 @@ push_all_deployment_artifacts() {
     local deployment_type="$1"
     local dry_run="${2:-false}"
     local version="${3:-}"
-    
+
     if [[ "$dry_run" == "true" ]]; then
         log_info "DRY RUN: Would push all deployment artifacts to remote"
         return 0
     fi
-    
+
     log_step "Pushing all deployment artifacts to remote..."
-    
+
     # Always push develop branch
     log_info "Pushing develop branch..."
     git push origin develop || {
         log_error "Failed to push develop branch"
         return 1
     }
-    
+
     # Push deployment-specific branches
     case "$deployment_type" in
         "staging")
@@ -319,7 +319,7 @@ push_all_deployment_artifacts() {
                 log_error "Failed to push main branch"
                 return 1
             }
-            
+
             # Push version tag if provided
             if [[ -n "$version" ]]; then
                 local tag_name="v$version"
@@ -338,7 +338,7 @@ push_all_deployment_artifacts() {
             }
             ;;
     esac
-    
+
     log_success "All deployment artifacts pushed to remote"
     return 0
 }
@@ -357,27 +357,27 @@ check_version_updated() {
     local source_branch="$1"
     local target_branch="$2"
     local dry_run="${3:-false}"
-    
+
     # Get current version on target branch
     local target_version
     target_version="$(git show "$target_branch:VERSION" 2>/dev/null || echo "0.0.0")"
-    
+
     # Get current version on source branch
     local source_version
     source_version="$(git show "$source_branch:VERSION" 2>/dev/null || echo "0.0.0")"
-    
+
     # Special case for deploy-release: check if develop has newer version than release
     # This handles the case where user updated version on develop but hasn't deployed to staging yet
     if [[ "$source_branch" == "staging" && "$target_branch" == "release" ]]; then
         local develop_version
         develop_version="$(git show "develop:VERSION" 2>/dev/null || echo "0.0.0")"
-        
+
         # In dry-run mode, if we just auto-deployed staging, use develop version as expected staging version
         if [[ "$dry_run" == "true" && "$develop_version" != "$target_version" ]]; then
             source_version="$develop_version"
             log_debug "Dry-run mode: Using develop version ($develop_version) as expected staging version"
         fi
-        
+
         # If develop has newer version than release, but staging doesn't, suggest deploy-staging first
         if [[ "$develop_version" != "$target_version" && "$source_version" == "$target_version" ]]; then
             log_error "Version updated on develop ($develop_version) but not deployed to staging yet."
@@ -386,7 +386,7 @@ check_version_updated() {
             return 1
         fi
     fi
-    
+
     if [[ "$source_version" == "$target_version" ]]; then
         log_error "Version not updated. Source ($source_branch): $source_version, Target ($target_branch): $target_version"
         if [[ "$source_branch" == "develop" ]]; then
@@ -396,7 +396,7 @@ check_version_updated() {
         fi
         return 1
     fi
-    
+
     log_info "Version check passed. Source ($source_branch): $source_version, Target ($target_branch): $target_version"
     return 0
 }
@@ -405,7 +405,7 @@ check_version_updated() {
 ensure_branch() {
     local branch_name="$1"
     local remote="${2:-origin}"
-    
+
     # Check if branch exists locally
     if ! git rev-parse --verify "$branch_name" &>/dev/null; then
         # Check if it exists on remote
@@ -417,7 +417,7 @@ ensure_branch() {
             return 1
         fi
     fi
-    
+
     return 0
 }
 
@@ -426,24 +426,24 @@ force_merge() {
     local source_branch="$1"
     local target_branch="$2"
     local dry_run="${3:-false}"
-    
+
     log_step "Force merging $source_branch into $target_branch"
-    
+
     if [[ "$dry_run" == "true" ]]; then
         log_info "DRY RUN: Would force merge $source_branch -> $target_branch"
         return 0
     fi
-    
+
     # Ensure both branches exist
     ensure_branch "$source_branch"
     ensure_branch "$target_branch"
-    
+
     # Checkout target branch
     git checkout "$target_branch"
-    
+
     # Reset target branch to match source branch exactly
     git reset --hard "$source_branch"
-    
+
     log_success "Force merged $source_branch into $target_branch"
 }
 
@@ -452,29 +452,29 @@ create_version_tag() {
     local version="$1"
     local branch="$2"
     local dry_run="${3:-false}"
-    
+
     local tag_name="v$version"
-    
+
     log_step "Creating version tag $tag_name on $branch"
-    
+
     if [[ "$dry_run" == "true" ]]; then
         log_info "DRY RUN: Would create tag $tag_name on $branch"
         return 0
     fi
-    
+
     # Check if tag already exists
     if git tag -l "$tag_name" | grep -q "^$tag_name$"; then
         log_warn "Tag $tag_name already exists, removing it"
         git tag -d "$tag_name"
         git push origin ":refs/tags/$tag_name" 2>/dev/null || true
     fi
-    
+
     # Create tag on current commit
     git tag -a "$tag_name" -m "Release version $version"
-    
+
     # Push tag to remote
     git push origin "$tag_name"
-    
+
     log_success "Created and pushed tag $tag_name"
 }
 
@@ -483,12 +483,12 @@ push_branch() {
     local branch_name="$1"
     local remote="${2:-origin}"
     local dry_run="${3:-false}"
-    
+
     if [[ "$dry_run" == "true" ]]; then
         log_info "DRY RUN: Would push $branch_name to $remote"
         return 0
     fi
-    
+
     log_step "Pushing $branch_name to $remote"
     git push "$remote" "$branch_name"
     log_success "Pushed $branch_name to $remote"
@@ -497,7 +497,7 @@ push_branch() {
 # Function to check if staging deployment is already current
 check_staging_already_deployed() {
     log_step "Checking if staging deployment is already current..."
-    
+
     # Check if staging deployment exists and is current
     if check_staging_deployment 2>/dev/null; then
         return 0  # Already deployed
@@ -510,21 +510,21 @@ check_staging_already_deployed() {
 deploy_staging() {
     local dry_run="${1:-false}"
     local force="${2:-false}"
-    
+
     log_info "Starting deployment to staging..."
-    
+
     local original_branch
     original_branch="$(git branch --show-current)"
     local timestamp
     timestamp="$(date '+%Y%m%d-%H%M%S')"
-    
+
     # Pre-deployment checks
     if [[ "$force" != "true" ]]; then
         check_working_directory || return 1
         check_on_develop_branch || return 1
         check_develop_pushed || return 1
         check_remote_access || return 1
-        
+
         # Check if staging is already deployed and current
         if check_staging_already_deployed; then
             log_warn "Staging deployment is already current and up-to-date."
@@ -532,30 +532,30 @@ deploy_staging() {
             log_info "No staging deployment needed. Use --force to redeploy anyway."
             return 0
         fi
-        
+
         # Check version was updated
         if ! check_version_updated "develop" "staging"; then
             return 1
         fi
     fi
-    
+
     # Save state for potential revert
     save_state "staging" "$original_branch" "$timestamp"
-    
+
     # Perform deployment
     force_merge "develop" "staging" "$dry_run"
-    
+
     if [[ "$dry_run" != "true" ]]; then
         push_branch "staging" "origin" "$dry_run"
-        
+
         # Push all deployment artifacts to remote
         push_all_deployment_artifacts "staging" "$dry_run"
-        
+
         log_success "Successfully deployed develop to staging"
     else
         log_success "DRY RUN: Would deploy develop to staging successfully"
     fi
-    
+
     # Return to original branch
     if [[ "$dry_run" != "true" && "$original_branch" != "staging" ]]; then
         git checkout "$original_branch"
@@ -565,39 +565,39 @@ deploy_staging() {
 # Function to check if staging deployment was completed
 check_staging_deployment() {
     log_step "Verifying staging deployment status..."
-    
+
     # Check if staging deployment state exists
     if ! load_state "staging" 2>/dev/null; then
         log_warn "No staging deployment found."
         return 1
     fi
-    
+
     # Verify staging branch is up to date with remote
     log_debug "Checking staging branch synchronization..."
     git fetch origin staging --quiet 2>/dev/null || true
-    
+
     local local_staging_commit
     local_staging_commit="$(git rev-parse staging 2>/dev/null || echo "none")"
     local remote_staging_commit
     remote_staging_commit="$(git rev-parse origin/staging 2>/dev/null || echo "none")"
-    
+
     if [[ "$local_staging_commit" != "$remote_staging_commit" ]]; then
         log_warn "Local staging branch is not synchronized with remote."
         log_debug "Local:  $local_staging_commit"
         log_debug "Remote: $remote_staging_commit"
         return 1
     fi
-    
+
     # Verify staging branch contains develop changes
     log_debug "Checking staging contains latest develop changes..."
     local develop_commit
     develop_commit="$(git rev-parse develop)"
-    
+
     if ! git merge-base --is-ancestor "$develop_commit" staging 2>/dev/null; then
         log_warn "Staging branch does not contain latest develop changes."
         return 1
     fi
-    
+
     log_success "Staging deployment verification passed"
     return 0
 }
@@ -606,17 +606,17 @@ check_staging_deployment() {
 auto_deploy_staging_if_needed() {
     local dry_run="${1:-false}"
     local force="${2:-false}"
-    
+
     log_info "Checking if staging deployment is needed..."
-    
+
     if check_staging_deployment; then
         log_info "Staging deployment is up to date, proceeding to release"
         return 0
     fi
-    
+
     log_warn "Staging deployment is missing or outdated"
     log_info "Automatically deploying to staging first..."
-    
+
     # Run staging deployment with same options
     if deploy_staging "$dry_run" "$force"; then
         log_success "Staging deployment completed successfully"
@@ -631,67 +631,67 @@ auto_deploy_staging_if_needed() {
 deploy_release() {
     local dry_run="${1:-false}"
     local force="${2:-false}"
-    
+
     log_info "Starting deployment to release..."
-    
+
     local original_branch
     original_branch="$(git branch --show-current)"
     local timestamp
     timestamp="$(date '+%Y%m%d-%H%M%S')"
-    
+
     # Pre-deployment checks
     if [[ "$force" != "true" ]]; then
         check_working_directory || return 1
         check_remote_access || return 1
-        
+
         # Auto-deploy to staging if needed
         if ! auto_deploy_staging_if_needed "$dry_run" "$force"; then
             return 1
         fi
-        
+
         # Check version was updated
         if ! check_version_updated "staging" "release" "$dry_run"; then
             return 1
         fi
     fi
-    
+
     # Save state for potential revert
     save_state "release" "$original_branch" "$timestamp"
-    
+
     # Get version for tagging
     local version
     version="$(git show staging:VERSION 2>/dev/null || echo "0.0.0")"
-    
+
     # Perform deployment to release
     force_merge "staging" "release" "$dry_run"
-    
+
     if [[ "$dry_run" != "true" ]]; then
         push_branch "release" "origin" "$dry_run"
-        
+
         # Create version tag
         create_version_tag "$version" "release" "$dry_run"
-        
+
         # Update master and main branches
         log_step "Updating master and main branches"
-        
+
         ensure_branch "master"
         force_merge "release" "master" "$dry_run"
         push_branch "master" "origin" "$dry_run"
-        
+
         ensure_branch "main"
         force_merge "release" "main" "$dry_run"
         push_branch "main" "origin" "$dry_run"
-        
+
         # Push all deployment artifacts to remote
         push_all_deployment_artifacts "release" "$dry_run" "$version"
-        
+
         log_success "Successfully deployed staging to release (v$version)"
         log_success "Updated master and main branches"
     else
         log_success "DRY RUN: Would deploy staging to release (v$version) successfully"
         log_success "DRY RUN: Would update master and main branches"
     fi
-    
+
     # Return to original branch
     if [[ "$dry_run" != "true" && "$original_branch" != "release" ]]; then
         git checkout "$original_branch"
@@ -702,14 +702,14 @@ deploy_release() {
 deploy_test() {
     local dry_run="${1:-false}"
     local force="${2:-false}"
-    
+
     log_info "Starting deployment to test..."
-    
+
     local original_branch
     original_branch="$(git branch --show-current)"
     local timestamp
     timestamp="$(date '+%Y%m%d-%H%M%S')"
-    
+
     # Pre-deployment checks
     if [[ "$force" != "true" ]]; then
         check_working_directory || return 1
@@ -717,24 +717,24 @@ deploy_test() {
         check_develop_pushed || return 1
         check_remote_access || return 1
     fi
-    
+
     # Save state for potential revert
     save_state "test" "$original_branch" "$timestamp"
-    
+
     # Perform deployment
     force_merge "develop" "test" "$dry_run"
-    
+
     if [[ "$dry_run" != "true" ]]; then
         push_branch "test" "origin" "$dry_run"
-        
+
         # Push all deployment artifacts to remote
         push_all_deployment_artifacts "test" "$dry_run"
-        
+
         log_success "Successfully deployed develop to test"
     else
         log_success "DRY RUN: Would deploy develop to test successfully"
     fi
-    
+
     # Return to original branch
     if [[ "$dry_run" != "true" && "$original_branch" != "test" ]]; then
         git checkout "$original_branch"
@@ -746,31 +746,31 @@ deploy_version() {
     local version="$1"
     local dry_run="${2:-false}"
     local force="${3:-false}"
-    
+
     log_info "Starting deployment of version $version..."
-    
+
     # Validate version format
     if ! "$VERSION_SCRIPT" validate "$version" -q; then
         log_error "Invalid version format: $version"
         return 1
     fi
-    
+
     local original_branch
     original_branch="$(git branch --show-current)"
     local timestamp
     timestamp="$(date '+%Y%m%d-%H%M%S')"
     local original_version
     original_version="$(get_current_version)"
-    
+
     # Pre-deployment checks
     if [[ "$force" != "true" ]]; then
         check_working_directory || return 1
         check_remote_access || return 1
     fi
-    
+
     # Save state for potential revert
     save_state "version" "$original_branch" "$timestamp"
-    
+
     # Update version file
     log_step "Updating version to $version"
     if [[ "$dry_run" != "true" ]]; then
@@ -778,19 +778,19 @@ deploy_version() {
         git add "$VERSION_FILE"
         git commit -m "chore: bump version to $version"
     fi
-    
+
     # Deploy to staging first
     log_step "Deploying to staging"
     deploy_staging "$dry_run" "true" # Force to skip checks since we just committed
-    
+
     # Then deploy to release
     log_step "Deploying to release"
     deploy_release "$dry_run" "true" # Force to skip checks
-    
+
     if [[ "$dry_run" != "true" ]]; then
         log_success "Successfully deployed version $version through staging to release"
     fi
-    
+
     # Return to original branch
     if [[ "$dry_run" != "true" && "$original_branch" != "release" ]]; then
         git checkout "$original_branch"
@@ -800,27 +800,27 @@ deploy_version() {
 # Function to revert staging deployment
 revert_staging() {
     log_info "Reverting staging deployment..."
-    
+
     if ! load_state "staging"; then
         log_error "No staging deployment state found"
         return 1
     fi
-    
+
     log_warn "This will revert staging branch to its previous state"
     log_warn "Original branch: ${ORIGINAL_BRANCH:-unknown}"
     log_warn "Original version: ${ORIGINAL_VERSION:-unknown}"
     log_warn "Deployment timestamp: ${TIMESTAMP:-unknown}"
-    
+
     read -p "Are you sure? (y/N): " -n 1 -r
     echo
     if [[ ! $REPLY =~ ^[Yy]$ ]]; then
         log_info "Revert cancelled"
         return 0
     fi
-    
+
     local current_branch
     current_branch="$(git branch --show-current)"
-    
+
     # Get the commit before our deployment
     log_step "Finding previous staging state..."
     local previous_commit
@@ -828,18 +828,18 @@ revert_staging() {
         log_error "Could not find previous commit on staging"
         return 1
     }
-    
+
     # Reset staging to previous state
     log_step "Reverting staging branch"
     git checkout staging
     git reset --hard "$previous_commit"
     push_branch "staging" "origin" "false"
-    
+
     # Return to original branch
     if [[ "$current_branch" != "staging" ]]; then
         git checkout "$current_branch"
     fi
-    
+
     log_success "Staging deployment reverted to $previous_commit"
     remove_state "staging"
 }
@@ -847,33 +847,33 @@ revert_staging() {
 # Function to revert release deployment
 revert_release() {
     log_info "Reverting release deployment..."
-    
+
     if ! load_state "release"; then
         log_error "No release deployment state found"
         return 1
     fi
-    
+
     log_warn "This will revert release, master, and main branches"
     log_warn "This will also remove the version tag if it exists"
     log_warn "Original branch: ${ORIGINAL_BRANCH:-unknown}"
     log_warn "Original version: ${ORIGINAL_VERSION:-unknown}"
     log_warn "Deployment timestamp: ${TIMESTAMP:-unknown}"
-    
+
     read -p "Are you sure? This is a destructive operation (y/N): " -n 1 -r
     echo
     if [[ ! $REPLY =~ ^[Yy]$ ]]; then
         log_info "Revert cancelled"
         return 0
     fi
-    
+
     local current_branch
     current_branch="$(git branch --show-current)"
-    
+
     # Get current version to remove tag
     local current_version
     current_version="$(git show release:VERSION 2>/dev/null || echo "0.0.0")"
     local tag_name="v$current_version"
-    
+
     # Find previous commits
     log_step "Finding previous states..."
     local prev_release_commit
@@ -881,36 +881,36 @@ revert_release() {
         log_error "Could not find previous release commit"
         return 1
     }
-    
+
     # Remove version tag if it exists
     if git tag -l "$tag_name" | grep -q "^$tag_name$"; then
         log_step "Removing version tag $tag_name"
         git tag -d "$tag_name"
         git push origin ":refs/tags/$tag_name" || true
     fi
-    
+
     # Revert release branch
     log_step "Reverting release branch"
     git checkout release
     git reset --hard "$prev_release_commit"
     push_branch "release" "origin" "false"
-    
+
     # Revert master and main branches
     log_step "Reverting master branch"
     ensure_branch "master"
     force_merge "release" "master" "false"
     push_branch "master" "origin" "false"
-    
+
     log_step "Reverting main branch"
     ensure_branch "main"
     force_merge "release" "main" "false"
     push_branch "main" "origin" "false"
-    
+
     # Return to original branch
     if [[ "$current_branch" != "release" ]]; then
         git checkout "$current_branch"
     fi
-    
+
     log_success "Release deployment reverted (removed tag $tag_name)"
     remove_state "release"
 }
@@ -918,26 +918,26 @@ revert_release() {
 # Function to revert test deployment
 revert_test() {
     log_info "Reverting test deployment..."
-    
+
     if ! load_state "test"; then
         log_error "No test deployment state found"
         return 1
     fi
-    
+
     log_warn "This will revert test branch to its previous state"
     log_warn "Original branch: $ORIGINAL_BRANCH"
     log_warn "Deployment timestamp: $TIMESTAMP"
-    
+
     read -p "Are you sure? (y/N): " -n 1 -r
     echo
     if [[ ! $REPLY =~ ^[Yy]$ ]]; then
         log_info "Revert cancelled"
         return 0
     fi
-    
+
     local current_branch
     current_branch="$(git branch --show-current)"
-    
+
     # Get the commit before our deployment
     log_step "Finding previous test state..."
     local previous_commit
@@ -945,18 +945,18 @@ revert_test() {
         log_error "Could not find previous commit on test"
         return 1
     }
-    
+
     # Reset test to previous state
     log_step "Reverting test branch"
     git checkout test
     git reset --hard "$previous_commit"
     push_branch "test" "origin" "false"
-    
+
     # Return to original branch
     if [[ "$current_branch" != "test" ]]; then
         git checkout "$current_branch"
     fi
-    
+
     log_success "Test deployment reverted to $previous_commit"
     remove_state "test"
 }
@@ -964,56 +964,56 @@ revert_test() {
 # Function to revert version deployment
 revert_version() {
     log_info "Reverting version deployment..."
-    
+
     if ! load_state "version"; then
         log_error "No version deployment state found"
         return 1
     fi
-    
+
     log_warn "This will revert the version deployment completely"
     log_warn "This includes: version file, staging, release, master, main, and tags"
     log_warn "Original branch: $ORIGINAL_BRANCH"
     log_warn "Original version: $ORIGINAL_VERSION"
     log_warn "Deployment timestamp: $TIMESTAMP"
-    
+
     read -p "Are you sure? This is a very destructive operation (y/N): " -n 1 -r
     echo
     if [[ ! $REPLY =~ ^[Yy]$ ]]; then
         log_info "Revert cancelled"
         return 0
     fi
-    
+
     # First revert release if it has a state
     if load_state "release"; then
         log_step "Reverting release deployment"
         revert_release
     fi
-    
+
     # Then revert staging if it has a state
     if load_state "staging"; then
         log_step "Reverting staging deployment"
         revert_staging
     fi
-    
+
     # Finally, revert the version commit on develop
     log_step "Reverting version commit on develop branch"
     git checkout develop
-    
+
     # Find the version commit (should be the last commit if we just did version deployment)
     local version_commit
     version_commit="$(git log --oneline -1 --grep="chore: bump version" | cut -d' ' -f1)"
-    
+
     if [[ -n "$version_commit" ]]; then
         log_step "Reverting version commit $version_commit"
         git revert --no-edit "$version_commit"
         push_branch "develop" "origin" "false"
     fi
-    
+
     # Return to original branch
     if [[ "$ORIGINAL_BRANCH" != "develop" ]]; then
         git checkout "$ORIGINAL_BRANCH"
     fi
-    
+
     log_success "Version deployment completely reverted"
     remove_state "version"
 }
@@ -1022,22 +1022,22 @@ revert_version() {
 show_status() {
     log_info "Deployment Status"
     echo "=================="
-    
+
     # Show current branch and version
     local current_branch
     current_branch="$(git branch --show-current)"
     local current_version
     current_version="$(get_current_version)"
-    
+
     echo "Current branch: $current_branch"
     echo "Current version: $current_version"
     echo
-    
+
     # Show active deployment states
     if [[ -d "$DEPLOY_STATE_DIR" ]]; then
         local state_files
         mapfile -t state_files < <(find "$DEPLOY_STATE_DIR" -name "*.state" 2>/dev/null || true)
-        
+
         if [[ ${#state_files[@]} -gt 0 ]]; then
             echo "Active deployments:"
             for state_file in "${state_files[@]}"; do
@@ -1076,7 +1076,7 @@ main() {
     local force=false
     local verbose=false
     local yes=false
-    
+
     # Parse options
     while [[ $# -gt 0 ]]; do
         case $1 in
@@ -1117,19 +1117,19 @@ main() {
                 ;;
         esac
     done
-    
+
     # Check if we're in a git repository
     if ! git rev-parse --git-dir >/dev/null 2>&1; then
         log_error "Not in a git repository"
         exit 1
     fi
-    
+
     # Check if version script exists
     if [[ ! -f "$VERSION_SCRIPT" ]]; then
         log_error "Version script not found: $VERSION_SCRIPT"
         exit 1
     fi
-    
+
     # Execute command
     case "$command" in
         deploy-staging)

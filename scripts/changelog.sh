@@ -64,13 +64,13 @@ get_current_version() {
 get_recent_commits() {
     local count=${1:-10}
     local format="--pretty=format:%h - %s (%cr) <%an>"
-    
+
     cd "$PROJECT_ROOT"
-    
+
     # Get commits since last tagged version
     local last_tag
     last_tag=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
-    
+
     if [[ -n "$last_tag" ]]; then
         log_info "Getting commits since tag: $last_tag"
         git log "${last_tag}..HEAD" "$format" --no-merges | head -n "$count"
@@ -97,9 +97,9 @@ add_changelog_entry() {
     local entry="$1"
     local category="${2:-}"
     local version="${3:-}"
-    
+
     check_changelog_exists
-    
+
     # Get current version if not provided
     if [[ -z "$version" ]]; then
         version=$(get_current_version)
@@ -108,7 +108,7 @@ add_changelog_entry() {
             return 1
         fi
     fi
-    
+
     # Auto-detect category if not provided
     if [[ -z "$category" ]]; then
         if [[ "$entry" =~ ^feat(.*): ]]; then
@@ -125,10 +125,10 @@ add_changelog_entry() {
             category="Added"
         fi
     fi
-    
+
     # Create a backup
     cp "$CHANGELOG_FILE" "${CHANGELOG_FILE}.backup"
-    
+
     # Format the entry based on category
     local formatted_entry
     case "$category" in
@@ -161,7 +161,7 @@ add_changelog_entry() {
             category="Added"
             ;;
     esac
-    
+
     # Check if version section exists
     if ! grep -q "## \[$version\]" "$CHANGELOG_FILE"; then
         log_error "Version section [$version] not found in changelog."
@@ -169,7 +169,7 @@ add_changelog_entry() {
         rm -f "${CHANGELOG_FILE}.backup"
         return 1
     fi
-    
+
     # Add the entry to the appropriate category in the version section
     awk -v version="$version" -v category="$category" -v entry="$formatted_entry" '
     /^## \['"$version"'\]/{in_version=1}
@@ -182,10 +182,10 @@ add_changelog_entry() {
     {print}
     ' "$CHANGELOG_FILE" > "${CHANGELOG_FILE}.tmp"
     mv "${CHANGELOG_FILE}.tmp" "$CHANGELOG_FILE"
-    
+
     log_success "Added entry to changelog version [$version] under '$category' section"
     log_info "Entry: $formatted_entry"
-    
+
     # Clean up backup if successful
     rm -f "${CHANGELOG_FILE}.backup"
 }
@@ -193,24 +193,24 @@ add_changelog_entry() {
 # Validate changelog format (updated for version-based approach)
 validate_changelog() {
     check_changelog_exists
-    
+
     local errors=0
-    
+
     log_info "Validating changelog format..."
-    
+
     # Check for required sections
     if ! grep -q "# Changelog" "$CHANGELOG_FILE"; then
         log_error "Missing main 'Changelog' title"
         ((errors++))
     fi
-    
+
     # Check for "Unreleased" sections (should NOT exist per protocol)
     if grep -q "## \[Unreleased\]" "$CHANGELOG_FILE"; then
         log_error "Found FORBIDDEN [Unreleased] section - this violates the changelog protocol"
         log_error "All entries must be associated with specific version numbers"
         ((errors++))
     fi
-    
+
     # Check for proper version format in sections
     local invalid_versions
     invalid_versions=$(grep "^## \[" "$CHANGELOG_FILE" | grep -v -E "\[[0-9]+\.[0-9]+\.[0-9]+\]" || true)
@@ -219,7 +219,7 @@ validate_changelog() {
         echo "$invalid_versions"
         ((errors++))
     fi
-    
+
     # Check for proper date formats
     local invalid_dates
     invalid_dates=$(grep "^## \[" "$CHANGELOG_FILE" | grep -v -E "[0-9]{4}-[0-9]{2}-[0-9]{2}" || true)
@@ -228,7 +228,7 @@ validate_changelog() {
         echo "$invalid_dates"
         ((errors++))
     fi
-    
+
     if [[ "$errors" -eq 0 ]]; then
         log_success "Changelog format validation passed!"
         log_success "✓ No forbidden [Unreleased] sections found"
@@ -256,33 +256,33 @@ Commands:
                                        Categories: Added, Changed, Fixed, Security, Deprecated, Removed
                                        Version defaults to current VERSION file content
                                        Auto-detects category from conventional commit format
-    
+
     new-version <version> [date]        Create a new version section in changelog
                                        Date format: YYYY-MM-DD (defaults to today)
-    
+
     validate                           Validate changelog format and protocol compliance
                                        (Checks for forbidden [Unreleased] sections)
-    
+
     recent-commits [count]             Show recent commits (useful for creating changelog entries)
                                        Default count: 10
-    
+
     help                              Show this help message
 
 Examples:
     # Create new version section
     $0 new-version 1.2.0
-    
+
     # Add entries (will auto-detect version from VERSION file)
     $0 add "Add new file deletion feature" Added
     $0 add "feat: improve error handling"    # Auto-detects as Added
     $0 add "fix: resolve permission issue"  # Auto-detects as Fixed
-    
+
     # Add entry to specific version
     $0 add "Security improvement" Security 1.2.0
-    
+
     # Check recent commits for reference
     $0 recent-commits 5
-    
+
     # Validate format
     $0 validate
 
@@ -301,7 +301,7 @@ main() {
         show_help
         return 1
     fi
-    
+
     case "$1" in
         "add")
             if [[ $# -lt 2 ]]; then

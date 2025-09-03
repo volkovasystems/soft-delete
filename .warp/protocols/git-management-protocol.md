@@ -10,7 +10,7 @@ The repository follows a multi-branch workflow with specific purposes:
 ```
 main        # Stable production releases (protected)
 develop     # Active development branch (primary working branch)
-staging     # Pre-release testing and validation  
+staging     # Pre-release testing and validation
 release     # Release preparation and final testing
 test        # Experimental features and testing
 master      # Legacy branch (avoid using)
@@ -58,14 +58,14 @@ Follow the established pattern observed in the repository:
 
 #### Primary Types
 - **`feat:`** - New features or functionality
-- **`fix:`** - Bug fixes and corrections  
+- **`fix:`** - Bug fixes and corrections
 - **`docs:`** - Documentation updates
 - **`test:`** - Test additions or modifications
 - **`ci:`** - CI/CD pipeline changes
 - **`config:`** - Configuration file changes
 - **`chore:`** - Maintenance tasks
 
-#### Secondary Types  
+#### Secondary Types
 - **`refactor:`** - Code restructuring without feature changes
 - **`perf:`** - Performance improvements
 - **`style:`** - Code formatting changes
@@ -227,7 +227,7 @@ git push origin develop
 git add file1.sh tests/test1.bats
 git commit -m "feat: implement feature A with tests"
 
-# Second atomic commit  
+# Second atomic commit
 git add docs/README.md
 git commit -m "docs: update README for feature A"
 

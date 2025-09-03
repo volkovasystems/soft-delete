@@ -14,12 +14,11 @@ This directory contains all Warp.dev-specific configuration files and protocols 
 │   ├── auto-cleanup-protocol.md # Automatic cleanup of generated files and dangling artifacts
 │   ├── changelog-protocol.md    # Changelog management protocol
 │   ├── compliance-protocol.md   # 100% compliance standards and verification protocol
-│   ├── consistency-protocol.md  # Cross-file consistency protocol  
+│   ├── consistency-protocol.md  # Cross-file consistency protocol
 │   ├── continuous-commit-protocol.md # Continuous commit workflow protocol
 │   ├── git-management-protocol.md # Git workflow and branch management protocol
 │   ├── structural-alignment-protocol.md # Repository structure documentation sync protocol
 │   ├── testing-protocol.md      # Testing workflow protocol
-│   ├── universal-compliance-checklist.md # MASTER CHECKLIST - All protocols and rules for every operation
 │   └── version-protocol.md      # VERSION file management protocol
 ├── rules/
 │   ├── agent-instructions.md    # Agent behavior and rule suggestion guidelines
@@ -46,32 +45,32 @@ Warp.dev will automatically read these files to understand:
 4. **Modular Organization**: Easy to maintain and update specific areas
 5. **Clear Separation**: Distinct from project documentation
 
-## Universal Compliance Checklist
+## Compliance Protocol
 
-**CRITICAL**: The `universal-compliance-checklist.md` is the **MASTER CHECKLIST** that MUST be completed for every single AI operation on this repository.
+**CRITICAL**: The `compliance-protocol.md` is the **MASTER COMPLIANCE PROTOCOL** that MUST be followed for every single AI operation on this repository.
 
 ### Purpose
-- **Consolidates ALL protocols** into one actionable checklist
-- **Ensures 100% compliance** across every operation
+- **Consolidates ALL protocols** into one comprehensive document
+- **Includes universal pre-operation checklist** that ensures 100% compliance
 - **Prevents protocol violations** through systematic verification
 - **Provides immediate remediation** for compliance failures
 
 ### Usage
-- **Pre-operation**: Validate system status before any changes
-- **During operation**: Follow protocol-specific requirements
+- **Pre-operation**: Follow universal pre-operation checklist before any changes
+- **During operation**: Apply operation-specific compliance rules
 - **Post-operation**: Complete all commit and documentation requirements
-- **Final verification**: Run automated compliance checks
+- **Final verification**: Run automated compliance checks via `scripts/compliance-check.sh`
 
 ### Enforcement Level
 - **ABSOLUTE**: No exceptions allowed
 - **IMMEDIATE**: Must be followed for every prompt
 - **COMPREHENSIVE**: Covers all protocols and rules
-- **AUTOMATED**: Includes validation commands for verification
+- **AUTOMATED**: Enforced by synchronized compliance check script
 
 ## File Precedence
 
 Warp.dev reads files in this order:
-1. `.warp/protocols/universal-compliance-checklist.md` (**CRITICAL - ALWAYS REQUIRED**)
+1. `.warp/protocols/compliance-protocol.md` (**CRITICAL - ALWAYS REQUIRED**)
 2. `.warp/project-context.md` (main project overview)
 3. `.warp/protocols/*.md` (specific workflow protocols)
 4. `.warp/rules/*.md` (behavioral rules and constraints)

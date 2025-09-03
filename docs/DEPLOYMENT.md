@@ -243,7 +243,7 @@ make version-show
 
 # Update version before deployment
 ./scripts/version.sh patch    # 1.0.0 → 1.0.1
-./scripts/version.sh minor    # 1.0.0 → 1.1.0  
+./scripts/version.sh minor    # 1.0.0 → 1.1.0
 ./scripts/version.sh major    # 1.0.0 → 2.0.0
 
 # Or using Make
@@ -411,8 +411,8 @@ git reset --hard origin/staging  # Reset to remote state
 ### After Deployment
 
 1. **Verify deployment** in target environment
-2. **Test critical functionality** 
-3. **Monitor for issues** 
+2. **Test critical functionality**
+3. **Monitor for issues**
 4. **Keep deployment state** until confident
 5. **Clean up state** after successful verification: `deploy.sh cleanup`
 

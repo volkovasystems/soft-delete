@@ -136,7 +136,6 @@ soft-delete/
     │   ├── git-management-protocol.md            # Development protocol specification
     │   ├── structural-alignment-protocol.md      # Development protocol specification
     │   ├── testing-protocol.md                   # Development protocol specification
-    │   ├── universal-compliance-checklist.md     # Development protocol specification
     │   └── version-protocol.md                   # Development protocol specification
     ├── README.md                                 # Project overview and main documentation
     ├── rules/                                    # AI agent behavioral rules
@@ -276,7 +275,7 @@ setup() {
     # Create isolated test environment
     TEST_DIR="$(mktemp -d)"
     cd "$TEST_DIR" || exit
-    
+
     # Copy executable
     cp "$BATS_TEST_DIRNAME/../bin/soft-delete" ./soft-delete
     chmod +x ./soft-delete
@@ -299,7 +298,7 @@ teardown() {
     [ "$status" -eq 0 ]
     [[ "$output" == *"Soft deleted:"* ]]
     [ ! -f "test.txt" ]
-    
+
     # Verify backup using helper
     backup_path=$(extract_backup_path "$output")
     verify_backup "$backup_path" "content"
@@ -325,7 +324,7 @@ teardown() {
    make docker-test
    make docker-lint
    ```
-   
+
    **Alternative (Local):**
    ```bash
    make build

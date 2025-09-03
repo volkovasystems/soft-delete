@@ -48,7 +48,7 @@ VERSION file protection and validation system.
 
 COMMANDS:
     enable          Enable VERSION file protection
-    disable         Disable VERSION file protection  
+    disable         Disable VERSION file protection
     check           Check if VERSION file is protected
     validate        Validate current VERSION file integrity
     reset           Reset protection system
@@ -99,7 +99,7 @@ store_protection_metadata() {
     local version="$1"
     local checksum="$2"
     local metadata_file="$PROJECT_ROOT/.version-guard"
-    
+
     cat > "$metadata_file" << EOF
 # VERSION file protection metadata
 # Generated: $(date -Iseconds)
@@ -109,7 +109,7 @@ store_protection_metadata() {
 # Host: $(hostname)
 # Timestamp: $(date +%s)
 EOF
-    
+
     # Make metadata file readonly
     chmod 444 "$metadata_file" 2>/dev/null || true
 }
@@ -120,68 +120,68 @@ detect_ai_environment() {
     local ai_indicators=(
         "WARP_SESSION_ID"          # Warp.dev
         "CURSOR_SESSION"           # Cursor
-        "GITHUB_CODESPACES_TOKEN"  # GitHub Codespaces  
+        "GITHUB_CODESPACES_TOKEN"  # GitHub Codespaces
         "CODESERVER_"              # VS Code Server
         "REPLIT_"                  # Replit
         "GITPOD_"                  # Gitpod
     )
-    
+
     for indicator in "${ai_indicators[@]}"; do
         if env | grep -q "^$indicator"; then
             return 0  # AI environment detected
         fi
     done
-    
+
     # Check process tree for AI tools
     if pgrep -f "(cursor|code-server|warp)" >/dev/null 2>&1; then
         return 0  # AI environment detected
     fi
-    
+
     return 1  # Not AI environment
 }
 
 # Check if user is authorized developer
 check_developer_authorization() {
     local git_name git_email
-    
+
     git_name="$(git config user.name 2>/dev/null || echo "")"
     git_email="$(git config user.email 2>/dev/null || echo "")"
-    
+
     # Known authorized developers (add more as needed)
     local authorized_developers=(
         "Richeve S. Bebedor:richeve.bebedor@gmail.com"
         # Add more authorized developers here in "Name:email" format
     )
-    
+
     local current_dev="$git_name:$git_email"
-    
+
     for auth_dev in "${authorized_developers[@]}"; do
         if [[ "$current_dev" == "$auth_dev" ]]; then
             return 0  # Authorized
         fi
     done
-    
+
     return 1  # Not authorized
 }
 
 # Enable VERSION file protection
 enable_protection() {
     local force="${1:-false}"
-    
+
     log_info "Enabling VERSION file protection..."
-    
+
     if [[ ! -f "$VERSION_FILE" ]]; then
         log_error "VERSION file not found: $VERSION_FILE"
         return 1
     fi
-    
+
     local current_version checksum
     current_version="$(get_current_version)"
     checksum="$(generate_checksum)"
-    
+
     # Store protection metadata
     store_protection_metadata "$current_version" "$checksum"
-    
+
     # Make VERSION file immutable (Linux)
     if command -v chattr >/dev/null 2>&1; then
         if chattr +i "$VERSION_FILE" 2>/dev/null; then
@@ -190,47 +190,47 @@ enable_protection() {
             log_warn "Could not set immutable flag (may require sudo)"
         fi
     fi
-    
+
     # Set restrictive permissions
     chmod 444 "$VERSION_FILE" 2>/dev/null || true
-    
+
     # Create pre-commit hook
     create_precommit_hook
-    
+
     log_success "VERSION file protection enabled for version: $current_version"
     log_info "Checksum: $checksum"
-    
+
     return 0
 }
 
 # Disable VERSION file protection
 disable_protection() {
     local force="${1:-false}"
-    
+
     if [[ "$force" != "true" ]]; then
         log_error "Protection disable requires --force flag"
         log_warn "Use: $SCRIPT_NAME disable --force"
         return 1
     fi
-    
+
     log_warn "Disabling VERSION file protection..."
-    
+
     # Remove immutable flag (Linux)
     if command -v chattr >/dev/null 2>&1; then
         chattr -i "$VERSION_FILE" 2>/dev/null || true
     fi
-    
+
     # Restore write permissions
     chmod 644 "$VERSION_FILE" 2>/dev/null || true
-    
+
     # Remove metadata
     rm -f "$PROJECT_ROOT/.version-guard" 2>/dev/null || true
-    
+
     # Remove pre-commit hook
     remove_precommit_hook
-    
+
     log_warn "VERSION file protection disabled"
-    
+
     return 0
 }
 
@@ -238,9 +238,9 @@ disable_protection() {
 create_precommit_hook() {
     local hook_dir="$PROJECT_ROOT/.git/hooks"
     local hook_file="$hook_dir/pre-commit.version-guard"
-    
+
     mkdir -p "$hook_dir"
-    
+
     cat > "$hook_file" << 'EOF'
 #!/usr/bin/env bash
 # VERSION file protection pre-commit hook
@@ -254,7 +254,7 @@ if [[ -f "$VERSION_GUARD" ]]; then
     # Check if VERSION file is being modified
     if git diff --cached --name-only | grep -q "^VERSION$"; then
         echo "🚨 VERSION file modification detected!"
-        
+
         # Run version guard validation
         if ! "$VERSION_GUARD" validate-commit; then
             echo "❌ VERSION file modification blocked by version-guard"
@@ -267,9 +267,9 @@ fi
 
 exit 0
 EOF
-    
+
     chmod +x "$hook_file"
-    
+
     # Install or update main pre-commit hook
     local main_hook="$hook_dir/pre-commit"
     if [[ ! -f "$main_hook" ]]; then
@@ -306,22 +306,22 @@ remove_precommit_hook() {
 # Validate VERSION file integrity
 validate_version_file() {
     log_info "Validating VERSION file integrity..."
-    
+
     if [[ ! -f "$VERSION_FILE" ]]; then
         log_error "VERSION file not found"
         return 1
     fi
-    
+
     local metadata_file="$PROJECT_ROOT/.version-guard"
     if [[ ! -f "$metadata_file" ]]; then
         log_warn "No protection metadata found - file may not be protected"
         return 0
     fi
-    
+
     local stored_checksum current_checksum
     stored_checksum="$(grep "^# Checksum:" "$metadata_file" | cut -d' ' -f3)"
     current_checksum="$(generate_checksum)"
-    
+
     if [[ "$stored_checksum" == "$current_checksum" ]]; then
         log_success "VERSION file integrity verified"
         return 0
@@ -336,28 +336,28 @@ validate_version_file() {
 # Validate commit-time changes
 validate_commit() {
     log_info "Validating VERSION file changes for commit..."
-    
+
     # Check if running in AI environment
     if detect_ai_environment; then
         log_error "AI environment detected - VERSION modifications not allowed"
         log_error "AI systems cannot modify version numbers without explicit developer authorization"
         return 1
     fi
-    
+
     # Check developer authorization
     if ! check_developer_authorization; then
         local git_name git_email
         git_name="$(git config user.name 2>/dev/null || echo "UNKNOWN")"
         git_email="$(git config user.email 2>/dev/null || echo "UNKNOWN")"
-        
+
         log_error "Unauthorized user attempting VERSION modification"
         log_error "User: $git_name <$git_email>"
         log_error "Only authorized developers can modify VERSION file"
         return 1
     fi
-    
+
     log_success "VERSION file modification authorized"
-    
+
     # Update protection metadata with new version
     if [[ -f "$VERSION_FILE" ]]; then
         local new_version new_checksum
@@ -365,23 +365,23 @@ validate_commit() {
         new_checksum="$(generate_checksum)"
         store_protection_metadata "$new_version" "$new_checksum"
     fi
-    
+
     return 0
 }
 
 # Check protection status
 check_protection_status() {
     log_info "Checking VERSION file protection status..."
-    
+
     if [[ ! -f "$VERSION_FILE" ]]; then
         log_error "VERSION file not found"
         return 1
     fi
-    
+
     local current_version
     current_version="$(get_current_version)"
     echo "Current version: $current_version"
-    
+
     # Check metadata file
     local metadata_file="$PROJECT_ROOT/.version-guard"
     if [[ -f "$metadata_file" ]]; then
@@ -391,7 +391,7 @@ check_protection_status() {
     else
         log_warn "No protection metadata found"
     fi
-    
+
     # Check file attributes
     if command -v lsattr >/dev/null 2>&1; then
         local attrs
@@ -402,7 +402,7 @@ check_protection_status() {
             log_warn "VERSION file is not immutable"
         fi
     fi
-    
+
     # Check permissions
     local perms
     perms="$(stat -c %a "$VERSION_FILE" 2>/dev/null || stat -f %A "$VERSION_FILE" 2>/dev/null || echo "unknown")"
@@ -411,7 +411,7 @@ check_protection_status() {
     else
         log_warn "VERSION file permissions: $perms (not read-only)"
     fi
-    
+
     # Check pre-commit hook
     if [[ -f "$PROJECT_ROOT/.git/hooks/pre-commit.version-guard" ]]; then
         log_success "Pre-commit hook installed"
@@ -423,14 +423,14 @@ check_protection_status() {
 # Reset protection system
 reset_protection() {
     log_warn "Resetting VERSION file protection system..."
-    
+
     # This requires manual intervention for security
     log_error "Reset requires manual steps:"
     echo "1. Remove immutable flag: sudo chattr -i $VERSION_FILE"
     echo "2. Remove metadata: rm -f $PROJECT_ROOT/.version-guard"
     echo "3. Remove hooks: rm -f $PROJECT_ROOT/.git/hooks/pre-commit.version-guard"
     echo "4. Restore permissions: chmod 644 $VERSION_FILE"
-    
+
     return 1
 }
 
@@ -439,7 +439,7 @@ main() {
     local command="${1:-status}"
     local verbose=false
     local force=false
-    
+
     # Parse arguments
     while [[ $# -gt 0 ]]; do
         case $1 in
@@ -471,10 +471,10 @@ main() {
                 ;;
         esac
     done
-    
+
     # Change to project root
     cd "$PROJECT_ROOT"
-    
+
     # Execute command
     case "$command" in
         enable)

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 # quick-commit.sh - Helper script for continuous commit protocol
-# 
+#
 # Part of the soft-delete project
 # Follows the continuous commit protocol defined in .warp/protocols/continuous-commit-protocol.md
 
@@ -133,7 +133,7 @@ else
         usage
         exit 1
     fi
-    
+
     # Format the message
     if [[ -n "$DESCRIPTION" ]]; then
         MESSAGE="$ACTION $COMPONENT - $DESCRIPTION"
