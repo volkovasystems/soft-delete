@@ -94,7 +94,7 @@ count_files() {
         fi
     fi
 
-    echo "$count"
+    printf "%d" "$count"
 }
 
 # Function to audit test artifacts
@@ -103,7 +103,6 @@ audit_test_artifacts() {
     
     local total=0
     local tap_count junit_count coverage_count shellcheck_count
-    
     tap_count=$(count_files "*.tap" "TAP test files")
     junit_count=$(count_files "*.xml" "JUnit XML reports")
     coverage_count=$(find reports/coverage/ -type f ! -name ".gitkeep" 2>/dev/null | wc -l || echo 0)
@@ -136,7 +135,6 @@ audit_temp_files() {
     
     local total=0
     local tmp_count temp_count log_count backup_count editor_count
-    
     tmp_count=$(count_files "*.tmp" "Temporary files (.tmp)")
     temp_count=$(count_files "*.temp" "Temporary files (.temp)")
     log_count=$(count_files "*.log" "Log files")
@@ -154,7 +152,6 @@ audit_system_files() {
     
     local total=0
     local ds_count thumbs_count orig_count rej_count
-    
     ds_count=$(count_files ".DS_Store" "macOS metadata files")
     thumbs_count=$(count_files "Thumbs.db" "Windows thumbnail files")
     orig_count=$(count_files "*.orig" "Original files (.orig)")
@@ -171,7 +168,6 @@ audit_deployment_artifacts() {
     
     local total=0
     local pid_count lock_count nohup_count
-    
     pid_count=$(count_files "*.pid" "Process ID files")
     lock_count=$(count_files "*.lock" "Lock files")
     nohup_count=$(count_files "nohup.out" "Background process logs")
