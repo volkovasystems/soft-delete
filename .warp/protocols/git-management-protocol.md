@@ -397,6 +397,156 @@ git commit -m "docs: update changelog for version $(cat VERSION) release"
 ./scripts/deploy.sh deploy-release
 ```
 
+## Gitignore Strategy (REVERSE IGNORE LOGIC)
+
+### CRITICAL UNDERSTANDING: Reverse Gitignore Pattern
+**This repository uses REVERSE IGNORE LOGIC** - fundamentally different from standard gitignore patterns.
+
+#### How It Works
+```bash
+# Line 1: Ignore EVERYTHING by default
+*
+
+# Line 2: Allow directories (needed for directory traversal)
+!*/
+
+# Remaining lines: EXPLICITLY allow specific files/patterns
+!LICENSE
+!*.md
+!*.sh
+# etc...
+```
+
+#### What This Means for AI Agents
+
+**✅ CORRECT Understanding**:
+- **Everything is ignored by default** - no need to add ignore patterns
+- **Only explicitly allowed files are tracked** (using `!filename` patterns)
+- **Security files (*.key, *.pem, etc.) are ALREADY ignored** - never add them to gitignore
+- **Temporary files are ALREADY ignored** - never add them to gitignore
+
+**❌ INCORRECT Understanding**:
+- "I need to add *.key to gitignore" ❌ (already ignored by `*`)
+- "Let me add *.tmp to gitignore" ❌ (already ignored by `*`)
+- "I should add security patterns" ❌ (everything is ignored unless explicitly allowed)
+
+#### When to Modify .gitignore
+
+**✅ ADD these patterns (to ALLOW files)**:
+```bash
+# Add new file types you want to track
+!*.new-extension
+!*/**.new-extension
+
+# Allow specific files
+!important-config.cfg
+```
+
+**✅ ADD these patterns (to EXCLUDE specific allowed types)**:
+```bash
+# Exclude specific files from an allowed pattern
+reports/*.tap     # Exclude .tap files from reports/ even though *.tap is allowed
+temp/*.log        # Exclude .log files from temp/ even though they might be allowed
+```
+
+**❌ NEVER ADD these patterns (redundant with `*`)**:
+```bash
+# DON'T ADD - already ignored by default
+*.key             ❌ (redundant)
+*.tmp             ❌ (redundant) 
+*.log             ❌ (redundant)
+.env              ❌ (redundant)
+node_modules/     ❌ (redundant)
+*.pyc             ❌ (redundant)
+```
+
+### Gitignore Modification Protocol
+
+#### Before Modifying .gitignore
+1. **Understand the current logic**: Everything ignored by default (`*`)
+2. **Check if the file type is already allowed**: Look for existing `!*.extension` patterns
+3. **Determine intent**: Do you want to ALLOW a new type or EXCLUDE from an allowed type?
+
+#### Decision Tree
+```bash
+# Want to track a new file type?
+# → Add: !*.new-type
+
+# Want to exclude specific files from a tracked type?
+# → Add: specific/path/*.type
+
+# Want to ignore a file type?
+# → DO NOTHING (already ignored by *)
+```
+
+#### Examples of Proper .gitignore Modifications
+
+**✅ Adding support for new file types**:
+```bash
+# Allow Python files
+!*.py
+!*/**/*.py
+
+# Allow configuration files
+!*.cfg
+!*.ini
+```
+
+**✅ Excluding specific files from allowed patterns**:
+```bash
+# Allow .log files generally, but exclude from reports/
+reports/*.log
+reports/**/*.log
+
+# Allow .json files generally, but exclude secrets
+secrets.json
+config/secrets.json
+```
+
+**❌ Incorrect additions (redundant with `*`)**:
+```bash
+# These are WRONG - already ignored
+*.tmp       ❌
+*.backup    ❌
+.env        ❌
+.cache/     ❌
+```
+
+### Validation Commands
+
+```bash
+# Check what files are currently tracked
+git ls-files
+
+# Check what files are ignored
+git status --ignored
+
+# Test if a file would be ignored
+git check-ignore filename.ext
+
+# See gitignore rules in effect
+git check-ignore -v filename.ext
+```
+
+### Agent Guidelines for .gitignore
+
+#### Before Modifying
+1. **Read current .gitignore** to understand allowed patterns
+2. **Test understanding**: "Is this file already ignored by the `*` rule?"
+3. **Identify goal**: Allow new type vs. exclude from allowed type
+
+#### Modification Process
+1. **Only add `!pattern` to allow new file types**
+2. **Only add `specific/path` to exclude from allowed patterns**
+3. **Never add plain ignore patterns** (they're redundant)
+4. **Test changes** with `git status` and `git check-ignore`
+
+#### Common Mistakes to Avoid
+- Adding redundant ignore patterns for files already ignored by `*`
+- Not understanding that security files are ALREADY protected
+- Treating this like a standard gitignore (it's reverse logic)
+- Adding development artifacts that are already ignored by default
+
 ## Quality Metrics
 
 ### Commit Quality Indicators
