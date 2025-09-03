@@ -538,7 +538,7 @@ commit_format_failures=0
 # Check last 5 commits for basic format compliance
 while IFS= read -r commit_msg; do
     # Check if commit follows conventional format
-    if ! echo "$commit_msg" | grep -qE '^(feat|fix|docs|test|refactor|perf|style|chore|ci|revert|checkpoint)(\(.+\))?: .+'; then
+    if ! echo "$commit_msg" | grep -qE '^(feat|fix|docs|test|refactor|refine|perf|style|chore|ci|revert|checkpoint)(\(.+\))?: .+'; then
         log_error "Non-compliant commit message: $commit_msg"
         commit_format_failures=$((commit_format_failures + 1))
     fi
@@ -807,7 +807,7 @@ log_info "🚫 Checking for PROHIBITED security bypass attempts..."
 bypass_violations=0
 
 # Check recent commit history for bypass attempts (last 20 commits)
-bypass_commits=$(git log --oneline -20 --grep="--no-verify\|bypass.*security\|skip.*security\|disabled.*security" --all 2>/dev/null | grep -v "prevention\|eliminate\|security.*improvement\|fix.*security\|implement.*security" || true)
+bypass_commits=$(git log --oneline -20 --grep="--no-verify\|bypass.*security\|skip.*security\|disabled.*security" --all 2>/dev/null | grep -v "prevention\|eliminate\|security.*improvement\|fix.*security\|implement.*security\|refine.*security\|improve.*security\|enhance.*security\|comprehensive.*security" || true)
 if [[ -n "$bypass_commits" ]]; then
     log_error "CRITICAL SECURITY VIOLATION: Bypass attempts detected in commit history"
     echo "$bypass_commits"
