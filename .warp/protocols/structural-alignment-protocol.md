@@ -293,6 +293,7 @@ soft-delete/
     │   ├── consistency-protocol.md               # Development protocol specification
     │   ├── continuous-commit-protocol.md         # Development protocol specification
     │   ├── git-management-protocol.md            # Development protocol specification
+    │   ├── security-protocol.md                  # Development protocol specification
     │   ├── structural-alignment-protocol.md      # Development protocol specification
     │   ├── testing-protocol.md                   # Development protocol specification
     │   └── version-protocol.md                   # Development protocol specification

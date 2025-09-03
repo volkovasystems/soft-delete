@@ -624,49 +624,43 @@ fi
 echo ""
 log_info "🔒 Checking Security Compliance..."
 
-# Check for sensitive data in git history (exclude security-related feature commits)
-log_info "Scanning git history for sensitive data..."
-# Look for actual credential assignment patterns (more precise than keyword matching)
-sensitive_commits=$(git log --all --grep="password\s*=\s*['\"][^'\"]*['\"]" --grep="api[_-]?key\s*=\s*['\"][^'\"]*['\"]" --grep="secret\s*=\s*['\"][^'\"]*['\"]" --grep="token\s*=\s*['\"][^'\"]*['\"]" --oneline 2>/dev/null || true)
-# Filter out legitimate security-related commits
-sensitive_commits=$(echo "$sensitive_commits" | grep -v "feat.*security\|security.*feat\|fix.*security" || true)
-if [[ -z "$sensitive_commits" ]]; then
-    sensitive_data_count=0
+# Run comprehensive security scan using dedicated security-scan.sh
+log_info "Running comprehensive security scan..."
+if [[ -x "./scripts/security-scan.sh" ]]; then
+    if [[ "$AUTO_FIX_MODE" == "true" && "$DRY_RUN_MODE" != "true" && "$QUIET_MODE" != "true" ]]; then
+        # Auto-fix mode: try to fix security issues
+        log_info "Running security scan with auto-fix enabled..."
+        if ./scripts/security-scan.sh --fix --quiet; then
+            log_success "Security scan: 100% compliant (with auto-fixes applied)"
+        else
+            log_error "Security scan: COMPLIANCE FAILURE (auto-fix could not resolve all issues)"
+        fi
+    elif [[ "$AUTO_FIX_MODE" == "true" && "$DRY_RUN_MODE" == "true" ]]; then
+        # Dry-run mode: preview security fixes
+        log_info "Running security scan with dry-run fix preview..."
+        if ./scripts/security-scan.sh --fix --dry-run --quiet; then
+            log_success "Security scan: Issues found but fixable (dry-run preview)"
+        else
+            log_error "Security scan: COMPLIANCE FAILURE (issues require manual intervention)"
+        fi
+    else
+        # Standard mode: just check security
+        if ./scripts/security-scan.sh --quiet; then
+            log_success "Security scan: 100% compliant (no issues found)"
+        else
+            log_error "Security scan: COMPLIANCE FAILURE (issues found)"
+        fi
+    fi
 else
-    sensitive_data_count=$(echo "$sensitive_commits" | wc -l)
-fi
-if [[ $sensitive_data_count -eq 0 ]]; then
-    log_success "Git history: 100% compliant (no sensitive data)"
-else
-    log_error "Git history: COMPLIANCE FAILURE ($sensitive_data_count potential sensitive commits)"
+    log_error "Security scan: security-scan.sh script not found or not executable"
 fi
 
-# Check for hardcoded credentials in files (exclude security scanner itself and workflow files)
-log_info "Scanning for hardcoded credentials..."
-credential_results=$(grep -r "password\s*=\|api_key\s*=\|secret\s*=" . --exclude-dir=.git --exclude-dir=node_modules --exclude="*.log" --exclude="security-scan.sh" --exclude="*.yml" 2>/dev/null | grep -v "compliance-check.sh" || true)
-if [[ -z "$credential_results" ]]; then
-    credential_matches=0
+# Additional basic security checks for protocol compliance
+log_info "Verifying security protocol compliance..."
+if [[ -f ".warp/protocols/security-protocol.md" ]]; then
+    log_success "Security protocol: Present and available"
 else
-    credential_matches=$(echo "$credential_results" | wc -l)
-fi
-if [[ $credential_matches -eq 0 ]]; then
-    log_success "Credentials: 100% compliant (no hardcoded values)"
-else
-    log_error "Credentials: COMPLIANCE FAILURE ($credential_matches potential matches)"
-fi
-
-# Check for path traversal vulnerabilities (exclude legitimate relative paths to VERSION file)
-log_info "Checking for path traversal vulnerabilities..."
-path_traversal_results=$(find . -name "*.sh" -exec grep -H "\.\./" {} \; 2>/dev/null | grep -v "VERSION" || true)
-if [[ -z "$path_traversal_results" ]]; then
-    path_traversal_matches=0
-else
-    path_traversal_matches=$(echo "$path_traversal_results" | wc -l)
-fi
-if [[ $path_traversal_matches -eq 0 ]]; then
-    log_success "Path security: 100% compliant"
-else
-    log_error "Path security: COMPLIANCE FAILURE ($path_traversal_matches potential issues)"
+    log_error "Security protocol: security-protocol.md not found"
 fi
 
 # 7. CONSISTENCY COMPLIANCE

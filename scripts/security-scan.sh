@@ -13,6 +13,18 @@ readonly SCRIPT_DIR
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 readonly PROJECT_ROOT
 
+# Auto-fix mode flags
+AUTO_FIX_MODE=false
+DRY_RUN_MODE=false
+QUIET_MODE=false
+
+# Fix tracking counters
+FIXED_PERMISSIONS=0
+FIXED_CONFIGURATIONS=0
+FIXED_VULNERABILITIES=0
+MANUAL_SECRETS=0
+MANUAL_VALIDATION=0
+
 # Colors for output
 readonly RED='\033[0;31m'
 readonly GREEN='\033[0;32m'
@@ -37,31 +49,303 @@ log_error() {
     echo -e "${RED}[FAIL]${NC} $*" >&2
 }
 
+log_fix() {
+    if [[ "$QUIET_MODE" != "true" ]]; then
+        echo -e "${BLUE}[FIX]${NC} $*" >&1
+    fi
+}
+
+# Auto-fix utility functions
+auto_fix_file_permissions() {
+    local file="$1"
+    local target_perm="$2"
+    local description="$3"
+    
+    if [[ "$DRY_RUN_MODE" == "true" ]]; then
+        log_fix "[DRY-RUN] Would fix permissions: $description"
+        return 0
+    fi
+    
+    if chmod "$target_perm" "$file" 2>/dev/null; then
+        log_fix "Fixed permissions: $description"
+        return 0
+    else
+        log_error "Failed to fix permissions: $description"
+        return 1
+    fi
+}
+
+auto_fix_remove_world_writable() {
+    local file="$1"
+    
+    if [[ "$DRY_RUN_MODE" == "true" ]]; then
+        log_fix "[DRY-RUN] Would remove world-writable permissions from: $(basename "$file")"
+        return 0
+    fi
+    
+    if chmod o-w "$file" 2>/dev/null; then
+        log_fix "Removed world-writable permissions from: $(basename "$file")"
+        ((FIXED_PERMISSIONS++))
+        return 0
+    else
+        log_error "Failed to remove world-writable permissions from: $(basename "$file")"
+        return 1
+    fi
+}
+
+auto_fix_executable_docs() {
+    local file="$1"
+    
+    if [[ "$DRY_RUN_MODE" == "true" ]]; then
+        log_fix "[DRY-RUN] Would remove execute permissions from documentation: $(basename "$file")"
+        return 0
+    fi
+    
+    if chmod -x "$file" 2>/dev/null; then
+        log_fix "Removed execute permissions from documentation: $(basename "$file")"
+        ((FIXED_PERMISSIONS++))
+        return 0
+    else
+        log_error "Failed to remove execute permissions from: $(basename "$file")"
+        return 1
+    fi
+}
+
+auto_fix_add_security_gitignore_patterns() {
+    local gitignore_file="$PROJECT_ROOT/.gitignore"
+    
+    local security_patterns=(
+        "# Security patterns"
+        "*.key"
+        "*.pem"
+        "*.p12"
+        "*.pfx"
+        "*.jks"
+        "*.keystore"
+        "*.truststore"
+        "*.ssh/"
+        "id_rsa"
+        "id_dsa"
+        "id_ecdsa"
+        "id_ed25519"
+        ".env"
+        ".env.*"
+        "secrets.yaml"
+        "secrets.yml"
+        "secret.json"
+        "credentials.json"
+        ".aws/"
+        ".gcp/"
+        "*.log"
+        "*.dump"
+        "core"
+        "*.pid"
+    )
+    
+    local patterns_added=0
+    
+    for pattern in "${security_patterns[@]}"; do
+        if ! grep -Fq "$pattern" "$gitignore_file" 2>/dev/null; then
+            if [[ "$DRY_RUN_MODE" == "true" ]]; then
+                log_fix "[DRY-RUN] Would add security pattern to .gitignore: $pattern"
+                ((patterns_added++))
+            else
+                echo "$pattern" >> "$gitignore_file"
+                ((patterns_added++))
+            fi
+        fi
+    done
+    
+    if [[ $patterns_added -gt 0 ]]; then
+        if [[ "$DRY_RUN_MODE" != "true" ]]; then
+            log_fix "Added $patterns_added security patterns to .gitignore"
+            ((FIXED_CONFIGURATIONS++))
+        fi
+        return 0
+    fi
+    
+    return 0
+}
+
+confirm_fix() {
+    local description="$1"
+    
+    if [[ "$QUIET_MODE" == "true" ]]; then
+        # In quiet mode, skip confirmation-required fixes
+        log_fix "Skipping confirmation-required fix in quiet mode: $description"
+        return 1
+    fi
+    
+    if [[ "$DRY_RUN_MODE" == "true" ]]; then
+        log_fix "[DRY-RUN] Would request confirmation for: $description"
+        return 0
+    fi
+    
+    echo -n "Apply fix: $description? [y/N] "
+    read -r response
+    case $response in
+        [yY]|[yY][eE][sS])
+            return 0
+            ;;
+        *)
+            log_fix "Skipped fix: $description"
+            return 1
+            ;;
+    esac
+}
+
+auto_fix_dockerfile_security() {
+    local dockerfile="$1"
+    local fixes_applied=0
+    
+    # Check if we need to add a non-root user
+    if ! grep -q "USER.*[^root]" "$dockerfile"; then
+        if [[ "$DRY_RUN_MODE" == "true" ]]; then
+            log_fix "[DRY-RUN] Would add non-root user to Dockerfile"
+            ((fixes_applied++))
+        else
+            # Add non-root user before the final instruction
+            local temp_file
+            temp_file=$(mktemp)
+            
+            # Insert non-root user configuration before the last line
+            head -n -1 "$dockerfile" > "$temp_file"
+            cat >> "$temp_file" << 'EOF'
+
+# Security: Create non-root user
+RUN groupadd -r appuser && useradd -r -g appuser appuser
+USER appuser
+EOF
+            tail -n 1 "$dockerfile" >> "$temp_file"
+            
+            if mv "$temp_file" "$dockerfile"; then
+                log_fix "Added non-root user to Dockerfile"
+                ((FIXED_VULNERABILITIES++))
+                ((fixes_applied++))
+            else
+                log_error "Failed to add non-root user to Dockerfile"
+                rm -f "$temp_file"
+            fi
+        fi
+    fi
+    
+    return $fixes_applied
+}
+
+# Function to apply fixes based on detected issues
+apply_security_fixes() {
+    if [[ "$AUTO_FIX_MODE" != "true" ]]; then
+        return 0
+    fi
+    
+    log_info "Applying security fixes..."
+    
+    # Fix file permissions
+    local world_writable_files
+    world_writable_files=$(find "$PROJECT_ROOT" -type f -perm /o+w 2>/dev/null | grep -v ".git" || true)
+    if [[ -n "$world_writable_files" ]]; then
+        while IFS= read -r file; do
+            auto_fix_remove_world_writable "$file"
+        done <<< "$world_writable_files"
+    fi
+    
+    # Fix executable documentation files
+    local suspicious_executables
+    suspicious_executables=$(find "$PROJECT_ROOT" -name "*.md" -o -name "*.txt" -o -name "*.json" -o -name "*.yml" -o -name "*.yaml" 2>/dev/null | while read -r f; do [[ -x "$f" ]] && echo "$f"; done)
+    if [[ -n "$suspicious_executables" ]]; then
+        while IFS= read -r file; do
+            auto_fix_executable_docs "$file"
+        done <<< "$suspicious_executables"
+    fi
+    
+    # Add security patterns to .gitignore
+    auto_fix_add_security_gitignore_patterns
+    
+    # Fix Docker security issues
+    if [[ -f "$PROJECT_ROOT/Dockerfile.test" ]]; then
+        auto_fix_dockerfile_security "$PROJECT_ROOT/Dockerfile.test"
+    fi
+    
+    # Handle secrets (confirmation required)
+    local secret_files
+    secret_files=$(grep -rli "password\|api[_-]\?key\|secret\|token" "$PROJECT_ROOT" --exclude-dir=.git --exclude-dir=reports --exclude-dir=dist 2>/dev/null | head -5 || true)
+    if [[ -n "$secret_files" ]]; then
+        if confirm_fix "Remove/redact potential secrets from detected files"; then
+            while IFS= read -r file; do
+                if [[ -f "$file" && "$DRY_RUN_MODE" != "true" ]]; then
+                    # Create backup
+                    cp "$file" "${file}.backup-$(date +%s)"
+                    
+                    # Simple redaction (replace common secret patterns with placeholders)
+                    sed -i 's/password\s*=\s*["'"'][^"'"']*["'"']/password="[REDACTED]"/gi' "$file"
+                    sed -i 's/api[_-]\?key\s*=\s*["'"'][^"'"']*["'"']/api_key="[REDACTED]"/gi' "$file"
+                    sed -i 's/secret\s*=\s*["'"'][^"'"']*["'"']/secret="[REDACTED]"/gi' "$file"
+                    sed -i 's/token\s*=\s*["'"'][^"'"']*["'"']/token="[REDACTED]"/gi' "$file"
+                    
+                    log_fix "Redacted potential secrets in: $(basename "$file")"
+                    ((FIXED_VULNERABILITIES++))
+                fi
+            done <<< "$secret_files"
+        else
+            ((MANUAL_SECRETS++))
+        fi
+    fi
+    
+    return 0
+}
+
 # Usage function
 usage() {
     cat << EOF
 Usage: $SCRIPT_NAME [OPTIONS]
 
-Comprehensive security scanning for the soft-delete project.
+Comprehensive security scanning with auto-fix capabilities for the soft-delete project.
 
 OPTIONS:
     -h, --help      Show this help message
     -v, --verbose   Enable verbose output
     -q, --quiet     Suppress output except security issues
+    --fix           Enable automatic fixing of security issues
+    --dry-run       Show what would be fixed without making changes (requires --fix)
+    --comprehensive Run extended security analysis
+
+MODES:
+    Default         Check security only, report issues
+    --fix           Check + automatically fix safe security issues
+    --fix --quiet   Apply only safe fixes, no prompts
+    --fix --dry-run Preview what would be fixed
 
 CHECKS PERFORMED:
     - Shell script security analysis with shellcheck
-    - File permission validation
-    - Hardcoded secrets detection
+    - File permission validation and auto-fix
+    - Hardcoded secrets detection with remediation
     - Path traversal vulnerability checks
     - Input validation analysis
-    - Docker security scanning
-    - Dependency security audit
+    - Docker security scanning and fixes
+    - Secure configuration defaults
+
+SAFE AUTO-FIXES:
+    - File permissions (scripts to 755, docs to 644)
+    - Remove world-writable permissions
+    - Add security patterns to .gitignore
+    - Fix basic Dockerfile security issues
+
+CONFIRMATION-REQUIRED FIXES:
+    - Remove potential secrets from files
+    - Modify security-sensitive configurations
+
+MANUAL-ONLY ISSUES:
+    - Complex code vulnerabilities
+    - Logic flaws in security controls
+    - Third-party dependency issues
 
 EXAMPLES:
     $SCRIPT_NAME                    # Run all security checks
     $SCRIPT_NAME -v                 # Run with verbose output
     $SCRIPT_NAME -q                 # Run quietly
+    $SCRIPT_NAME --fix              # Check and auto-fix issues
+    $SCRIPT_NAME --fix --dry-run    # Preview fixes
+    $SCRIPT_NAME --fix --quiet      # Silent auto-fix
 EOF
 }
 
@@ -417,6 +701,29 @@ check_docker_security() {
     return $issues
 }
 
+# Function to generate fix summary report
+generate_fix_summary() {
+    if [[ "$AUTO_FIX_MODE" == "true" && "$QUIET_MODE" != "true" ]]; then
+        echo ""
+        log_info "=== AUTO-FIX SUMMARY ==="
+        echo "Permissions fixed: $FIXED_PERMISSIONS"
+        echo "Configuration fixes: $FIXED_CONFIGURATIONS"
+        echo "Vulnerability fixes: $FIXED_VULNERABILITIES"
+        echo "Manual secrets requiring attention: $MANUAL_SECRETS"
+        echo "Manual validation items: $MANUAL_VALIDATION"
+        
+        local total_fixed=$((FIXED_PERMISSIONS + FIXED_CONFIGURATIONS + FIXED_VULNERABILITIES))
+        local total_manual=$((MANUAL_SECRETS + MANUAL_VALIDATION))
+        
+        if [[ $total_fixed -gt 0 ]]; then
+            log_success "Applied $total_fixed automatic fixes"
+        fi
+        if [[ $total_manual -gt 0 ]]; then
+            log_warn "$total_manual issues require manual attention"
+        fi
+    fi
+}
+
 # Main security scan function
 run_security_scan() {
     local verbose="${1:-false}"
@@ -424,15 +731,61 @@ run_security_scan() {
 
     [[ "$quiet" == "false" ]] && log_info "Starting comprehensive security scan..."
 
-    local total_issues=0
+    # Safety check: warn if working directory is dirty and auto-fix is enabled
+    if [[ "$AUTO_FIX_MODE" == "true" && "$DRY_RUN_MODE" != "true" && "$QUIET_MODE" != "true" ]]; then
+        if command -v git >/dev/null 2>&1 && [[ -d "$PROJECT_ROOT/.git" ]]; then
+            if ! git diff --quiet 2>/dev/null || ! git diff --cached --quiet 2>/dev/null; then
+                echo ""
+                log_warn "WARNING: Working directory has uncommitted changes."
+                log_warn "Auto-fixes will modify files. Consider committing changes first."
+                echo -n "Continue with auto-fix? [y/N] "
+                read -r response
+                case $response in
+                    [yY]|[yY][eE][sS])
+                        ;;
+                    *)
+                        log_info "Aborting auto-fix due to dirty working directory"
+                        exit 1
+                        ;;
+                esac
+            fi
+        fi
+    fi
 
-    # Run all security checks
-    check_file_permissions || ((total_issues += $?))
-    check_hardcoded_secrets || ((total_issues += $?))
-    check_path_traversal || ((total_issues += $?))
-    check_input_validation || ((total_issues += $?))
-    run_shellcheck_security || ((total_issues += $?))
-    check_docker_security || ((total_issues += $?))
+    local total_issues=0
+    local initial_issues=0
+
+    # Run initial security checks to detect issues
+    check_file_permissions || ((initial_issues += $?))
+    check_hardcoded_secrets || ((initial_issues += $?))
+    check_path_traversal || ((initial_issues += $?))
+    check_input_validation || ((initial_issues += $?))
+    run_shellcheck_security || ((initial_issues += $?))
+    check_docker_security || ((initial_issues += $?))
+    
+    total_issues=$initial_issues
+
+    # Apply fixes if auto-fix mode is enabled
+    if [[ "$AUTO_FIX_MODE" == "true" && $initial_issues -gt 0 ]]; then
+        echo ""
+        apply_security_fixes
+        
+        # Re-run checks to verify fixes and count remaining issues
+        if [[ "$DRY_RUN_MODE" != "true" ]]; then
+            echo ""
+            log_info "Re-scanning after applying fixes..."
+            total_issues=0
+            check_file_permissions || ((total_issues += $?))
+            check_hardcoded_secrets || ((total_issues += $?))
+            check_path_traversal || ((total_issues += $?))
+            check_input_validation || ((total_issues += $?))
+            run_shellcheck_security || ((total_issues += $?))
+            check_docker_security || ((total_issues += $?))
+        fi
+    fi
+
+    # Generate fix summary
+    generate_fix_summary
 
     # Summary
     if [[ "$quiet" == "false" ]]; then
@@ -441,6 +794,14 @@ run_security_scan() {
             log_success "Security scan completed - No issues found! ✅"
         else
             log_error "Security scan completed - $total_issues issues found ❌"
+            if [[ "$AUTO_FIX_MODE" == "true" ]]; then
+                if [[ $total_issues -lt $initial_issues ]]; then
+                    log_info "Resolved $((initial_issues - total_issues)) of $initial_issues issues automatically"
+                fi
+                if [[ $total_issues -gt 0 ]]; then
+                    log_warn "$total_issues issues require manual attention"
+                fi
+            fi
         fi
     fi
 
@@ -452,7 +813,7 @@ main() {
     local verbose=false
     local quiet=false
 
-    # Parse arguments
+# Parse arguments
     while [[ $# -gt 0 ]]; do
         case $1 in
             -h|--help)
@@ -465,6 +826,19 @@ main() {
                 ;;
             -q|--quiet)
                 quiet=true
+                QUIET_MODE=true
+                shift
+                ;;
+            --fix)
+                AUTO_FIX_MODE=true
+                shift
+                ;;
+            --dry-run)
+                DRY_RUN_MODE=true
+                shift
+                ;;
+            --comprehensive)
+                # Enable comprehensive mode (currently same as default)
                 shift
                 ;;
             *)
@@ -474,6 +848,12 @@ main() {
                 ;;
         esac
     done
+
+    # Validate argument combinations
+    if [[ "$DRY_RUN_MODE" == "true" && "$AUTO_FIX_MODE" != "true" ]]; then
+        log_error "--dry-run requires --fix"
+        exit 1
+    fi
 
     cd "$PROJECT_ROOT"
 

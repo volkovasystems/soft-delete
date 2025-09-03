@@ -327,26 +327,24 @@ reports/**/*.txt
 
 ### 6. Security Compliance (MANDATORY 100%)
 
-#### Sensitive Data Protection (ZERO TOLERANCE)
+**SECURITY PROTOCOL INTEGRATION**: All security requirements are defined in the dedicated [Security Protocol](.warp/protocols/security-protocol.md).
+
+**REQUIRED SECURITY VALIDATION**:
 ```bash
-# REQUIRED: No sensitive data in repository
-git log --all --grep="password\|secret\|key\|token" | wc -l  # Must be 0
-
-# REQUIRED: No hardcoded credentials
-grep -r -i "password\|secret\|key.*=" . --exclude-dir=.git | wc -l  # Must be 0
-
-# REQUIRED: No TODO with security implications
-grep -r "TODO.*security\|FIXME.*security" . | wc -l  # Must be 0
+# REQUIRED: Run comprehensive security scan
+./scripts/security-scan.sh --quiet || exit 1
+# Must pass all security checks with zero issues
 ```
 
-#### Path Safety Compliance
-```bash
-# REQUIRED: No path traversal vulnerabilities
-grep -r "\.\./\|\.\.\\\\" . --exclude-dir=.git | wc -l  # Must be 0
+**Security compliance includes**:
+- Sensitive data protection (zero tolerance)
+- Path traversal vulnerability prevention
+- Input validation requirements
+- File permission security
+- Docker security standards
+- Hardcoded credential detection
 
-# REQUIRED: Proper input validation
-grep -r "cd.*\$" . --include="*.sh" | wc -l  # Review required
-```
+**Refer to**: `.warp/protocols/security-protocol.md` for detailed security standards, verification procedures, and remediation guidelines.
 
 ## Compliance Verification Workflow
 
@@ -391,7 +389,7 @@ echo "✅ File system: 100% compliant"
 
 # 6. Security Compliance
 echo "🔒 Checking security compliance..."
-git log --all --oneline | grep -i "password\|secret\|key" | wc -l | grep -q "^0$" || { echo "❌ Security compliance"; exit 1; }
+./scripts/security-scan.sh --quiet || { echo "❌ Security compliance failed"; exit 1; }
 echo "✅ Security: 100% compliant"
 
 echo "🎉 ALL COMPLIANCE CHECKS PASSED - 100% COMPLIANT"
@@ -594,7 +592,7 @@ echo "COMPLIANCE SCORECARD"
 echo "==================="
 echo "ShellCheck: $(make docker-lint > /dev/null 2>&1 && echo "100%" || echo "FAILED")"
 echo "Tests: $(make docker-test > /dev/null 2>&1 && echo "100%" || echo "FAILED")"
-echo "Security: $(./scripts/security-check.sh > /dev/null 2>&1 && echo "100%" || echo "FAILED")"
+echo "Security: $(./scripts/security-scan.sh --quiet > /dev/null 2>&1 && echo "100%" || echo "FAILED")"
 echo "Overall: PASS only if all domains are 100%"
 ```
 
