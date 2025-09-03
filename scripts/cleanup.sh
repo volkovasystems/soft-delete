@@ -50,8 +50,9 @@ CLEANUP_TYPE:
     docker          Clean Docker environment only
     reports         Clean test reports only
     dist            Clean distribution packages only
-    all             Clean everything (default)
+    security        Clean security-related temporary files only
     deployment      Clean deployment-specific artifacts
+    all             Clean everything (default)
     auto            Auto-cleanup mode (silent, comprehensive)
 
 OPTIONS:
@@ -220,6 +221,7 @@ clean_temp() {
 
     local temp_patterns=(
         "*.tmp"
+        "*.temp"
         "*.log"
         "*~"
         ".DS_Store"
@@ -228,6 +230,11 @@ clean_temp() {
         "*.swo"
         "*.orig"
         "*.rej"
+        "*.backup"
+        "*.bak"
+        "nohup.out"
+        "*.pid"
+        "*.lock"
     )
 
     for pattern in "${temp_patterns[@]}"; do
@@ -349,6 +356,40 @@ clean_auto() {
     # Don't log success in auto mode to keep it truly silent
 }
 
+# Function to perform security cleanup
+clean_security() {
+    local dry_run="${1:-false}"
+    local verbose="${2:-false}"
+
+    log_info "Cleaning security-related temporary files..."
+
+    # Security temporary patterns (but NOT actual security files like keys)
+    local security_temp_patterns=(
+        "*.key.tmp"
+        "*.pem.backup"
+        "staging.env"
+        "temp.state"
+        "*.secret.tmp"
+        "auth.temp"
+        "token.cache"
+    )
+
+    for pattern in "${security_temp_patterns[@]}"; do
+        if [[ "$dry_run" == "true" ]]; then
+            local count
+            count=$(find . -name "$pattern" -type f 2>/dev/null | wc -l || echo 0)
+            if [[ $count -gt 0 ]]; then
+                echo "[DRY RUN] Would remove $count security temp files matching: $pattern"
+            fi
+        else
+            [[ "$verbose" == "true" ]] && log_info "Removing security temp files matching: $pattern"
+            find . -name "$pattern" -type f -delete 2>/dev/null || true
+        fi
+    done
+
+    [[ "$dry_run" == "false" ]] && log_success "Security temporary files cleaned"
+}
+
 # Function to perform deployment cleanup
 clean_deployment() {
     local dry_run="${1:-false}"
@@ -421,6 +462,9 @@ perform_cleanup() {
         dist)
             clean_build "$dry_run" "$verbose"  # dist is part of build cleanup
             ;;
+        security)
+            clean_security "$dry_run" "$verbose"
+            ;;
         deployment)
             clean_deployment "$dry_run" "$verbose"
             ;;
@@ -429,6 +473,7 @@ perform_cleanup() {
             clean_temp "$dry_run" "$verbose"
             clean_docker "$dry_run" "$verbose"
             clean_reports "$dry_run" "$verbose"
+            clean_security "$dry_run" "$verbose"
             clean_deployment "$dry_run" "$verbose"
             ;;
         auto)
@@ -479,7 +524,7 @@ main() {
                 force=true
                 shift
                 ;;
-            build|temp|docker|reports|dist|deployment|all|auto)
+            build|temp|docker|reports|dist|security|deployment|all|auto)
                 cleanup_type="$1"
                 shift
                 ;;

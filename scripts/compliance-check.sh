@@ -953,7 +953,59 @@ else
     log_error "Changelog: Version mismatch - changelog shows ($changelog_version), VERSION file shows ($current_version)"
 fi
 
-# 8. STRUCTURAL ALIGNMENT COMPLIANCE
+# 8. AUTO-CLEANUP COMPLIANCE VALIDATION
+echo ""
+log_info "🧹 Checking Auto-Cleanup Compliance..."
+
+# Run cleanup audit to detect dangling files
+log_info "Running cleanup audit to detect dangling files..."
+if [[ -x "./scripts/audit-cleanup.sh" ]]; then
+    if ./scripts/audit-cleanup.sh --quiet; then
+        log_success "Auto-cleanup: 100% compliant (no dangling files)"
+    else
+        log_error "Auto-cleanup: COMPLIANCE FAILURE - dangling files detected"
+        echo ""
+        log_error "Found dangling files that should be cleaned up:"
+        ./scripts/audit-cleanup.sh --report
+        echo ""
+        log_error "REQUIRED ACTIONS:"
+        log_error "  1. Run: ./scripts/cleanup.sh --auto --quiet"
+        log_error "  2. Or run: ./scripts/audit-cleanup.sh --fix"
+        log_error "  3. Ensure no temporary/generated files remain"
+        log_error "  4. Re-run compliance check"
+        echo ""
+    fi
+else
+    log_error "Auto-cleanup audit script not found or not executable"
+fi
+
+# Check for specific patterns that should never exist
+log_info "Checking for prohibited file patterns..."
+prohibited_patterns=0
+
+# Security files that should never be committed
+security_files=$(find . -name "*.key" -o -name "*.pem" -o -name ".env" -o -name "secrets.*" -o -name "credentials.*" 2>/dev/null | head -5 || true)
+if [[ -n "$security_files" ]]; then
+    log_error "CRITICAL: Security files detected (should be gitignored):"
+    echo "$security_files" | sed 's/^/  /'
+    prohibited_patterns=$((prohibited_patterns + 1))
+fi
+
+# Temporary files that should be cleaned up
+temp_files=$(find . -name "*.tmp" -o -name "*.temp" -o -name "*~" -o -name "*.swp" 2>/dev/null | head -5 || true)
+if [[ -n "$temp_files" ]]; then
+    log_error "Temporary files detected (should be cleaned up):"
+    echo "$temp_files" | sed 's/^/  /'
+    prohibited_patterns=$((prohibited_patterns + 1))
+fi
+
+if [[ $prohibited_patterns -eq 0 ]]; then
+    log_success "File patterns: 100% compliant (no prohibited files)"
+else
+    log_error "File patterns: $prohibited_patterns violations detected"
+fi
+
+# 9. STRUCTURAL ALIGNMENT COMPLIANCE
 echo ""
 log_info "🏗️  Checking Structural Alignment Compliance..."
 

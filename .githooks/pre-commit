@@ -182,11 +182,60 @@ detect_bypass_attempts() {
     fi
 }
 
+# Function to validate auto-cleanup compliance
+validate_auto_cleanup() {
+    echo -e "${BLUE}🧹 Validating auto-cleanup compliance...${NC}"
+    
+    local dangling_files=0
+    
+    # Check for test artifacts
+    if find reports/ -name "*.tap" -o -name "*.txt" 2>/dev/null | grep -q .; then
+        echo -e "${RED}❌ Test artifacts found in reports/${NC}"
+        dangling_files=$((dangling_files + 1))
+    fi
+    
+    # Check for temporary files
+    if find . -name "*.tmp" -o -name "*.temp" 2>/dev/null | grep -q .; then
+        echo -e "${RED}❌ Temporary files found${NC}"
+        dangling_files=$((dangling_files + 1))
+    fi
+    
+    # Check for system files
+    if find . -name ".DS_Store" -o -name "Thumbs.db" 2>/dev/null | grep -q .; then
+        echo -e "${RED}❌ System files found${NC}"
+        dangling_files=$((dangling_files + 1))
+    fi
+    
+    # Check for security temporary files
+    if find . -name "*.key.tmp" -o -name "staging.env" -o -name "temp.state" 2>/dev/null | grep -q .; then
+        echo -e "${RED}❌ Security temporary files found${NC}"
+        dangling_files=$((dangling_files + 1))
+    fi
+    
+    if [[ $dangling_files -gt 0 ]]; then
+        echo ""
+        echo -e "${RED}❌ AUTO-CLEANUP VALIDATION FAILED${NC}"
+        echo -e "${YELLOW}Run cleanup before committing:${NC}"
+        echo -e "  ${BOLD}./scripts/cleanup.sh --auto --quiet${NC}"
+        echo -e "  ${BOLD}./scripts/audit-cleanup.sh --fix${NC}"
+        echo ""
+        return 1
+    fi
+    
+    echo -e "${GREEN}✅ Auto-cleanup validation passed${NC}"
+    return 0
+}
+
 # Function to run AI agent protection checks
 run_functionality_preservation_check() {
     echo -e "${BLUE}🛡️  Running AI Agent Protection Checks...${NC}"
     
-    # 0. First check for security bypass attempts
+    # 0. First validate auto-cleanup compliance
+    if ! validate_auto_cleanup; then
+        exit 1
+    fi
+    
+    # 1. Check for security bypass attempts
     detect_bypass_attempts
     
     # 1. Functionality preservation check

@@ -54,6 +54,52 @@ reports/**/*.txt
 !.githooks/
 !.githooks/**
 
+# Security patterns (NEVER commit secrets)
+*.key
+*.pem
+*.p12
+*.pfx
+*.jks
+*.keystore
+*.truststore
+*.ssh/
+id_rsa
+id_dsa
+id_ecdsa
+id_ed25519
+.env
+.env.*
+secrets.yaml
+secrets.yml
+secret.json
+credentials.json
+.aws/
+.gcp/
+staging.env
+temp.state
+
+# Development artifacts
+*.pyc
+__pycache__/
+node_modules/
+.cache/
+.pytest_cache/
+.coverage
+*.o
+*.so
+*.dylib
+docs/build/
+site/
+*.html
+*.pdf
+
+# Additional temporary patterns
+*.backup
+*.bak
+*backup*
+*.temp
+nohup.out
+
 # Deployment state files
 .deploy/
 *.state
