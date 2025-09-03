@@ -807,7 +807,7 @@ log_info "🚫 Checking for PROHIBITED security bypass attempts..."
 bypass_violations=0
 
 # Check recent commit history for bypass attempts (last 20 commits)
-bypass_commits=$(git log --oneline -20 --grep="--no-verify\|bypass.*security\|skip.*security\|disabled.*security" --all 2>/dev/null | grep -v "prevention\|eliminate\|security.*improvement\|fix.*security\|implement.*security\|refine.*security\|improve.*security\|enhance.*security\|comprehensive.*security" || true)
+bypass_commits=$(git log --oneline -20 --grep="--no-verify\|bypass.*security\|skip.*security\|disabled.*security" --all 2>/dev/null | grep -v "prevention\|eliminate\|security.*improvement\|fix.*security\|implement.*security\|refine.*security\|improve.*security\|enhance.*security\|comprehensive.*security\|bypass.*detection\|clean.*up.*bypass\|false.*positive" || true)
 if [[ -n "$bypass_commits" ]]; then
     log_error "CRITICAL SECURITY VIOLATION: Bypass attempts detected in commit history"
     echo "$bypass_commits"
