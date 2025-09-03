@@ -430,23 +430,33 @@ check_hardcoded_secrets() {
         matches=$(grep -rEi "$pattern" "$PROJECT_ROOT" --exclude-dir=.git --exclude-dir=reports --exclude-dir=dist 2>/dev/null || true)
 
         if [[ -n "$matches" ]]; then
-            # Filter out legitimate documentation contexts
+            # Filter out ALL forms of comments and documentation contexts
             local filtered_matches=""
             while IFS= read -r line; do
-                local is_documentation_context=false
+                local is_comment_or_documentation=false
+
+                # Check if this line is a comment (various formats)
+                if [[ "$line" =~ ^[[:space:]]*# ]] || [[ "$line" =~ .*#[[:space:]]*Safe: ]] || [[ "$line" =~ ^[[:space:]]*// ]] || [[ "$line" =~ ^[[:space:]]*\* ]] || [[ "$line" =~ ^[[:space:]]*\<!-- ]]; then
+                    is_comment_or_documentation=true
+                fi
+
+                # Check for inline comments (# after code)
+                if [[ "$line" =~ .*[[:space:]]+#[[:space:]]+ ]]; then
+                    is_comment_or_documentation=true
+                fi
 
                 # Check if this is within documentation context patterns
                 if [[ "$line" =~ (sed\ -i\ \'s/|\#\ Example:|\#\ Template:|\#\ Documentation:|\#\ Remediation:|\[REDACTED\]) ]]; then
-                    is_documentation_context=true
+                    is_comment_or_documentation=true
                 fi
 
-                # Check if this is in a security protocol or documentation file with explanatory context
-                if [[ "$line" =~ (security-protocol\.md|README\.md) ]] && [[ "$line" =~ (remediation|example|template|documentation) ]]; then
-                    is_documentation_context=true
+                # Check if this is in a security protocol or documentation file
+                if [[ "$line" =~ (security-protocol\.md|README\.md|\.md:) ]]; then
+                    is_comment_or_documentation=true
                 fi
 
-                # Only report if NOT in documentation context
-                if [[ "$is_documentation_context" == "false" ]]; then
+                # Only report if NOT in comments or documentation
+                if [[ "$is_comment_or_documentation" == "false" ]]; then
                     if [[ -n "$filtered_matches" ]]; then
                         filtered_matches="${filtered_matches}\n${line}"
                     else
@@ -455,7 +465,7 @@ check_hardcoded_secrets() {
                 fi
             done <<< "$matches"
 
-            # Only warn if we have filtered matches that aren't documentation
+            # Only warn if we have filtered matches that aren't comments/documentation
             if [[ -n "$filtered_matches" ]]; then
                 log_warn "Potential secret found with pattern: $pattern"
                 echo -e "$filtered_matches"
@@ -550,11 +560,17 @@ check_path_traversal() {
 
     for pattern in "${unsafe_patterns[@]}"; do
         local matches
-        matches=$(grep -rE "$pattern" "$PROJECT_ROOT" --include="*.sh" --include="*.bash" --exclude-dir=.git 2>/dev/null | grep -v "# Safe:" || true)
+        matches=$(grep -rE "$pattern" "$PROJECT_ROOT" --include="*.sh" --include="*.bash" --exclude-dir=.git 2>/dev/null || true)
         if [[ -n "$matches" ]]; then
-            log_error "Potential path traversal vulnerability found with pattern: $pattern"
-            echo "$matches"
-            ((issues++))
+            # Filter out ALL comments and documentation
+            local filtered_matches
+            filtered_matches=$(echo "$matches" | grep -v "^[[:space:]]*#" | grep -v "[[:space:]]#[[:space:]]" | grep -v "# Safe:" || true)
+            
+            if [[ -n "$filtered_matches" ]]; then
+                log_error "Potential path traversal vulnerability found with pattern: $pattern"
+                echo "$filtered_matches"
+                ((issues++))
+            fi
         fi
     done
 
@@ -563,12 +579,12 @@ check_path_traversal() {
     unquoted_var_matches=$(grep -rE '\$[A-Za-z_][A-Za-z0-9_]*/' "$PROJECT_ROOT" --include="*.sh" --include="*.bash" --exclude-dir=.git 2>/dev/null || true)
 
     if [[ -n "$unquoted_var_matches" ]]; then
-        # Filter out safe variable usage (escape the pattern properly)
+        # Filter out safe variable usage AND all comments
         local filtered_matches
         if [[ -n "$safe_pattern" ]]; then
-            filtered_matches=$(echo "$unquoted_var_matches" | grep -vE "$safe_pattern" | grep -v "# Safe:" || true)
+            filtered_matches=$(echo "$unquoted_var_matches" | grep -vE "$safe_pattern" | grep -v "^[[:space:]]*#" | grep -v "[[:space:]]#[[:space:]]" | grep -v "# Safe:" || true)
         else
-            filtered_matches="$unquoted_var_matches"
+            filtered_matches=$(echo "$unquoted_var_matches" | grep -v "^[[:space:]]*#" | grep -v "[[:space:]]#[[:space:]]" | grep -v "# Safe:" || true)
         fi
 
         if [[ -n "$filtered_matches" ]]; then

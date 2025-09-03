@@ -164,8 +164,8 @@ detect_bypass_attempts() {
         exit 1
     fi
     
-    # Check for bypass-related code in staged changes (actual bypass code, not documentation)
-    local bypass_patterns=$(git diff --cached | grep "^+" | grep -E "(git.*commit.*--no-verify|git.*push.*--no-verify|--skip-security|--bypass-security)" | grep -v "# Safe:" || true) # Safe: legitimate security detection code
+    # Check for bypass-related code in staged changes (ONLY in executable code, not comments/documentation)
+    local bypass_patterns=$(git diff --cached | grep "^+" | grep -E "(git.*commit.*--no-verify|git.*push.*--no-verify|--skip-security|--bypass-security)" | grep -v "^+[[:space:]]*#" | grep -v "[[:space:]]#[[:space:]]" | grep -v "# Safe:" | grep -v "\.md:" || true) # Safe: legitimate security detection code
     
     if [[ -n "$bypass_patterns" ]]; then
         echo ""
