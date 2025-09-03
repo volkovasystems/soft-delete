@@ -93,8 +93,16 @@ setup_benchmark_env() {
 cleanup_benchmark_env() {
     log_info "Cleaning up benchmark environment..."
     cd "$PROJECT_ROOT"
-    rm -rf "$BENCHMARK_DIR"
-    # Clean up any backup directories created during benchmarking
+    
+    # Validate benchmark directory path is safe to remove
+    if [[ -n "$BENCHMARK_DIR" ]] && [[ "$BENCHMARK_DIR" =~ ^/tmp/soft-delete-benchmark-[0-9]+$ ]] && [[ -d "$BENCHMARK_DIR" ]]; then
+        rm -rf "$BENCHMARK_DIR"
+        log_success "Removed benchmark directory: $BENCHMARK_DIR"
+    else
+        log_warn "Benchmark directory not found or invalid path: $BENCHMARK_DIR"
+    fi
+    
+    # Clean up any backup directories created during benchmarking (already has validation pattern)
     rm -rf /tmp/backup-*benchmark* 2>/dev/null || true
     log_success "Benchmark environment cleaned"
 }

@@ -70,8 +70,11 @@ echo "    # Restore it"
 echo "    mv /tmp/backup-k7m9p-20250122-143052/document.pdf ./"
 echo
 
-echo "13. Clean up old backups manually:"
-echo "    rm -rf /tmp/backup-k7m9p-20250122-143052/"
+echo "13. Clean up old backups safely:"
+echo "    # First, verify the backup directory exists and check its contents"
+echo "    ls -la /tmp/backup-k7m9p-20250122-143052/"
+echo "    # Then remove it safely"
+echo "    [[ -d \"/tmp/backup-k7m9p-20250122-143052\" ]] && rm -rf \"/tmp/backup-k7m9p-20250122-143052/\""
 echo
 
 echo "=== Safety Tips ==="

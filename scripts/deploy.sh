@@ -1056,8 +1056,14 @@ show_status() {
 # Function to cleanup deployment state
 cleanup_state() {
     if [[ -d "$DEPLOY_STATE_DIR" ]]; then
-        rm -rf "$DEPLOY_STATE_DIR"
-        log_success "Cleaned up deployment state"
+        # Validate path is safe to remove
+        if [[ "$DEPLOY_STATE_DIR" =~ ^/.+/.deploy$ ]] && [[ -n "$DEPLOY_STATE_DIR" ]] && [[ "$DEPLOY_STATE_DIR" != "/" ]]; then
+            rm -rf "$DEPLOY_STATE_DIR"
+            log_success "Cleaned up deployment state"
+        else
+            log_error "Invalid deployment state directory path: $DEPLOY_STATE_DIR"
+            return 1
+        fi
     else
         log_info "No deployment state to clean up"
     fi

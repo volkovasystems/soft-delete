@@ -164,8 +164,8 @@ cat << 'EOF'
 # Weekly cleanup of old downloads
 0 3 * * 0 find $HOME/Downloads -mtime +30 -exec /usr/local/bin/soft-delete {} \; 2>/dev/null
 
-# Monthly cleanup of old backups (made by soft-delete itself)
-0 4 1 * * find /tmp -name "backup-*" -mtime +7 -exec rm -rf {} \; 2>/dev/null
+# Monthly cleanup of old backups (made by soft-delete itself) - safely
+0 4 1 * * find /tmp -maxdepth 1 -name "backup-*" -type d -mtime +7 -exec rm -rf {} \; 2>/dev/null
 EOF
 echo
 
