@@ -6,6 +6,7 @@
 !VERSION
 
 !.gitignore
+!.gitattributes
 !.editorconfig
 !.gitkeep
 
@@ -28,6 +29,7 @@
 !*/**/Makefile
 
 !*/**/.gitignore
+!*/**/.gitattributes
 !*/**/.editorconfig
 !*/**/.gitkeep
 
