@@ -171,7 +171,7 @@ show_cleanup_preview() {
             get_cleanup_stats "nohup.out" "Background process logs"
             if [[ -d "/tmp" ]]; then
                 local backup_count
-                backup_count=$(find /tmp -name "backup-*" -type d 2>/dev/null | wc -l || echo 0)
+                backup_count=$(find /tmp -name "backup-*" -type d 2>/dev/null | wc -l | tr -d ' \n' || echo 0)
                 if [[ $backup_count -gt 0 ]]; then
                     echo "  Soft-delete backups in /tmp: $backup_count directories"
                 fi
