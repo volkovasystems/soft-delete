@@ -123,6 +123,8 @@ show_cleanup_preview() {
             get_cleanup_stats "*.tmp" "Temporary files (.tmp)"
             get_cleanup_stats "*.log" "Log files"
             get_cleanup_stats "*~" "Backup files (~)"
+            get_cleanup_stats "*.backup" "Backup files (.backup)"
+            get_cleanup_stats "*.backup-*" "Timestamped backup files"
             get_cleanup_stats ".DS_Store" "macOS metadata files"
             get_cleanup_stats "Thumbs.db" "Windows thumbnail files"
             get_cleanup_stats "*.swp" "Vim swap files"
@@ -231,6 +233,7 @@ clean_temp() {
         "*.orig"
         "*.rej"
         "*.backup"
+        "*.backup-*"
         "*.bak"
         "nohup.out"
         "*.pid"
@@ -330,6 +333,9 @@ clean_auto() {
     find . -name "*~" -type f -delete 2>/dev/null || true
     find . -name "*.orig" -type f -delete 2>/dev/null || true
     find . -name "*.rej" -type f -delete 2>/dev/null || true
+    find . -name "*.backup" -type f -delete 2>/dev/null || true
+    find . -name "*.backup-*" -type f -delete 2>/dev/null || true
+    find . -name "*.bak" -type f -delete 2>/dev/null || true
 
     # Clean system files
     find . -name ".DS_Store" -delete 2>/dev/null || true
