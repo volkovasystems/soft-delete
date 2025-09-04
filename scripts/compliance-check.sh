@@ -962,8 +962,9 @@ log_info "Running manual cleanup audit..."
 # Note: audit-cleanup.sh has known issues, using manual checks for now
 manual_dangling_files=0
 
-# Check for test artifacts
-if find reports/ -name "*.tap" -o -name "*.txt" 2>/dev/null | grep -q .; then
+# Check for test artifacts (exclude recently generated files from this compliance run)
+old_test_artifacts=$(find reports/ -name "*.tap" -o -name "*.txt" -mmin +5 2>/dev/null || true)
+if [[ -n "$old_test_artifacts" ]]; then
     manual_dangling_files=$((manual_dangling_files + 1))
 fi
 
