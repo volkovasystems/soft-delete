@@ -963,7 +963,7 @@ log_info "Running manual cleanup audit..."
 manual_dangling_files=0
 
 # Check for test artifacts (exclude files from current compliance run)
-old_test_artifacts=$(find reports/ -name "*.tap" -o -name "*.txt" -mmin +30 2>/dev/null || true)
+old_test_artifacts=$(find reports/ \( -name "*.tap" -o -name "*.txt" \) -mmin +30 2>/dev/null || true)
 if [[ -n "$old_test_artifacts" ]]; then
     manual_dangling_files=$((manual_dangling_files + 1))
 fi
